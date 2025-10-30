@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spotify Soundboard</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Arial;display:flex;flex-direction:column;align-items:center;gap:12px;padding:24px;background:#0e1114;color:#e6eef3}
+    .board{display:grid;grid-template-columns:repeat(3,120px);gap:12px}
+    button{padding:12px;border-radius:10px;border:0;background:#1db954;color:#052012;font-weight:600;cursor:pointer}
+    .muted{background:#2c2f33}
+    .row{display:flex;gap:8px}
+    input{padding:8px;border-radius:8px;border:1px solid #222;background:#fff;color:#000}
+    .info{font-size:13px;color:#9fb1a0}
+  </style>
+</head>
+<body>
+  <h1>Spotify Soundboard</h1>
+  <div class="info" id="status">Not signed in</div>
+  <div class="row">
+    <input id="clientId" placeholder="Paste your Spotify Client ID" style="width:360px" />
+    <input id="redirectUri" placeholder="Redirect URI, e.g. https://your-username.github.io/spotify-soundboard/" style="width:360px" />
+  </div>
+  <div class="row">
+    <button id="btnAuth">Sign in with Spotify</button>
+    <button id="btnSignOut" class="muted">Sign out</button>
+  </div>
+  <div class="board">
+    <button id="prev">Previous</button>
+    <button id="play">Play</button>
+    <button id="pause">Pause</button>
+    <button id="next">Next</button>
+    <button id="volDown">Vol -</button>
+    <button id="volUp">Vol +</button>
+    <button id="seekBack">Seek -10s</button>
+    <button id="seekForward">Seek +10s</button>
+    <button id="toggleShuffle">Shuffle</button>
+  </div>
+  <div class="row">
+    <button id="currentTrack" class="muted">Get Track</button>
+    <div id="trackInfo" class="info">No track info</div>
+  </div>
+  <script>
+    // You must paste the full script from the previous HTML file here.
+    alert('Full code must be copied from the original spotify_soundboard.html script section.')
+  </script>
+</body>
+</html>
