@@ -1,490 +1,711 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Spotify Soundboard</title>
-  
-  <script src="https://developer.spotify.com/documentation/web-api/tutorials/code-pkce-flow"></script>
-
-  <style>
-    /* All your advanced CSS goes here... */
-    /* --- Base & Layout --- */
-    html, body { height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden; }
-    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 24px; background: #004a9a; color: #e6eef3; box-sizing: border-box; }
-    /* --- Auth & Status Area --- */
-    .auth-area { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 500px; }
-    .auth-area .auth-buttons { display: flex; gap: 10px; }
-    .auth-area .auth-buttons button { flex-grow: 1; padding: 10px; border-radius: 8px; border: 0; background: #1db954; color: #052012; font-weight: 600; cursor: pointer; }
-    .auth-area .auth-buttons button.muted { background: #2c2f33; color: #e6eef3; }
-    /* --- Info Displays --- */
-    .info { font-size: 14px; color: #c0d4ff; min-height: 1.2em; text-align: center; font-weight: 500; }
-    /* --- Currently Playing UI --- */
-    .track-info { display: flex; flex-direction: column; align-items: center; justify-content: center; background: #0a0a0e; border-radius: 12px; padding: 16px; width: 100%; max-width: 420px; box-sizing: border-box; min-height: 80px; text-align: center; }
-    .track-name { font-size: 1.1rem; font-weight: 600; color: #fff; margin: 0; }
-    .track-artist { font-size: 0.9rem; color: #b3b3b3; margin: 4px 0 0 0; }
-    /* --- Soundboard Grid --- */
-    .board { display: grid; width: 100%; max-width: 420px; gap: 12px; grid-template-areas: "prev next" "clock play" "volDown play" "volUp play" "liked liked"; grid-template-columns: 1fr 1fr; }
-    /* --- Base Button Style --- */
-    .board button { display: flex; align-items: center; justify-content: center; padding: 16px; border-radius: 12px; border: 0; background: #0a0a0e; color: #fff; cursor: pointer; min-height: 80px; transition: background-color 0.2s; }
-    .board button:hover { background: #1a1a1e; }
-    .board button:active { background: #2a2a2e; }
-    .board button svg { width: 28px; height: 28px; fill: #fff; }
-    /* --- Assign buttons to grid areas --- */
-    #prev { grid-area: prev; }
-    #next { grid-area: next; }
-    #clock { grid-area: clock; }
-    #volDown { grid-area: volDown; }
-    #volUp { grid-area: volUp; }
-    #playLiked { grid-area: liked; }
-    #playPause { grid-area: play; min-height: 276px; border-radius: 16px; }
-    #playPause svg { width: 48px; height: 48px; }
-    #clock { font-size: 2.5rem; font-weight: 600; font-family: 'Courier New', Courier, monospace; color: #fff; background: #0a0a0e; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; user-select: none; }
-    #clock:hover { background: #1a1a1e; }
-    /* --- Fullscreen Mode --- */
-    body:fullscreen, body:-webkit-full-screen { padding: 0; gap: 0; background: #0a0a0e; }
-    body:fullscreen .auth-area, body:fullscreen .info, body:fullscreen hr, body:-webkit-full-screen .auth-area, body:-webkit-full-screen .info, body:-webkit-full-screen hr { display: none; }
-    body:fullscreen .track-info, body:fullscreen .board, body:-webkit-full-screen .track-info, body:-webkit-full-screen .board { max-width: 100%; width: 100%; border-radius: 0; }
-    body:fullscreen .track-info, body:-webkit-full-screen .track-info { flex-shrink: 0; min-height: 112px; }
-    body:fullscreen .board, body:-webkit-full-screen .board { flex-grow: 1; height: 100%; padding: 16px; box-sizing: border-box; }
-    body:fullscreen #playPause, body:-webkit-full-screen #playPause { min-height: 0; height: 100%; }
-    @media (orientation: landscape) {
-      body:fullscreen .board, body:-webkit-full-screen .board { grid-template-areas: "track prev next" "track play play" "track play play" "track volDown volUp" "track clock liked"; grid-template-columns: 2fr 1fr 1fr; grid-template-rows: repeat(5, 1fr); gap: 12px; }
-      body:fullscreen .track-info, body:-webkit-full-screen .track-info { display: flex; grid-area: track; height: 100%; min-height: 0; }
-      body:fullscreen #prev, body:-webkit-full-screen #prev { grid-area: prev; }
-      body:fullscreen #next, body:-webkit-full-screen #next { grid-area: next; }
-      body:fullscreen #clock, body:-webkit-full-screen #clock { grid-area: clock; }
-      body:fullscreen #volDown, body:-webkit-full-screen #volDown { grid-area: volDown; }
-      body:fullscreen #volUp, body:-webkit-full-screen #volUp { grid-area: volUp; }
-      body:fullscreen #playLiked, body:-webkit-full-screen #playLiked { grid-area: liked; }
-      body:fullscreen #playPause, body:-webkit-full-screen #playPause { grid-area: play; }
-    }
-  </style>
-</head>
-<body>
-
-  <div class="info" id="status">Not signed in</div>
-  <div class="auth-area">
-    <div class="auth-buttons">
-      <button id="btnAuth">Sign In</button>
-      <button id="btnSignOut" class="muted">Sign Out</button>
-    </div>
-  </div>
-  
-  <hr style="width: 100%; max-width: 500px; border-color: #333;">
-
-  <div class="track-info" id="trackInfo">
-    <div class="track-name">No track playing</div>
-    <div class="track-artist"></div>
-  </div>
-
-  <div class="board">
-    <button id="prev" title="Previous"><svg viewBox="0 0 24 24"><path d="M17.51 3.87L15.73 2.1 5.84 12l9.9 9.9 1.77-1.77L9.38 12l8.13-8.13z"/></svg></button>
-    <button id="next" title="Next"><svg viewBox="0 0 24 24"><path d="M6.49 3.87L8.27 2.1l9.89 9.9-9.9 9.9-1.77-1.77L14.62 12l-8.13-8.13z"/></svg></button>
-    <div id="clock" title="Toggle Fullscreen">00:00</div>
-    <button id="playPause" title="Play/Pause">
-      <svg id="icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-      <svg id="icon-pause" viewBox="0 0 24 24" style="display: none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-    </button>
-    <button id="volDown" title="Volume Down"><svg viewBox="0 0 24 24"><path d="M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg></button>
-    <button id="volUp" title="Volume Up"><svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></button>
-    <button id="playLiked" title="Play Liked Songs"><svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button>
-  </div>
-
-  <script>
-    // --- Configuration ---
-    const CLIENT_ID = 'bb82c1e306e44bc681b5fc345b2b493f';
-    const REDIRECT_URI = 'https://valo-valox.github.io/spotify-soundboard/';
-    
-    // --- Spotify API Constants ---
-    const AUTHORIZE_URL = 'https://accounts.spotify.com/authorize';
-    const TOKEN_URL = 'https://accounts.spotify.com/api/token';
-    const API_BASE_URL = 'https://api.spotify.com/v1';
-
-    const SCOPES = [
-      'streaming', 
-      'user-modify-playback-state',
-      'user-read-playback-state',
-      'user-read-currently-playing',
-      'user-library-read',
-      'user-read-private'
-    ].join(' ');
-
-    // --- DOM Elements ---
-    const $status = document.getElementById('status');
-    const $trackInfo = document.getElementById('trackInfo');
-    const $trackName = $trackInfo.querySelector('.track-name');
-    const $trackArtist = $trackInfo.querySelector('.track-artist');
-    const $iconPlay = document.getElementById('icon-play');
-    const $iconPause = document.getElementById('icon-pause');
-    const $clock = document.getElementById('clock');
-
-    // --- State ---
-    let player = null; 
-    let deviceId = null; 
-    let currentVolume = 0.5;
-
-    // --- Helpers ---
-    function setStatus(s) { $status.textContent = s; }
-    function randomString(length) {
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234456789';
-      let r = '';
-      for (let i = 0; i < length; i++) r += chars.charAt(Math.floor(Math.random() * chars.length));
-      return r;
-    }
-    async function sha256(plain) {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(plain);
-      return await crypto.subtle.digest('SHA-256', data);
-    }
-    function base64UrlEncode(bytes) {
-      return btoa(String.fromCharCode(...new Uint8Array(bytes)))
-        .replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_');
-    }
-    async function makeCodeChallenge(verifier) {
-      const hashed = await sha256(verifier);
-      return base64UrlEncode(hashed);
-    }
-
-    // --- Authentication Flow ---
-    async function startAuth() {
-      const state = randomString(16);
-      const codeVerifier = randomString(64);
-      const codeChallenge = await makeCodeChallenge(codeVerifier);
-
-      localStorage.setItem('pkce_code_verifier', codeVerifier);
-      localStorage.setItem('pkce_state', state);
-
-      const params = new URLSearchParams({
-        client_id: CLIENT_ID,
-        response_type: 'code',
-        redirect_uri: REDIRECT_URI,
-        code_challenge_method: 'S256',
-        code_challenge: codeChallenge,
-        state: state,
-        scope: SCOPES
-      });
-      window.location = `${AUTHORIZE_URL}?${params.toString()}`;
-    }
-
-    async function handleCallback() {
-      const params = new URLSearchParams(window.location.search);
-      const code = params.get('code');
-      const state = params.get('state');
-      if (!code) return;
-
-      const storedState = localStorage.getItem('pkce_state');
-      if (state !== storedState) {
-        setStatus('State mismatch error.');
-        return;
-      }
-
-      setStatus('Exchanging code for token...');
-      const codeVerifier = localStorage.getItem('pkce_code_verifier');
-      const body = new URLSearchParams({
-        grant_type: 'authorization_code',
-        code: code,
-        redirect_uri: REDIRECT_URI,
-        client_id: CLIENT_ID,
-        code_verifier: codeVerifier
-      });
-
-      try {
-        const res = await fetch(TOKEN_URL, { method: 'POST', body: body });
-        if (!res.ok) throw new Error(await res.text());
-
-        const data = await res.json();
-        localStorage.setItem('sp_access_token', data.access_token);
-        localStorage.setItem('sp_refresh_token', data.refresh_token || '');
-        const expiresAt = Date.now() + (data.expires_in || 3600) * 1000;
-        localStorage.setItem('sp_expires_at', expiresAt);
-
-        setStatus('Signed in successfully!');
-        history.replaceState(null, '', window.location.pathname);
-      } catch (e) {
-        setStatus(`Error during token exchange: ${e.message}`);
-      }
-    }
-
-    async function refreshTokenIfNeeded() {
-      const expiresAt = Number(localStorage.getItem('sp_expires_at') || 0);
-      if (Date.now() < expiresAt - 60000) return localStorage.getItem('sp_access_token');
-
-      const refresh_token = localStorage.getItem('sp_refresh_token');
-      if (!refresh_token) {
-        setStatus('Signed out. Please sign in again.');
-        localStorage.clear();
-        updateUI(null);
-        return null;
-      }
-
-      setStatus('Refreshing token...');
-      const body = new URLSearchParams({
-        grant_type: 'refresh_token',
-        refresh_token: refresh_token,
-        client_id: CLIENT_ID
-      });
-
-      try {
-        const res = await fetch(TOKEN_URL, { method: 'POST', body: body });
-        if (!res.ok) throw new Error('Refresh failed');
-
-        const data = await res.json();
-        localStorage.setItem('sp_access_token', data.access_token);
-        if (data.refresh_token) {
-          localStorage.setItem('sp_refresh_token', data.refresh_token);
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Controller</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        /* Use the Inter font, which is clean and modern */
+        body {
+            font-family: 'Inter', sans-serif;
         }
-        const expiresAtNew = Date.now() + (data.expires_in || 3600) * 1000;
-        localStorage.setItem('sp_expires_at', expiresAtNew);
-        setStatus('Token refreshed.');
-        return data.access_token;
-      } catch (e) {
-        setStatus(`Token refresh failed. Please sign in again.`);
-        localStorage.clear();
-        updateUI(null);
-        return null;
-      }
-    }
 
-    // --- API Wrapper ---
-    async function api(path, method = 'GET', body = null) {
-      const token = await refreshTokenIfNeeded();
-      if (!token) throw new Error('Not signed in.');
-
-      const headers = { 'Authorization': `Bearer ${token}` };
-      if (body) {
-        headers['Content-Type'] = 'application/json';
-      }
-
-      const res = await fetch(API_BASE_URL + path, {
-        method,
-        headers,
-        body: body ? JSON.stringify(body) : null
-      });
-
-      if (res.status === 204) return null;
-      const text = await res.text();
-      if (!res.ok) {
-        throw new Error(`API Error: ${res.status} ${text}`);
-      }
-      return text ? JSON.parse(text) : null;
-    }
-
-    // --- Function to transfer playback ---
-    async function transferPlayback(newDeviceId) {
-      try {
-        setStatus('Transferring playback to browser...');
-        await api('/me/player', 'PUT', { 
-          device_ids: [newDeviceId],
-          play: false 
-        });
-        setStatus('Soundboard is active.');
-      } catch (e) {
-        setStatus(`Could not transfer: ${e.message}`);
-        console.warn("Could not auto-transfer playback. User may need to do it manually.");
-      }
-    }
-
-    // --- Web Playback SDK Initialization ---
-    function initializeSpotifyPlayer(token) {
-      window.onSpotifyWebPlaybackSDKReady = () => {
-        setStatus('Web Playback SDK ready.');
-        player = new Spotify.Player({
-          name: 'Valo-Valox Soundboard',
-          getOAuthToken: cb => { 
-            refreshTokenIfNeeded().then(freshToken => {
-              cb(freshToken);
-            });
-          },
-          volume: currentVolume
-        });
-
-        player.addListener('ready', ({ device_id }) => {
-          console.log('Player ready with Device ID', device_id);
-          deviceId = device_id; 
-          transferPlayback(device_id);
-        });
-
-        player.addListener('not_ready', ({ device_id }) => {
-          console.log('Device ID has gone offline', device_id);
-          deviceId = null;
-          setStatus('Soundboard offline.');
-        });
-
-        player.addListener('player_state_changed', (state) => {
-          if (!state) {
-            updateUI(null);
-            return;
-          }
-          updateUI(state);
-        });
-
-        player.addListener('initialization_error', ({ message }) => { setStatus(`Init Error: ${message}`); });
-        player.addListener('authentication_error', ({ message }) => { setStatus(`Auth Error: ${message}`); localStorage.clear(); });
-        player.addListener('account_error', ({ message }) => { setStatus(`Account Error: ${message}`); });
-
-        player.connect().then(success => {
-          if (success) {
-            console.log('The Web Playback SDK successfully connected!');
-          }
-        });
-      };
-    }
-    
-    // --- Playback Control Functions ---
-    function updateUI(state) {
-      if (!state) {
-        $iconPlay.style.display = 'block';
-        $iconPause.style.display = 'none';
-        $trackName.textContent = 'No track playing';
-        $trackArtist.textContent = 'Soundboard is idle';
-        return;
-      }
-
-      if (state.paused) {
-        $iconPlay.style.display = 'block';
-        $iconPause.style.display = 'none';
-      } else {
-        $iconPlay.style.display = 'none';
-        $iconPause.style.display = 'block';
-      }
-
-      const currentTrack = state.track_window.current_track;
-      if (currentTrack) {
-        // --- THIS IS THE FIXED LINE ---
-        const artists = currentTrack.artists.map(a => a.name).join(', ');
-        $trackName.textContent = currentTrack.name;
-        $trackArtist.textContent = artists;
-      } else {
-        $trackName.textContent = 'No track playing';
-        $trackArtist.textContent = '';
-      }
-    }
-
-    // --- SDK Player Functions ---
-    async function togglePlayPause() {
-      if (!player) return;
-      await player.togglePlay();
-    }
-    
-    async function next() {
-      if (!player) return;
-      await player.nextTrack();
-    }
-    
-    async function previous() {
-      if (!player) return;
-      await player.previousTrack();
-    }
-    
-    async function setVolume(v) {
-      if (!player) return;
-      currentVolume = Math.max(0, Math.min(1, v));
-      await player.setVolume(currentVolume);
-      setStatus(`Volume ${Math.round(currentVolume * 100)}%`);
-    }
-    
-    // --- Web API Function (for playing specific context) ---
-    async function playLikedSongs() {
-      if (!deviceId) {
-        setStatus('Player not ready yet.');
-        return;
-      }
-      try {
-        setStatus('Getting user info...');
-        const userProfile = await api('/me');
-        if (!userProfile || !userD.id) {
-          setStatus('Could not get user ID');
-          return;
+        /* Custom class for the frosted glass effect */
+        .glass-effect {
+            background: rgba(40, 40, 40, 0.6);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            /* [NEW] Add transition for a smoother change */
+            transition: background-color 0.2s, backdrop-filter 0.2s;
         }
-        const contextUri = `spotify:user:${userProfile.id}:collection`;
+
+        /* Keyframes for the glowing pulse effect on the Premium badge */
+        @keyframes pulse-glow {
+            0%, 100% {
+                opacity: 1;
+                filter: drop-shadow(0 0 8px theme(colors.spotify-green));
+            }
+            50% {
+                opacity: 0.8;
+                filter: drop-shadow(0 0 4px theme(colors.spotify-green));
+            }
+        }
+
+        /* Apply the animation */
+        .animate-pulse-glow {
+            animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        /* [NEW CSS FIX]
+         - This logic fixes the fullscreen stacking context bug.
+         - The 'fullscreen-active' class will be added to the <html> tag by JavaScript.
+        */
+        html.fullscreen-active .glass-effect {
+            /* Disable the filter, which causes the bug */
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+            /* Make it more opaque to compensate for the lost blur */
+            background: rgba(40, 40, 40, 0.9);
+        }
+
+        /* [NEW CSS FIX] Ensure header is always on top in fullscreen */
+        html.fullscreen-active header {
+            position: relative;
+            z-index: 50;
+        }
         
-        setStatus('Playing Liked Songs...');
-        await api('/me/player/play', 'PUT', { 
-          context_uri: contextUri,
-          device_id: deviceId 
-        });
-      } catch (e) {
-        setStatus(e.message);
-      }
-    }
-    
-    // --- Clock & Fullscreen ---
-    function updateClock() {
-      const now = new Date();
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      $clock.textContent = `${hours}:${minutes}`;
-    }
-    
-    function toggleFullscreen() {
-      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-        const el = document.documentElement;
-        if (el.requestFullscreen) el.requestFullscreen({ navigationUI: "hide" });
-        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-        if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {});
-      } else {
-        if (document.exitFullscreen) document.exitFullscreen();
-        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-      }
-    }
-
-    // --- UI Event Listeners ---
-    document.getElementById('btnAuth').addEventListener('click', startAuth);
-
-    document.getElementById('btnSignOut').addEventListener('click', () => {
-      if (player) player.disconnect(); 
-      player = null;
-      deviceId = null;
-      localStorage.clear();
-      setStatus('Signed out');
-      updateUI(null);
-    });
-
-    function addApiListener(id, action) {
-      document.getElementById(id).addEventListener('click', () => {
-        if (!player || !deviceId) {
-          setStatus('Player not ready. Please wait.');
-          return;
+        /* [NEW CSS FIX] Ensure main content is below header */
+        html.fullscreen-active main {
+            position: relative;
+            z-index: 10;
         }
-        action().catch(e => setStatus(e.message));
-      });
-    }
 
-    addApiListener('playPause', togglePlayPause);
-    addApiListener('next', next);
-    addApiListener('prev', previous);
-    addApiListener('playLiked', playLikedSongs);
-    $clock.addEventListener('click', toggleFullscreen);
+    </style>
+    <script>
+        // Tailwind configuration to add the 'Inter' font
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        'spotify-green': '#1DB954',
+                        'spotify-dark': '#121212',
+                        'spotify-light-dark': '#191414',
+                        'spotify-gray': '#282828',
+                        'spotify-light-gray': '#535353',
+                        'spotify-text': '#FFFFFF',
+                        'spotify-text-subtle': '#b3b3b3',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-spotify-dark text-spotify-text antialiased">
 
-    document.getElementById('volUp').addEventListener('click', () => {
-      if (!player) return;
-      setVolume(currentVolume + 0.1).catch(e => setStatus(e.message));
-    });
+    <div class="flex flex-col h-screen p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
 
-    document.getElementById('volDown').addEventListener('click', () => {
-      if (!player) return;
-      setVolume(currentVolume - 0.1).catch(e => setStatus(e.message));
-    });
+        <header class="flex-shrink-0 flex items-center justify-between">
+            
+            <div class="flex items-center gap-3">
+                <h1 class="text-2xl md:text-3xl font-bold text-spotify-text">
+                    Controller
+                </h1>
+                <span class="text-xs font-bold text-spotify-green uppercase bg-spotify-gray py-1 px-2 rounded-md 
+                             shadow-lg animate-pulse-glow 
+                             ring-1 ring-spotify-green/50">
+                    Premium
+                </span>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <button id="fullscreen-button" title="Toggle Fullscreen" class="text-spotify-text-subtle hover:text-spotify-text p-2 rounded-full hover:bg-spotify-gray transition-colors duration-200">
+                    <svg id="fullscreen-enter-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 1v4m0 0h-4m4 0l-5-5"></path>
+                    </svg>
+                    <svg id="fullscreen-exit-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 4H4v6m0-6l6 6m10-6h-6v6m0-6l-6 6M10 20H4v-6m0 6l6-6m10 6h-6v-6m0 6l-6-6"></path>
+                    </svg>
+                </button>
+
+                <button id="login-button" class="bg-spotify-green text-black font-semibold py-2 px-6 rounded-full text-sm hover:scale-105 transition-transform duration-200">
+                    Sign In with Spotify
+                </button>
+            </div>
+        </header>
+
+        <main class="flex-grow flex flex-col md:flex-row gap-8">
+
+            <div class="w-full md:w-1/3 flex-shrink-0 flex flex-col space-y-8">
+                
+                <div class="glass-effect rounded-xl p-6 shadow-lg">
+                    <h2 class="text-lg font-semibold mb-5">Now Playing</h2>
+                    
+                    <img id="current-track-image" 
+                         src="https://placehold.co/600x600/1DB954/000000?text=Spotify" 
+                         alt="Album Art" 
+                         class="w-full aspect-square rounded-lg object-cover shadow-2xl">
+                    
+                    <div class="mt-5 text-center">
+                        <h3 id="current-track-title" class="text-2xl font-bold truncate">
+                            Song Title Placeholder
+                        </h3>
+                        
+                        <p id="current-track-artist" class="text-spotify-text-subtle text-base truncate mt-1">
+                            Artist Name
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="w-full md:w-2/3 flex-grow flex flex-col space-y-8">
+                
+                <div class="glass-effect rounded-xl p-6 shadow-lg flex items-center justify-around flex-shrink-0">
+                    
+                    <button id="prev-button" title="Previous Track" class="text-spotify-text-subtle hover:text-spotify-text transition-colors duration-200">
+                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M7 6v12l-6-6 6-6zm16 0v12l-9-6 9-6z"/></svg>
+                    </button>
+
+                    <button id="play-pause-button" title="Play/Pause" class="bg-spotify-green text-black rounded-full w-16 h-16 flex items-center justify-center shadow-lg hover:scale-110 transition-transform duration-200">
+                        <svg id="play-icon" class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5.14v14l11-7-11-7z"/></svg>
+                        
+                        <svg id="pause-icon" class="w-8 h-8 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                    </button>
+
+                    <button id="next-button" title="Next Track" class="text-spotify-text-subtle hover:text-spotify-text transition-colors duration-200">
+                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M17 6v12l6-6-6-6zM1 6v12l9-6-9-6z"/></svg>
+                    </button>
+                </div>
+
+                <div class="glass-effect rounded-xl p-4 shadow-lg flex items-center space-x-3 flex-shrink-0">
+                    <button id="volume-down-button" class="text-spotify-text-subtle hover:text-spotify-text p-2 transition-colors duration-200">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M5 9v6h4l5 5V4L9 9H5z"/></svg>
+                    </button>
+                    
+                    <input id="volume-slider" type="range" min="0" max="100" value="75" class="w-full h-1 accent-spotify-green cursor-pointer">
+
+                    <button id="volume-up-button" class="text-spotify-text-subtle hover:text-spotify-text p-2 transition-colors duration-200">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                    </button>
+                </div>
+
+
+            <div class="grid grid-cols-2 gap-4 md:gap-8 flex-shrink-0">
+
+                <button id="play-liked-button" class="glass-effect rounded-xl p-4 flex flex-col md:flex-row items-center justify-center gap-4 h-32 md:h-40 hover:bg-spotify-light-gray transition-colors duration-200">
+                    <div class="bg-gradient-to-br from-purple-500 to-blue-500 w-16 h-16 rounded-lg flex items-center justify-center shadow-lg flex-shrink-0">
+                        <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    </div>
+                    <span class="font-semibold text-spotify-text text-center md:text-left">Play Latest Liked Song</span>
+                </button>
+
+                <div class="glass-effect rounded-xl p-4 flex items-center justify-center h-32 md:h-40">
+                    <h2 id="clock-display" class="text-5xl md:text-7xl font-bold text-spotify-text" style="font-variant-numeric: tabular-nums;">
+                        --:--
+                    </h2>
+                </div>
+
+            </div>
+
+            <div class="flex-grow">
+                </div>
+        </main>
+
+    </div>
     
-    // --- Page Load ---
-    window.addEventListener('load', async () => {
-      updateClock();
-      setInterval(updateClock, 1000);
-      
-      if (window.location.search.includes('code=')) {
-        await handleCallback();
-      }
-      
-      const token = await refreshTokenIfNeeded();
-      
-      if (token) {
-        setStatus('Signed in. Loading player...');
-        initializeSpotifyPlayer(token);
-      } else {
-        setStatus('Not signed in');
-      }
-    });
-  </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // --- 1. Clock Logic ---
+            const clockElement = document.getElementById('clock-display');
+            function updateClock() {
+                const now = new Date();
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                if (clockElement) {
+                    clockElement.textContent = `${hours}:${minutes}`;
+                }
+            }
+            updateClock();
+            setInterval(updateClock, 1000);
+
+
+            // --- 2. Fullscreen Logic ---
+            const fsButton = document.getElementById('fullscreen-button');
+            const fsEnterIcon = document.getElementById('fullscreen-enter-icon');
+            const fsExitIcon = document.getElementById('fullscreen-exit-icon');
+
+            // [NEW] Function to update the state
+            function updateFullscreenState() {
+                const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement;
+                if (isFullscreen) {
+                    document.documentElement.classList.add('fullscreen-active');
+                    fsEnterIcon.classList.add('hidden');
+                    fsExitIcon.classList.remove('hidden');
+                } else {
+                    document.documentElement.classList.remove('fullscreen-active');
+                    fsEnterIcon.classList.remove('hidden');
+                    fsExitIcon.classList.add('hidden');
+                }
+            }
+
+            // Check if allowed
+            if (!fsButton || !(document.fullscreenEnabled || document.webkitFullscreenEnabled || document.mozFullScreenEnabled)) {
+                if (fsButton) fsButton.style.display = 'none'; // Hide button if not allowed
+            } else {
+                // Add click listener
+                fsButton.addEventListener('click', () => {
+                    if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement) {
+                        if (document.exitFullscreen) {
+                            document.exitFullscreen();
+                        } else if (document.webkitExitFullscreen) {
+                            document.webkitExitFullscreen();
+                        } else if (document.mozCancelFullScreen) {
+                            document.mozCancelFullScreen();
+                        }
+                    } else {
+                        if (document.documentElement.requestFullscreen) {
+                            document.documentElement.requestFullscreen();
+                        } else if (document.documentElement.webkitRequestFullscreen) {
+                            document.documentElement.webkitRequestFullscreen();
+                        } else if (document.documentElement.mozRequestFullScreen) {
+                            document.documentElement.mozRequestFullScreen();
+                        }
+                    }
+                });
+
+                // [MODIFIED] Add change listeners to call the new function
+                document.addEventListener('fullscreenchange', updateFullscreenState);
+                document.addEventListener('webkitfullscreenchange', updateFullscreenState);
+                document.addEventListener('mozfullscreenchange', updateFullscreenState);
+
+                // [NEW] Call it once to set the initial state
+                updateFullscreenState();
+            }
+
+            
+            // --- 3. Spotify Logic (Main Entry Point) ---
+            const clientId = 'bb82c1e306e44bc681b5fc345b2b493f';
+            const redirectUri = 'https://valo-valox.github.io/spotify-soundboard/';
+            const scopes = [
+                'streaming',
+                'user-read-email',
+                'user-read-private',
+                'user-read-playback-state',
+                'user-modify-playback-state',
+                'user-library-read'
+            ].join(' ');
+
+            let player = null;
+            let deviceId = null;
+
+            // DOM Element References
+            const loginButton = document.getElementById('login-button');
+            const prevButton = document.getElementById('prev-button');
+            const playPauseButton = document.getElementById('play-pause-button');
+            const playIcon = document.getElementById('play-icon');
+            const pauseIcon = document.getElementById('pause-icon');
+            const nextButton = document.getElementById('next-button');
+            const volumeSlider = document.getElementById('volume-slider');
+            const volumeDownButton = document.getElementById('volume-down-button');
+            const volumeUpButton = document.getElementById('volume-up-button');
+            const playLikedButton = document.getElementById('play-liked-button');
+            const currentTrackImage = document.getElementById('current-track-image');
+            const currentTrackTitle = document.getElementById('current-track-title');
+            const currentTrackArtist = document.getElementById('current-track-artist');
+
+            // Check for auth code in URL
+            const params = new URLSearchParams(window.location.search);
+            const code = params.get('code');
+
+            if (code) {
+                // User is returning from Spotify login
+                handleAuthCallback(code);
+            } else {
+                // Standard page load
+                const accessToken = localStorage.getItem('spotify_access_token');
+                if (accessToken) {
+                    const expiry = localStorage.getItem('spotify_token_expiry');
+                    if (expiry && new Date().getTime() > parseInt(expiry)) {
+                        console.log("Access token expired.");
+                        signOut(); // A real app would refresh, we'll just sign out
+                    } else {
+                        // Logged in, initialize
+                        (async () => {
+                            await fetchUserProfile(accessToken); // Get user info for button
+                            initializePlayer(accessToken);
+                            updateLoginButton(true);
+                        })();
+                    }
+                } else {
+                    // Logged out
+                    updateLoginButton(false);
+                }
+            }
+
+            // Add a click listener to 'login-button':
+            loginButton.addEventListener('click', () => {
+                if (localStorage.getItem('spotify_access_token')) {
+                    signOut(); // Function to clear localStorage and disconnect player
+                } else {
+                    startAuth(); // Function to redirect to Spotify login
+                }
+            });
+
+            
+            // --- 4. Spotify Helper Functions ---
+
+            /**
+             * Generates a random string for PKCE
+             */
+            function generateRandomString(length) {
+                let text = '';
+                let possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                for (let i = 0; i < length; i++) {
+                    text += possible.charAt(Math.floor(Math.random() * possible.length));
+                }
+                return text;
+            }
+
+            /**
+             * Generates a PKCE code challenge
+             */
+            async function generateCodeChallenge(codeVerifier) {
+                const data = new TextEncoder().encode(codeVerifier);
+                const digest = await window.crypto.subtle.digest('SHA-256', data);
+                return btoa(String.fromCharCode.apply(null, [...new Uint8Array(digest)]))
+                    .replace(/\+/g, '-')
+                    .replace(/\//g, '_')
+                    .replace(/=+$/, '');
+            }
+
+            /**
+             * Kicks off the Spotify PKCE authentication flow
+             */
+            async function startAuth() {
+                const verifier = generateRandomString(128);
+                localStorage.setItem('spotify_code_verifier', verifier);
+                const challenge = await generateCodeChallenge(verifier);
+
+                const authParams = new URLSearchParams({
+                    client_id: clientId,
+                    response_type: 'code',
+                    redirect_uri: redirectUri,
+                    scope: scopes,
+                    code_challenge_method: 'S256',
+                    code_challenge: challenge,
+                });
+
+                window.location = `https://accounts.spotify.com/authorize?${authParams.toString()}`;
+            }
+
+            /**
+             * Handles the redirect from Spotify, exchanging the code for a token
+             */
+            async function handleAuthCallback(code) {
+                const verifier = localStorage.getItem('spotify_code_verifier');
+                if (!verifier) {
+                    console.error('No code verifier found!');
+                    signOut();
+                    return;
+                }
+
+                const tokenParams = new URLSearchParams({
+                    client_id: clientId,
+                    grant_type: 'authorization_code',
+                    code: code,
+                    redirect_uri: redirectUri,
+                    code_verifier: verifier,
+                });
+
+                try {
+                    const response = await fetch('https://accounts.spotify.com/api/token', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: tokenParams.toString(),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch token: ' + await response.text());
+                    }
+
+                    const data = await response.json();
+                    const expiryTime = new Date().getTime() + data.expires_in * 1000;
+                    localStorage.setItem('spotify_access_token', data.access_token);
+                    localStorage.setItem('spotify_refresh_token', data.refresh_token);
+                    localStorage.setItem('spotify_token_expiry', expiryTime);
+
+                    // Clean the URL of auth code
+                    window.history.pushState({}, document.title, window.location.pathname);
+                    
+                    // Fetch user profile to display email/name
+                    await fetchUserProfile(data.access_token);
+
+                    // Initialize player
+                    initializePlayer(data.access_token);
+                    updateLoginButton(true);
+
+                } catch (error) {
+                    console.error('Error handling auth callback:', error);
+                    signOut(); // Clear any partial auth
+                }
+            }
+
+            /**
+             * Fetches the user's profile to get their email/ID
+             */
+            async function fetchUserProfile(token) {
+                try {
+                    const response = await fetch('https://api.spotify.com/v1/me', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (!response.ok) throw new Error('Failed to fetch user profile');
+                    const data = await response.json();
+                    localStorage.setItem('spotify_user_email', data.email || data.id);
+                } catch (error) {
+                    console.error(error);
+                    localStorage.setItem('spotify_user_email', 'User'); // Fallback
+                }
+            }
+
+            /**
+             * Clears all credentials and disconnects the player
+             */
+            function signOut() {
+                if (player) {
+                    player.disconnect();
+                    player = null;
+                }
+                localStorage.removeItem('spotify_access_token');
+                localStorage.removeItem('spotify_refresh_token');
+                localStorage.removeItem('spotify_token_expiry');
+                localStorage.removeItem('spotify_code_verifier');
+                localStorage.removeItem('spotify_user_email');
+                
+                updateLoginButton(false);
+                
+                // Reset UI to default
+                currentTrackImage.src = 'https://placehold.co/600x600/1DB954/000000?text=Spotify';
+                currentTrackTitle.textContent = 'Song Title Placeholder';
+                currentTrackArtist.textContent = 'Artist Name';
+                playIcon.classList.remove('hidden');
+                pauseIcon.classList.add('hidden');
+                volumeSlider.value = 75;
+            }
+
+            /**
+             * Loads the SDK script and initializes the Spotify.Player
+             */
+            function initializePlayer(token) {
+                // Check if SDK script is already loaded
+                if (window.Spotify) {
+                    console.log("Spotify SDK already loaded.");
+                    return;
+                }
+                
+                const script = document.createElement('script');
+                script.src = 'https://sdk.scdn.co/spotify-player.js';
+                script.async = true;
+                document.body.appendChild(script);
+
+                window.onSpotifyWebPlaybackSDKReady = () => {
+                    player = new Spotify.Player({
+                        name: 'Web Controller',
+                        getOAuthToken: cb => { cb(token); },
+                        volume: 0.75 // Default volume
+                    });
+
+                    // Error handling
+                    player.addListener('initialization_error', ({ message }) => console.error('Init Error:', message));
+                    player.addListener('authentication_error', ({ message }) => {
+                        console.error('Auth Error:', message, "Signing out.");
+                        signOut(); // Token is likely bad or expired
+                    });
+                    player.addListener('account_error', ({ message }) => console.error('Account Error:', message));
+                    player.addListener('playback_error', ({ message }) => console.error('Playback Error:', message));
+
+                    // Player state changes
+                    player.addListener('player_state_changed', state => {
+                        console.log('Player state changed:', state);
+                        updateUI(state);
+                    });
+
+                    // Ready
+                    player.addListener('ready', ({ device_id }) => {
+                        console.log('Ready with Device ID', device_id);
+                        deviceId = device_id;
+                        transferPlayback(token, device_id);
+                        setupEventListeners(); // Player is ready, wire up controls
+                    });
+
+                    // Not Ready
+                    player.addListener('not_ready', ({ device_id }) => {
+                        console.log('Device ID has gone offline', device_id);
+                    });
+
+                    // Connect
+                    player.connect().then(success => {
+                        if (success) {
+                            console.log('The Web Playback SDK successfully connected to Spotify!');
+                        }
+                    });
+                };
+            }
+
+            /**
+             * Transfers playback to this web player
+             */
+            async function transferPlayback(token, deviceId) {
+                try {
+                    await fetch('https://api.spotify.com/v1/me/player', {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            device_ids: [deviceId],
+                            play: false // Don't start playing immediately
+                        }),
+                    });
+                } catch (error) {
+                    console.error('Error transferring playback:', error);
+                }
+            }
+
+            /**
+             * Updates the UI (album art, title, buttons) based on player state
+             */
+            function updateUI(state) {
+                if (!state) {
+                    // Player disconnected
+                    playIcon.classList.remove('hidden');
+                    pauseIcon.classList.add('hidden');
+                    currentTrackTitle.textContent = 'Player Disconnected';
+                    currentTrackArtist.textContent = 'Connect to this device...';
+                    currentTrackImage.src = 'https://placehold.co/600x600/1DB954/000000?text=Spotify';
+                    return;
+                }
+
+                // Update Play/Pause button
+                if (state.paused) {
+                    playIcon.classList.remove('hidden');
+                    pauseIcon.classList.add('hidden');
+                } else {
+                    playIcon.classList.add('hidden');
+                    pauseIcon.classList.remove('hidden');
+                }
+
+                // Update Track Info
+                const currentTrack = state.track_window.current_track;
+                if (currentTrack) {
+                    currentTrackImage.src = currentTrack.album.images[0].url;
+                    currentTrackTitle.textContent = currentTrack.name;
+                    currentTrackArtist.textContent = currentTrack.artists.map(a => a.name).join(', ');
+                }
+
+                // Update Volume Slider
+                if (player) {
+                    player.getVolume().then(volume => {
+                        if (volumeSlider) {
+                            volumeSlider.value = volume * 100;
+                        }
+                    });
+                }
+            }
+            
+            /**
+             * Updates the login button text and style
+             */
+            function updateLoginButton(isLoggedIn) {
+                if (isLoggedIn) {
+                    const email = localStorage.getItem('spotify_user_email') || 'User';
+                    loginButton.textContent = `Sign Out (${email})`;
+                    loginButton.classList.remove('bg-spotify-green', 'text-black');
+                    loginButton.classList.add('bg-spotify-gray', 'text-spotify-text-subtle');
+                } else {
+                    loginButton.textContent = 'Sign In with Spotify';
+                    loginButton.classList.add('bg-spotify-green', 'text-black');
+                    loginButton.classList.remove('bg-spotify-gray', 'text-spotify-text-subtle');
+                }
+            }
+
+            /**
+             * Fetches and plays the user's most recently liked song
+             */
+            async function playLatestLikedSong() {
+                const token = localStorage.getItem('spotify_access_token');
+                if (!token || !deviceId) {
+                    console.error('Not authenticated or player not ready');
+                    return;
+                }
+
+                try {
+                    // 1. Fetch latest liked song
+                    const trackResponse = await fetch('https://api.spotify.com/v1/me/tracks?limit=1&offset=0', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (!trackResponse.ok) throw new Error('Failed to fetch liked songs');
+                    
+                    const trackData = await trackResponse.json();
+                    if (!trackData.items || trackData.items.length === 0) {
+                        console.warn('No liked songs found.');
+                        return;
+                    }
+                    
+                    const trackUri = trackData.items[0].track.uri;
+
+                    // 2. Play that song on the current device
+                    await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            uris: [trackUri] // Play just this one track
+                        }),
+                    });
+
+                } catch (error) {
+                    console.error('Error playing liked song:', error);
+                }
+            }
+            
+            /**
+             * Wires up all the buttons (Play, Next, Vol, etc.)
+             */
+            function setupEventListeners() {
+                // Note: These are only set up *after* the player is ready.
+                
+                playPauseButton.onclick = () => {
+                    player.togglePlay();
+                };
+
+                prevButton.onclick = () => {
+                    player.previousTrack();
+                };
+
+                nextButton.onclick = () => {
+                    player.nextTrack();
+                };
+
+                volumeSlider.oninput = (e) => {
+                    const volume = parseFloat(e.target.value) / 100;
+                    player.setVolume(volume);
+                };
+                
+                volumeDownButton.onclick = () => {
+                    player.getVolume().then(volume => {
+                        const newVolume = Math.max(0, volume - 0.1);
+                        player.setVolume(newVolume).then(() => {
+                            volumeSlider.value = newVolume * 100;
+                        });
+                    });
+                };
+
+                volumeUpButton.onclick = () => {
+                    player.getVolume().then(volume => {
+                        const newVolume = Math.min(1, volume + 0.1);
+                        player.setVolume(newVolume).then(() => {
+                            volumeSlider.value = newVolume * 100;
+                        });
+                    });
+                };
+
+                playLikedButton.onclick = () => {
+                    playLatestLikedSong();
+                };
+            }
+            
+        });
+    </script>
+
 </body>
 </html>
