@@ -127,7 +127,7 @@
     // --- Helpers ---
     function setStatus(s) { $status.textContent = s; }
     function randomString(length) {
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234456789';
       let r = '';
       for (let i = 0; i < length; i++) r += chars.charAt(Math.floor(Math.random() * chars.length));
       return r;
@@ -270,18 +270,16 @@
       return text ? JSON.parse(text) : null;
     }
 
-    // --- NEW: Function to transfer playback ---
+    // --- Function to transfer playback ---
     async function transferPlayback(newDeviceId) {
       try {
         setStatus('Transferring playback to browser...');
-        // This is the Web API call to change active device
         await api('/me/player', 'PUT', { 
           device_ids: [newDeviceId],
-          play: false // Set to false to just transfer, not auto-play
+          play: false 
         });
         setStatus('Soundboard is active.');
       } catch (e) {
-        // This can fail if the user is in a private session
         setStatus(`Could not transfer: ${e.message}`);
         console.warn("Could not auto-transfer playback. User may need to do it manually.");
       }
@@ -301,15 +299,10 @@
           volume: currentVolume
         });
 
-        // --- Player Event Listeners ---
         player.addListener('ready', ({ device_id }) => {
           console.log('Player ready with Device ID', device_id);
-          deviceId = device_id; // Store the new device_id
-          
-          // --- THIS IS THE NEW, CRITICAL STEP ---
-          // Automatically make this browser the active player
+          deviceId = device_id; 
           transferPlayback(device_id);
-          // --- END NEW STEP ---
         });
 
         player.addListener('not_ready', ({ device_id }) => {
@@ -323,7 +316,6 @@
             updateUI(null);
             return;
           }
-          // This event now controls the UI
           updateUI(state);
         });
 
@@ -359,7 +351,8 @@
 
       const currentTrack = state.track_window.current_track;
       if (currentTrack) {
-        const artists = currentTrack.artists..map(a => a.name).join(', ');
+        // --- THIS IS THE FIXED LINE ---
+        const artists = currentTrack.artists.map(a => a.name).join(', ');
         $trackName.textContent = currentTrack.name;
         $trackArtist.textContent = artists;
       } else {
@@ -400,7 +393,7 @@
       try {
         setStatus('Getting user info...');
         const userProfile = await api('/me');
-        if (!userProfile || !userProfile.id) {
+        if (!userProfile || !userD.id) {
           setStatus('Could not get user ID');
           return;
         }
@@ -409,7 +402,7 @@
         setStatus('Playing Liked Songs...');
         await api('/me/player/play', 'PUT', { 
           context_uri: contextUri,
-          device_id: deviceId // Target *this* browser
+          device_id: deviceId 
         });
       } catch (e) {
         setStatus(e.message);
