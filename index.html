@@ -338,7 +338,6 @@
       const hashed = await sha256(verifier);
       return base64UrlEncode(hashed);
     }
-    // --- Removed qs() helper function ---
 
     // --- Authentication Flow ---
     async function startAuth() {
@@ -376,7 +375,6 @@
       setStatus('Exchanging code for token...');
       const codeVerifier = localStorage.getItem('pkce_code_verifier');
 
-      // --- FIX: Use URLSearchParams for the body ---
       const body = new URLSearchParams();
       body.append('grant_type', 'authorization_code');
       body.append('code', code);
@@ -384,99 +382,140 @@
       body.append('client_id', CLIENT_ID);
       body.append('code_verifier', codeVerifier);
 
-      const res = await fetch(TOKEN_URL, {
-        method: 'POST',
-        // 'Content-Type' header is set automatically by fetch
-        body: body 
-      });
-      // --- END FIX ---
+      try {
+        const res = await fetch(TOKEN_URL, {
+          method: 'POST',
+          body: body 
+        });
 
-      if (!res.ok) {
-        const txt = await res.text();
-        // This is where your error was shown
-        setStatus(`Token exchange failed: ${res.status} ${txt}`); 
-        return;
+        if (!res.ok) {
+          const txt = await res.text();
+          // Try to parse error text from Spotify's HTML response
+          const errorMatch = txt.match(/<p>(.*?)<\/p>/);
+          const errorMsg = errorMatch ? errorMatch[1] : txt;
+          setStatus(`Token exchange failed: ${res.status} ${errorMsg}`); 
+          return;
+        }
+
+        const data = await res.json();
+        localStorage.setItem('sp_access_token', data.access_token);
+        localStorage.setItem('sp_refresh_token', data.refresh_token || '');
+        const expiresAt = Date.now() + (data.expires_in || 3600) * 1000;
+        localStorage.setItem('sp_expires_at', expiresAt);
+
+        setStatus('Signed in successfully!');
+        history.replaceState(null, '', window.location.pathname); // Clean up URL
+        
+      } catch (e) {
+        setStatus(`Network error: ${e.message}`);
       }
-
-      const data = await res.json();
-      localStorage.setItem('sp_access_token', data.access_token);
-      localStorage.setItem('sp_refresh_token', data.refresh_token || '');
-      const expiresAt = Date.now() + (data.expires_in || 3600) * 1000;
-      localStorage.setItem('sp_expires_at', expiresAt);
-
-      setStatus('Signed in successfully!');
-      history.replaceState(null, '', window.location.pathname);
     }
 
     async function refreshTokenIfNeeded() {
       const expiresAt = Number(localStorage.getItem('sp_expires_at') || 0);
-      if (Date.now() < expiresAt - 60000) return;
+      if (Date.now() < expiresAt - 60000) return; // Still valid
 
       const refresh_token = localStorage.getItem('sp_refresh_token');
       if (!refresh_token) {
         setStatus('Signed out. Please sign in again.');
-        return;
+        localStorage.clear(); // Clear all stale data
+        updateUI(null);
+        return; // Can't refresh
       }
 
       setStatus('Refreshing token...');
       
-      // --- FIX: Use URLSearchParams for the body ---
       const body = new URLSearchParams();
       body.append('grant_type', 'refresh_token');
       body.append('refresh_token', refresh_token);
       body.append('client_id', CLIENT_ID);
 
-      const res = await fetch(TOKEN_URL, {
-        method: 'POST',
-        // 'Content-Type' header is set automatically by fetch
-        body: body
-      });
-      // --- END FIX ---
+      try {
+        const res = await fetch(TOKEN_URL, {
+          method: 'POST',
+          body: body
+        });
 
-      if (!res.ok) {
-        setStatus(`Token refresh failed: ${res.status}. Please sign in again.`);
-        localStorage.removeItem('sp_access_token');
-        localStorage.removeItem('sp_refresh_token');
-        return;
-      }
+        if (!res.ok) {
+          setStatus(`Token refresh failed: ${res.status}. Please sign in again.`);
+          localStorage.clear(); // Auth failed, clear everything
+          updateUI(null);
+          return;
+        }
 
-      const data = await res.json();
-      localStorage.setItem('sp_access_token', data.access_token);
-      if (data.refresh_token) {
-        localStorage.setItem('sp_refresh_token', data.refresh_token);
+        const data = await res.json();
+        localStorage.setItem('sp_access_token', data.access_token);
+        // Spotify *may* send a new refresh token
+        if (data.refresh_token) {
+          localStorage.setItem('sp_refresh_token', data.refresh_token);
+        }
+        const expiresAtNew = Date.now() + (data.expires_in || 3600) * 1000;
+        localStorage.setItem('sp_expires_at', expiresAtNew);
+        setStatus('Token refreshed.');
+        
+      } catch (e) {
+        setStatus(`Network error: ${e.message}`);
       }
-      const expiresAtNew = Date.now() + (data.expires_in || 3600) * 1000;
-      localStorage.setItem('sp_expires_at', expiresAtNew);
-      setStatus('Token refreshed.');
     }
 
     // --- API Wrapper ---
     async function api(path, method = 'GET', body = null) {
+      // Check for token first. If none, don't even try.
+      if (!localStorage.getItem('sp_access_token')) {
+        setStatus('Not signed in.');
+        return null;
+      }
+      
       await refreshTokenIfNeeded();
-      const headers = { 'Authorization': `Bearer ${localStorage.getItem('sp_access_token')}` };
+      
+      // Check again, refreshToken might have failed
+      const token = localStorage.getItem('sp_access_token');
+      if (!token) {
+        setStatus('Sign in required.');
+        return null;
+      }
+
+      const headers = { 'Authorization': `Bearer ${token}` };
       if (body && !(body instanceof FormData)) {
         headers['Content-Type'] = 'application/json';
       }
 
-      const res = await fetch(API_BASE_URL + path, {
-        method,
-        headers,
-        body: body && (typeof body === 'string' ? body : JSON.stringify(body))
-      });
+      try {
+        const res = await fetch(API_BASE_URL + path, {
+          method,
+          headers,
+          body: body && (typeof body === 'string' ? body : JSON.stringify(body))
+        });
 
-      if (res.status === 204) return null;
-      if (!res.ok) {
-        const t = await res.text();
-        throw new Error(`API Error: ${res.status} ${t}`);
+        if (res.status === 204) return null; // No Content
+        
+        const text = await res.text(); // Get text first
+        
+        if (!res.ok) {
+          // Try to parse JSON error from Spotify
+          try {
+            const jsonError = JSON.parse(text);
+            if (jsonError.error && jsonError.error.message) {
+              throw new Error(jsonError.error.message);
+            }
+          } catch (e) {
+            // Not JSON, just throw text
+          }
+          throw new Error(`API Error: ${res.status} ${text}`);
+        }
+        
+        return text ? JSON.parse(text) : null; // OK response
+        
+      } catch (e) {
+        setStatus(e.message);
+        throw e; // Re-throw to stop calling function
       }
-      const text = await res.text();
-      return text ? JSON.parse(text) : null;
     }
 
     // --- Playback Control Functions ---
     function updateUI(state) {
       if (!state) {
-        currentPlaybackState = { is_playing: false };
+        currentPlaybackState = { is_playing: false, device: null };
         $iconPlay.style.display = 'block';
         $iconPause.style.display = 'none';
         $trackName.textContent = 'No active device';
@@ -506,12 +545,16 @@
         const state = await api('/me/player');
         updateUI(state);
       } catch (e) {
-        setStatus(e.message);
-        updateUI(null);
+        // API wrapper already set status
+        updateUI(null); // Show default state on error
       }
     }
     
     async function togglePlayPause() {
+      if (!currentPlaybackState.device) {
+        setStatus("No active device. Play on Spotify first.");
+        return; // Don't try to play if no device
+      }
       const wasPlaying = currentPlaybackState.is_playing;
       try {
         if (wasPlaying) {
@@ -529,7 +572,7 @@
         }
         setTimeout(getPlaybackState, 500);
       } catch (e) {
-        setStatus(e.message);
+        // API wrapper sets status
         setTimeout(getPlaybackState, 100);
       }
     }
@@ -563,7 +606,7 @@
         await api('/me/player/play', 'PUT', { context_uri: contextUri });
         setTimeout(getPlaybackState, 1000); 
       } catch (e) {
-        setStatus(e.message);
+        // API wrapper sets status
       }
     }
     
@@ -603,8 +646,14 @@
       updateUI(null);
     });
 
+    // Helper to wrap API calls with status updates
     function addApiListener(id, action) {
       document.getElementById(id).addEventListener('click', () => {
+        // Check for token before trying any API action
+        if (!localStorage.getItem('sp_access_token')) {
+          setStatus('Please sign in first.');
+          return;
+        }
         action().catch(e => setStatus(e.message));
       });
     }
@@ -612,10 +661,17 @@
     addApiListener('playPause', togglePlayPause);
     addApiListener('next', next);
     addApiListener('prev', previous);
-D    addApiListener('playLiked', playLikedSongs);
+    
+    // --- THIS IS THE FIXED LINE ---
+    addApiListener('playLiked', playLikedSongs);
+    
     $clock.addEventListener('click', toggleFullscreen);
 
     document.getElementById('volUp').addEventListener('click', async () => {
+      if (!localStorage.getItem('sp_access_token')) {
+          setStatus('Please sign in first.');
+          return;
+      }
       try {
         if (!currentPlaybackState.device) {
           setStatus('No active device to control volume.');
@@ -629,6 +685,10 @@ D    addApiListener('playLiked', playLikedSongs);
     });
 
     document.getElementById('volDown').addEventListener('click', async () => {
+      if (!localStorage.getItem('sp_access_token')) {
+          setStatus('Please sign in first.');
+          return;
+      }
       try {
         if (!currentPlaybackState.device) {
           setStatus('No active device to control volume.');
@@ -646,12 +706,18 @@ D    addApiListener('playLiked', playLikedSongs);
       updateClock();
       setInterval(updateClock, 1000);
       
-      await handleCallback();
+      // Check if we are on the redirect page
+      if (window.location.search.includes('code=')) {
+        await handleCallback();
+      }
       
+      // Regular page load
       if (localStorage.getItem('sp_access_token')) {
         setStatus('Signed in');
         await getPlaybackState();
-        setInterval(getPlaybackState, 15000);
+        setInterval(getPlaybackState, 15000); // Poll for changes
+      } else {
+        setStatus('Not signed in');
       }
     });
   </script>
