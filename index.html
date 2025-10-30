@@ -5,26 +5,106 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Spotify Soundboard</title>
   <style>
-    body{font-family:system-ui,Segoe UI,Roboto,Arial;display:flex;flex-direction:column;align-items:center;gap:12px;padding:24px;background:#0e1114;color:#e6eef3}
-    .board{display:grid;grid-template-columns:repeat(3,120px);gap:12px}
-    button{padding:12px;border-radius:10px;border:0;background:#1db954;color:#052012;font-weight:600;cursor:pointer}
-    .muted{background:#2c2f33}
-    .row{display:flex;gap:8px}
-    input{padding:8px;border-radius:8px;border:1px solid #222;background:#fff;color:#000}
-    .info{font-size:13px;color:#9fb1a0}
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 24px;
+      background: #0e1114;
+      color: #e6eef3;
+      margin: 0;
+    }
+    h1 {
+      margin-top: 0;
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr); /* Use 1fr for responsive columns */
+      gap: 12px;
+      width: 100%;
+      max-width: 420px; /* Max width for the board */
+    }
+    button {
+      padding: 12px;
+      border-radius: 10px;
+      border: 0;
+      background: #1db954; /* Spotify Green */
+      color: #052012;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background-color 0.2s;
+    }
+    button:hover {
+      background: #1ed760;
+    }
+    button:active {
+      background: #1aa34a;
+    }
+    .muted {
+      background: #2c2f33;
+      color: #e6eef3;
+    }
+    .muted:hover {
+      background: #3a3f44;
+    }
+    .row {
+      display: flex;
+      flex-direction: column; /* Stack vertically on small screens */
+      gap: 8px;
+      width: 100%;
+      max-width: 860px; /* Max width for inputs */
+    }
+    input {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #222;
+      background: #fff;
+      color: #000;
+      font-size: 0.9rem;
+      box-sizing: border-box; /* Include padding in width */
+      width: 100%;
+    }
+    .info {
+      font-size: 14px;
+      color: #9fb1a0;
+      min-height: 1.2em; /* Prevent layout shift */
+      text-align: center;
+    }
+    #trackInfo {
+      word-break: break-word;
+    }
+
+    /* Desktop layout adjustments */
+    @media (min-width: 768px) {
+      .row {
+        flex-direction: row; /* Side-by-side on larger screens */
+      }
+      .board {
+        grid-template-columns: repeat(3, 120px); /* Fixed size on desktop */
+      }
+      input {
+        width: 360px;
+      }
+    }
   </style>
 </head>
 <body>
   <h1>Spotify Soundboard</h1>
   <div class="info" id="status">Not signed in</div>
+
   <div class="row">
-    <input id="clientId" placeholder="Paste your Spotify Client ID" style="width:360px" />
-    <input id="redirectUri" placeholder="Redirect URI, e.g. https://your-username.github.io/spotify-soundboard/" style="width:360px" />
+    <input id="clientId" placeholder="Paste your Spotify Client ID" />
+    <input id="redirectUri" placeholder="Redirect URI (e.g., https://your-username.github.io/)" />
   </div>
-  <div class="row">
+
+  <div class="row" style="justify-content: center;">
     <button id="btnAuth">Sign in with Spotify</button>
     <button id="btnSignOut" class="muted">Sign out</button>
   </div>
+
   <div class="board">
     <button id="prev">Previous</button>
     <button id="play">Play</button>
@@ -36,62 +116,114 @@
     <button id="seekForward">Seek +10s</button>
     <button id="toggleShuffle">Shuffle</button>
   </div>
-  <div class="row">
-    <button id="currentTrack" class="muted">Get Track</button>
-    <div id="trackInfo" class="info">No track info</div>
+
+  <div class="row" style="justify-content: center;">
+    <button id="currentTrack" class="muted">Get Current Track</button>
   </div>
+  <div id="trackInfo" class="info">No track info</div>
+
   <script>
-    // Full PKCE + Spotify Web API logic
+    // --- Spotify API Constants ---
+    // Corrected endpoints
     const AUTHORIZE_URL = 'https://accounts.spotify.com/authorize';
     const TOKEN_URL = 'https://accounts.spotify.com/api/token';
+    const API_BASE_URL = 'https://api.spotify.com/v1';
+
+    // Scopes required for the app's functionality
     const SCOPES = [
-      'user-modify-playback-state',
-      'user-read-playback-state',
-      'user-read-currently-playing'
+      'user-modify-playback-state', // For play, pause, seek, volume, etc.
+      'user-read-playback-state',   // For getting current state (volume, shuffle)
+      'user-read-currently-playing' // For getting current track info
     ].join(' ');
 
+    // --- DOM Elements & Helpers ---
     const $status = document.getElementById('status');
     const $clientId = document.getElementById('clientId');
     const $redirectUri = document.getElementById('redirectUri');
 
-    function setStatus(s){ $status.textContent = s; }
+    // Helper to update the status message
+    function setStatus(s) {
+      $status.textContent = s;
+    }
 
-    function randomString(length){
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+    // --- PKCE Helper Functions ---
+    // 2. Full OAuth 2.0 PKCE flow
+    
+    /**
+     * Generates a random string for the PKCE code verifier.
+     * @param {number} length 
+     * @returns {string}
+     */
+    function randomString(length) {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
       let r = '';
-      for(let i=0;i<length;i++) r += chars.charAt(Math.floor(Math.random()*chars.length));
+      for (let i = 0; i < length; i++) {
+        r += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
       return r;
     }
 
-    async function sha256(plain){
+    /**
+     * Hashes a string using SHA-256.
+     * @param {string} plain 
+     * @returns {Promise<ArrayBuffer>}
+     */
+    async function sha256(plain) {
       const encoder = new TextEncoder();
       const data = encoder.encode(plain);
-      const digest = await crypto.subtle.digest('SHA-256', data);
-      return new Uint8Array(digest);
+      return await crypto.subtle.digest('SHA-256', data);
     }
 
-    function base64UrlEncode(bytes){
-      let str = btoa(String.fromCharCode(...bytes));
-      str = str.replace(/=+$/,'').replace(/\+/g,'-').replace(/\//g,'_');
+    /**
+     * Base64 URL-encodes an ArrayBuffer.
+     * @param {ArrayBuffer} bytes 
+     * @returns {string}
+     */
+    function base64UrlEncode(bytes) {
+      let str = btoa(String.fromCharCode(...new Uint8Array(bytes)));
+      str = str.replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_');
       return str;
     }
 
-    async function makeCodeChallenge(verifier){
+    /**
+     * Creates the PKCE code challenge from a verifier.
+     * @param {string} verifier 
+     * @returns {Promise<string>}
+     */
+    async function makeCodeChallenge(verifier) {
       const hashed = await sha256(verifier);
       return base64UrlEncode(hashed);
     }
 
-    function qs(obj){
-      return Object.entries(obj).map(([k,v])=>encodeURIComponent(k)+'='+encodeURIComponent(v)).join('&');
+    /**
+     * Helper to create a query string from an object.
+     * @param {object} obj 
+     * @returns {string}
+     */
+    function qs(obj) {
+      return Object.entries(obj)
+        .map(([k, v]) => encodeURIComponent(k) + '=' + encodeURIComponent(v))
+        .join('&');
     }
 
-    async function startAuth(){
+    // --- Authentication Flow ---
+
+    /**
+     * Kicks off the authorization process.
+     */
+    async function startAuth() {
       const clientId = $clientId.value.trim();
       const redirectUri = $redirectUri.value.trim();
-      if(!clientId || !redirectUri){ alert('Set Client ID and Redirect URI'); return; }
+      if (!clientId || !redirectUri) {
+        alert('Please enter both Client ID and Redirect URI.');
+        return;
+      }
+
       const state = randomString(16);
       const codeVerifier = randomString(64);
       const codeChallenge = await makeCodeChallenge(codeVerifier);
+
+      // 6. Use localStorage to store PKCE code verifier
       localStorage.setItem('pkce_code_verifier', codeVerifier);
       localStorage.setItem('pkce_state', state);
       localStorage.setItem('sp_client_id', clientId);
@@ -107,20 +239,34 @@
         scope: SCOPES
       };
 
+      // Redirect the user to the Spotify authorization page
       window.location = AUTHORIZE_URL + '?' + qs(params);
     }
 
-    async function handleCallback(){
+    /**
+     * Handles the redirect back from Spotify after authorization.
+     */
+    async function handleCallback() {
       const params = new URLSearchParams(window.location.search);
       const code = params.get('code');
       const state = params.get('state');
-      if(!code) return;
+
+      // If there's no code, we're not in a callback, so just return.
+      if (!code) return;
+
       const storedState = localStorage.getItem('pkce_state');
-      if(state !== storedState){ setStatus('State mismatch'); return; }
-      setStatus('Exchanging code for token');
+      if (state !== storedState) {
+        setStatus('State mismatch error.');
+        return;
+      }
+
+      // 4. Display status messages
+      setStatus('Exchanging code for token...');
+
       const codeVerifier = localStorage.getItem('pkce_code_verifier');
       const clientId = localStorage.getItem('sp_client_id');
       const redirectUri = localStorage.getItem('sp_redirect_uri');
+
       const body = qs({
         grant_type: 'authorization_code',
         code: code,
@@ -129,133 +275,255 @@
         code_verifier: codeVerifier
       });
 
-      const res = await fetch(TOKEN_URL,{
+      // 5. All logic must be client-side JavaScript using `fetch`
+      const res = await fetch(TOKEN_URL, {
         method: 'POST',
-        headers: {'Content-Type':'application/x-www-form-urlencoded'},
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: body
       });
 
-      if(!res.ok){ const txt = await res.text(); setStatus('Token exchange failed ' + res.status + ' ' + txt); return; }
+      if (!res.ok) {
+        const txt = await res.text();
+        setStatus('Token exchange failed: ' + res.status + ' ' + txt);
+        return;
+      }
 
       const data = await res.json();
+
+      // 6. Use localStorage to store tokens
       localStorage.setItem('sp_access_token', data.access_token);
       localStorage.setItem('sp_refresh_token', data.refresh_token || '');
-      const expiresAt = Date.now() + (data.expires_in || 3600)*1000;
+      // Calculate expiration time
+      const expiresAt = Date.now() + (data.expires_in || 3600) * 1000;
       localStorage.setItem('sp_expires_at', expiresAt);
-      setStatus('Signed in, token stored');
-      history.replaceState(null, '', '/');
+
+      setStatus('Signed in successfully!');
+      // Clean up the URL bar
+      history.replaceState(null, '', window.location.pathname);
     }
 
-    async function refreshTokenIfNeeded(){
+    /**
+     * Checks if the access token is expired and refreshes it if needed.
+     */
+    async function refreshTokenIfNeeded() {
+      // 7. Include error handling for token expiration and refresh token flow
       const expiresAt = Number(localStorage.getItem('sp_expires_at') || 0);
-      if(Date.now() < expiresAt - 60000) return;
+      
+      // Check if token expires in the next 60 seconds
+      if (Date.now() < expiresAt - 60000) return;
+
       const refresh_token = localStorage.getItem('sp_refresh_token');
       const clientId = localStorage.getItem('sp_client_id');
-      if(!refresh_token || !clientId) return;
-      setStatus('Refreshing token');
+      if (!refresh_token || !clientId) {
+        setStatus('Signed out. Please sign in again.');
+        return;
+      }
+
+      setStatus('Refreshing token...');
       const body = qs({
         grant_type: 'refresh_token',
         refresh_token: refresh_token,
         client_id: clientId
       });
-      const res = await fetch(TOKEN_URL,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
-      if(!res.ok){ setStatus('Refresh failed ' + res.status); return; }
+
+      const res = await fetch(TOKEN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body
+      });
+
+      if (!res.ok) {
+        setStatus('Token refresh failed: ' + res.status + '. Please sign in again.');
+        // Clear broken tokens
+        localStorage.removeItem('sp_access_token');
+        localStorage.removeItem('sp_refresh_token');
+        return;
+      }
+
       const data = await res.json();
+      
+      // Store new tokens
       localStorage.setItem('sp_access_token', data.access_token);
-      const expiresAtNew = Date.now() + (data.expires_in || 3600)*1000;
+      // Spotify might issue a new refresh token
+      if(data.refresh_token) {
+        localStorage.setItem('sp_refresh_token', data.refresh_token);
+      }
+      const expiresAtNew = Date.now() + (data.expires_in || 3600) * 1000;
       localStorage.setItem('sp_expires_at', expiresAtNew);
-      setStatus('Token refreshed');
+      setStatus('Token refreshed.');
     }
 
-    function getAuthHeader(){ return 'Bearer ' + localStorage.getItem('sp_access_token'); }
+    /**
+     * Gets the authorization header for API calls.
+     * @returns {string}
+     */
+    function getAuthHeader() {
+      return 'Bearer ' + localStorage.getItem('sp_access_token');
+    }
 
-    async function api(path, method='GET', body=null){
+    /**
+     * A wrapper function for making authenticated API calls to Spotify.
+     * @param {string} path - The API endpoint path (e.g., '/me/player')
+     * @param {string} method - HTTP method (GET, POST, PUT)
+     * @param {object|string} body - The request body for POST/PUT
+     * @returns {Promise<object|null>}
+     */
+    async function api(path, method = 'GET', body = null) {
       await refreshTokenIfNeeded();
-      const headers = {'Authorization':getAuthHeader()};
-      if(body && !(body instanceof FormData)) headers['Content-Type'] = 'application/json';
-      const res = await fetch('https://api.spotify.com/v1' + path,{method,headers,body: body && (typeof body === 'string' ? body : JSON.stringify(body))});
-      if(res.status === 204) return null;
-      if(!res.ok){ const t = await res.text(); throw new Error(res.status + ' ' + t); }
-      return await res.json();
+      const headers = { 'Authorization': getAuthHeader() };
+      if (body && !(body instanceof FormData)) {
+        headers['Content-Type'] = 'application/json';
+      }
+
+      const res = await fetch(API_BASE_URL + path, {
+        method,
+        headers,
+        body: body && (typeof body === 'string' ? body : JSON.stringify(body))
+      });
+
+      // 204 No Content is a valid response for many playback commands
+      if (res.status === 204) return null;
+
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error('API Error: ' + res.status + ' ' + t);
+      }
+      
+      // Handle empty response body
+      const text = await res.text();
+      return text ? JSON.parse(text) : null;
     }
 
-    async function play(){ await api('/me/player/play','PUT'); }
-    async function pause(){ await api('/me/player/pause','PUT'); }
-    async function next(){ await api('/me/player/next','POST'); }
-    async function previous(){ await api('/me/player/previous','POST'); }
-    async function setVolume(v){ await api('/me/player/volume?volume_percent='+v,'PUT'); }
-    async function seek(posMs){ await api('/me/player/seek?position_ms='+posMs,'PUT'); }
-    async function toggleShuffle(){
-      const st = await api('/me/player');
+    // --- Playback Control Functions ---
+    // These functions call the Spotify API wrapper.
+    async function play() { await api('/me/player/play', 'PUT'); }
+    async function pause() { await api('/me/player/pause', 'PUT'); }
+    async function next() { await api('/me/player/next', 'POST'); }
+    async function previous() { await api('/me/player/previous', 'POST'); }
+    async function setVolume(v) { await api('/me/player/volume?volume_percent=' + v, 'PUT'); }
+    async function seek(posMs) { await api('/me/player/seek?position_ms=' + posMs, 'PUT'); }
+    
+    async function toggleShuffle() {
+      const st = await api('/me/player'); // Get current state
       const current = st && st.shuffle_state;
-      await api('/me/player/shuffle?state='+(!current),'PUT');
+      await api('/me/player/shuffle?state=' + (!current), 'PUT');
+      return !current; // Return the new state
     }
 
-    async function getCurrent(){
-      try{
+    async function getCurrent() {
+      try {
         const cur = await api('/me/player/currently-playing');
-        if(!cur || !cur.item){ document.getElementById('trackInfo').textContent = 'No track playing'; return; }
-        const artists = cur.item.artists.map(a=>a.name).join(', ');
-        document.getElementById('trackInfo').textContent = cur.item.name + ' — ' + artists;
-      }catch(e){ document.getElementById('trackInfo').textContent = 'Error: ' + e.message; }
+        if (!cur || !cur.item) {
+          document.getElementById('trackInfo').textContent = 'No track playing';
+          return;
+        }
+        const artists = cur.item.artists.map(a => a.name).join(', ');
+        document.getElementById('trackInfo').textContent = `${cur.item.name} — ${artists}`;
+      } catch (e) {
+        document.getElementById('trackInfo').textContent = 'Error: ' + e.message;
+      }
+    }
+    
+    /**
+     * Gets current playback state to read volume or progress.
+     * @returns {Promise<object|null>}
+     */
+    async function getPlaybackState() {
+        return await api('/me/player');
     }
 
-    // UI wiring
-    document.getElementById('btnAuth').addEventListener('click', ()=>startAuth());
-    document.getElementById('btnSignOut').addEventListener('click', ()=>{
+    // --- UI Event Listeners ---
+    // 8. Wire up the buttons to the API functions
+
+    document.getElementById('btnAuth').addEventListener('click', () => startAuth());
+
+    document.getElementById('btnSignOut').addEventListener('click', () => {
+      // Clear all stored data
       localStorage.removeItem('sp_access_token');
       localStorage.removeItem('sp_refresh_token');
       localStorage.removeItem('sp_expires_at');
       localStorage.removeItem('pkce_code_verifier');
       localStorage.removeItem('pkce_state');
+      localStorage.removeItem('sp_client_id');
+      localStorage.removeItem('sp_redirect_uri');
       setStatus('Signed out');
+      document.getElementById('trackInfo').textContent = 'No track info';
+      // Optionally clear inputs
+      // $clientId.value = '';
+      // $redirectUri.value = '';
     });
-    document.getElementById('play').addEventListener('click', ()=>play().then(()=>setStatus('Played')).catch(e=>setStatus(e.message)));
-    document.getElementById('pause').addEventListener('click', ()=>pause().then(()=>setStatus('Paused')).catch(e=>setStatus(e.message)));
-    document.getElementById('next').addEventListener('click', ()=>next().then(()=>setStatus('Next')).catch(e=>setStatus(e.message)));
-    document.getElementById('prev').addEventListener('click', ()=>previous().then(()=>setStatus('Previous')).catch(e=>setStatus(e.message)));
-    document.getElementById('volUp').addEventListener('click', async ()=>{
-      try{
-        const st = await api('/me/player');
-        const v = Math.min(100, (st && st.device && st.device.volume_percent) || 50 + 10);
-        await setVolume(v);
-        setStatus('Volume ' + v);
-      }catch(e){ setStatus(e.message); }
-    });
-    document.getElementById('volDown').addEventListener('click', async ()=>{
-      try{
-        const st = await api('/me/player');
-        const v = Math.max(0, (st && st.device && st.device.volume_percent) || 50 - 10);
-        await setVolume(v);
-        setStatus('Volume ' + v);
-      }catch(e){ setStatus(e.message); }
-    });
-    document.getElementById('seekForward').addEventListener('click', async ()=>{
-      try{
-        const st = await api('/me/player');
-        const pos = (st && st.progress_ms) || 0;
-        await seek(pos + 10000);
-        setStatus('Seek +10s');
-      }catch(e){ setStatus(e.message); }
-    });
-    document.getElementById('seekBack').addEventListener('click', async ()=>{
-      try{
-        const st = await api('/me/player');
-        const pos = (st && st.progress_ms) || 0;
-        await seek(Math.max(0, pos - 10000));
-        setStatus('Seek -10s');
-      }catch(e){ setStatus(e.message); }
-    });
-    document.getElementById('toggleShuffle').addEventListener('click', ()=>toggleShuffle().then(()=>setStatus('Toggled shuffle')).catch(e=>setStatus(e.message)));
-    document.getElementById('currentTrack').addEventListener('click', ()=>getCurrent());
 
-    window.addEventListener('load', async ()=>{
+    // Helper to wrap API calls with status updates
+    function addApiListener(id, action, statusMsg) {
+      document.getElementById(id).addEventListener('click', () => {
+        action()
+          .then(result => setStatus(statusMsg(result)))
+          .catch(e => setStatus(e.message));
+      });
+    }
+
+    addApiListener('play', play, () => 'Playing');
+    addApiListener('pause', pause, () => 'Paused');
+    addApiListener('next', next, () => 'Next track');
+    addApiListener('prev', previous, () => 'Previous track');
+    addApiListener('toggleShuffle', toggleShuffle, (newState) => 'Shuffle ' + (newState ? 'On' : 'Off'));
+    addApiListener('currentTrack', getCurrent, () => ''); // getCurrent updates its own info
+
+    // Volume and Seek need more complex logic
+    document.getElementById('volUp').addEventListener('click', async () => {
+      try {
+        const st = await getPlaybackState();
+        const v = Math.min(100, ((st && st.device && st.device.volume_percent) || 50) + 10);
+        await setVolume(v);
+        setStatus('Volume ' + v);
+      } catch (e) { setStatus(e.message); }
+    });
+
+    document.getElementById('volDown').addEventListener('click', async () => {
+      try {
+        const st = await getPlaybackState();
+        const v = Math.max(0, ((st && st.device && st.device.volume_percent) || 50) - 10);
+        await setVolume(v);
+        setStatus('Volume ' + v);
+      } catch (e) { setStatus(e.message); }
+    });
+
+    document.getElementById('seekForward').addEventListener('click', async () => {
+      try {
+        const st = await getPlaybackState();
+        const pos = (st && st.progress_ms) || 0;
+        await seek(pos + 10000); // Seek forward 10s
+        setStatus('Seek +10s');
+      } catch (e) { setStatus(e.message); }
+    });
+    
+    document.getElementById('seekBack').addEventListener('click', async () => {
+      try {
+        const st = await getPlaybackState();
+        const pos = (st && st.progress_ms) || 0;
+        await seek(Math.max(0, pos - 10000)); // Seek back 10s
+        setStatus('Seek -10s');
+      } catch (e) { setStatus(e.message); }
+    });
+
+
+    /**
+     * On page load, check for auth callback and restore state.
+     */
+    window.addEventListener('load', async () => {
+      // Restore inputs from localStorage
       const ci = localStorage.getItem('sp_client_id');
       const ru = localStorage.getItem('sp_redirect_uri');
-      if(ci) $clientId.value = ci;
-      if(ru) $redirectUri.value = ru;
+      if (ci) $clientId.value = ci;
+      if (ru) $redirectUri.value = ru;
+
+      // Check if this is an auth callback
       await handleCallback();
-      if(localStorage.getItem('sp_access_token')) setStatus('Signed in');
+      
+      // Update status if we are already signed in
+      if (localStorage.getItem('sp_access_token')) {
+        setStatus('Signed in');
+      }
     });
   </script>
 </body>
