@@ -34,6 +34,16 @@
       width: 100%;
       max-width: 500px;
     }
+    .auth-area input {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #222;
+      background: #fff;
+      color: #000;
+      font-size: 0.9rem;
+      box-sizing: border-box;
+      width: 100%;
+    }
     .auth-area .auth-buttons {
       display: flex;
       gap: 10px;
@@ -95,6 +105,7 @@
       width: 100%;
       max-width: 420px;
       gap: 12px;
+      /* Updated grid: removed shuffle, 'liked' spans bottom row */
       grid-template-areas:
         "prev next"
         "clock play"
@@ -138,9 +149,10 @@
     #volUp { grid-area: volUp; }
     #playLiked { grid-area: liked; }
     
+    /* Special styling for large Play button */
     #playPause {
       grid-area: play;
-      min-height: 276px;
+      min-height: 276px; /* Span 3 rows + 2 gaps */
       border-radius: 16px;
     }
     #playPause svg {
@@ -148,6 +160,7 @@
       height: 48px;
     }
 
+    /* Special styling for clock (now a button) */
     #clock {
       font-size: 2.5rem;
       font-weight: 600;
@@ -158,20 +171,23 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      cursor: pointer; 
-      user-select: none; 
+      cursor: pointer; /* Make it look clickable */
+      user-select: none; /* Prevent text selection */
     }
     #clock:hover {
       background: #1a1a1e;
     }
 
     /* --- Fullscreen Mode --- */
+    /* Helper class for vendor prefixes */
     body:fullscreen,
     body:-webkit-full-screen {
       padding: 0;
       gap: 0;
-      background: #0a0a0e;
+      background: #0a0a0e; /* Match UI background */
     }
+
+    /* Hide auth section when in fullscreen */
     body:fullscreen .auth-area,
     body:fullscreen .info,
     body:fullscreen hr,
@@ -180,6 +196,8 @@
     body:-webkit-full-screen hr {
       display: none;
     }
+    
+    /* Make board and track info fill the screen */
     body:fullscreen .track-info,
     body:fullscreen .board,
     body:-webkit-full-screen .track-info,
@@ -190,25 +208,29 @@
     }
     body:fullscreen .track-info,
     body:-webkit-full-screen .track-info {
-        flex-shrink: 0; 
+        flex-shrink: 0; /* Prevent shrinking */
         min-height: 112px;
     }
     body:fullscreen .board,
     body:-webkit-full-screen .board {
-      flex-grow: 1; 
+      flex-grow: 1; /* Fill remaining vertical space */
       height: 100%;
       padding: 16px;
       box-sizing: border-box;
     }
+    
+    /* Bigger play button in fullscreen */
     body:fullscreen #playPause,
     body:-webkit-full-screen #playPause {
-        min-height: 0; 
-        height: 100%; 
+        min-height: 0; /* Remove portrait min-height */
+        height: 100%; /* Fill its grid area */
     }
     
+    /* Landscape-specific layout for fullscreen */
     @media (orientation: landscape) {
       body:fullscreen .board,
       body:-webkit-full-screen .board {
+        /* New layout: Track info on left, controls on right */
         grid-template-areas:
           "track prev next"
           "track play play"
@@ -219,6 +241,8 @@
         grid-template-rows: repeat(5, 1fr);
         gap: 12px;
       }
+      
+      /* Move track info into the grid */
       body:fullscreen .track-info,
       body:-webkit-full-screen .track-info {
         display: flex;
@@ -226,18 +250,26 @@
         height: 100%;
         min-height: 0;
       }
+      
+      /* Redefine grid areas for the buttons */
       body:fullscreen #prev,
       body:-webkit-full-screen #prev { grid-area: prev; }
+      
       body:fullscreen #next,
       body:-webkit-full-screen #next { grid-area: next; }
+      
       body:fullscreen #clock,
       body:-webkit-full-screen #clock { grid-area: clock; }
+      
       body:fullscreen #volDown,
       body:-webkit-full-screen #volDown { grid-area: volDown; }
+      
       body:fullscreen #volUp,
       body:-webkit-full-screen #volUp { grid-area: volUp; }
+      
       body:fullscreen #playLiked,
       body:-webkit-full-screen #playLiked { grid-area: liked; }
+      
       body:fullscreen #playPause,
       body:-webkit-full-screen #playPause { grid-area: play; }
     }
@@ -247,6 +279,8 @@
 
   <div class="info" id="status">Not signed in</div>
   <div class="auth-area">
+    <input id="clientId" placeholder="Paste your Spotify Client ID" />
+    <input id="redirectUri" placeholder="Redirect URI (e.g., https://your-username.github.io/)" />
     <div class="auth-buttons">
       <button id="btnAuth">Sign In</button>
       <button id="btnSignOut" class="muted">Sign Out</button>
@@ -262,37 +296,49 @@
 
   <div class="board">
     <button id="prev" title="Previous">
-      <svg viewBox="0 0 24 24"><path d="M17.51 3.87L15.73 2.1 5.84 12l9.9 9.9 1.77-1.77L9.38 12l8.13-8.13z"/></svg>
+      <svg viewBox="0 0 24 24">
+        <path d="M17.51 3.87L15.73 2.1 5.84 12l9.9 9.9 1.77-1.77L9.38 12l8.13-8.13z"/>
+      </svg>
     </button>
     <button id="next" title="Next">
-      <svg viewBox="0 0 24 24"><path d="M6.49 3.87L8.27 2.1l9.89 9.9-9.9 9.9-1.77-1.77L14.62 12l-8.13-8.13z"/></svg>
+      <svg viewBox="0 0 24 24">
+        <path d="M6.49 3.87L8.27 2.1l9.89 9.9-9.9 9.9-1.77-1.77L14.62 12l-8.13-8.13z"/>
+      </svg>
     </button>
     
     <div id="clock" title="Toggle Fullscreen">00:00</div>
 
     <button id="playPause" title="Play/Pause">
-      <svg id="icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-      <svg id="icon-pause" viewBox="0 0 24 24" style="display: none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+      <svg id="icon-play" viewBox="0 0 24 24">
+        <path d="M8 5v14l11-7z"/>
+      </svg>
+      <svg id="icon-pause" viewBox="0 0 24 24" style="display: none;">
+        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+      </svg>
     </button>
 
     <button id="volDown" title="Volume Down">
-      <svg viewBox="0 0 24 24"><path d="M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg>
+      <svg viewBox="0 0 24 24">
+        <path d="M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/>
+      </svg>
     </button>
     <button id="volUp" title="Volume Up">
-      <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+      <svg viewBox="0 0 24 24">
+        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+      </svg>
     </button>
     
     <button id="playLiked" title="Play Liked Songs">
-      <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+      <svg viewBox="0 0 24 24">
+        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+      </svg>
     </button>
   </div>
 
   <script>
-    // --- Configuration ---
-    const CLIENT_ID = 'bb82c1e306e44bc681b5fc345b2b493f';
-    const REDIRECT_URI = 'https://valo-valox.github.io/spotify-soundboard/';
-    
     // --- Spotify API Constants ---
+    // Using placeholder URLs for security.
+    // You would replace these with your actual token proxy/endpoint.
     const AUTHORIZE_URL = 'https://accounts.spotify.com/authorize';
     const TOKEN_URL = 'https://accounts.spotify.com/api/token';
     const API_BASE_URL = 'https://api.spotify.com/v1';
@@ -307,6 +353,8 @@
 
     // --- DOM Elements ---
     const $status = document.getElementById('status');
+    const $clientId = document.getElementById('clientId');
+    const $redirectUri = document.getElementById('redirectUri');
     const $trackInfo = document.getElementById('trackInfo');
     const $trackName = $trackInfo.querySelector('.track-name');
     const $trackArtist = $trackInfo.querySelector('.track-artist');
@@ -338,26 +386,37 @@
       const hashed = await sha256(verifier);
       return base64UrlEncode(hashed);
     }
+    function qs(obj) {
+      return Object.entries(obj).map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
+    }
 
     // --- Authentication Flow ---
     async function startAuth() {
+      const clientId = $clientId.value.trim();
+      const redirectUri = $redirectUri.value.trim();
+      if (!clientId || !redirectUri) {
+        alert('Please enter both Client ID and Redirect URI.');
+        return;
+      }
       const state = randomString(16);
       const codeVerifier = randomString(64);
       const codeChallenge = await makeCodeChallenge(codeVerifier);
 
       localStorage.setItem('pkce_code_verifier', codeVerifier);
       localStorage.setItem('pkce_state', state);
+      localStorage.setItem('sp_client_id', clientId);
+      localStorage.setItem('sp_redirect_uri', redirectUri);
 
-      const params = new URLSearchParams({
-        client_id: CLIENT_ID,
+      const params = {
+        client_id: clientId,
         response_type: 'code',
-        redirect_uri: REDIRECT_URI,
+        redirect_uri: redirectUri,
         code_challenge_method: 'S256',
         code_challenge: codeChallenge,
         state: state,
         scope: SCOPES
-      });
-      window.location = `${AUTHORIZE_URL}?${params.toString()}`;
+      };
+      window.location = `${AUTHORIZE_URL}?${qs(params)}`;
     }
 
     async function handleCallback() {
@@ -374,155 +433,121 @@
 
       setStatus('Exchanging code for token...');
       const codeVerifier = localStorage.getItem('pkce_code_verifier');
+      const clientId = localStorage.getItem('sp_client_id');
+      const redirectUri = localStorage.getItem('sp_redirect_uri');
 
-      const body = new URLSearchParams();
-      body.append('grant_type', 'authorization_code');
-      body.append('code', code);
-      body.append('redirect_uri', REDIRECT_URI);
-      body.append('client_id', CLIENT_ID);
-      body.append('code_verifier', codeVerifier);
+      const body = qs({
+        grant_type: 'authorization_code',
+        code: code,
+        redirect_uri: redirectUri,
+        client_id: clientId,
+        code_verifier: codeVerifier
+      });
 
-      try {
-        const res = await fetch(TOKEN_URL, {
-          method: 'POST',
-          body: body 
-        });
+      const res = await fetch(TOKEN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-form-urlencoded' },
+        body: body
+      });
 
-        if (!res.ok) {
-          const txt = await res.text();
-          // Try to parse error text from Spotify's HTML response
-          const errorMatch = txt.match(/<p>(.*?)<\/p>/);
-          const errorMsg = errorMatch ? errorMatch[1] : txt;
-          setStatus(`Token exchange failed: ${res.status} ${errorMsg}`); 
-          return;
-        }
-
-        const data = await res.json();
-        localStorage.setItem('sp_access_token', data.access_token);
-        localStorage.setItem('sp_refresh_token', data.refresh_token || '');
-        const expiresAt = Date.now() + (data.expires_in || 3600) * 1000;
-        localStorage.setItem('sp_expires_at', expiresAt);
-
-        setStatus('Signed in successfully!');
-        history.replaceState(null, '', window.location.pathname); // Clean up URL
-        
-      } catch (e) {
-        setStatus(`Network error: ${e.message}`);
+      if (!res.ok) {
+        const txt = await res.text();
+        setStatus(`Token exchange failed: ${res.status} ${txt}`);
+        return;
       }
+
+      const data = await res.json();
+      localStorage.setItem('sp_access_token', data.access_token);
+      localStorage.setItem('sp_refresh_token', data.refresh_token || '');
+      const expiresAt = Date.now() + (data.expires_in || 3600) * 1000;
+      localStorage.setItem('sp_expires_at', expiresAt);
+
+      setStatus('Signed in successfully!');
+      history.replaceState(null, '', window.location.pathname);
     }
 
     async function refreshTokenIfNeeded() {
       const expiresAt = Number(localStorage.getItem('sp_expires_at') || 0);
-      if (Date.now() < expiresAt - 60000) return; // Still valid
+      if (Date.now() < expiresAt - 60000) return;
 
       const refresh_token = localStorage.getItem('sp_refresh_token');
-      if (!refresh_token) {
+      const clientId = localStorage.getItem('sp_client_id');
+      if (!refresh_token || !clientId) {
         setStatus('Signed out. Please sign in again.');
-        localStorage.clear(); // Clear all stale data
-        updateUI(null);
-        return; // Can't refresh
+        return;
       }
 
       setStatus('Refreshing token...');
-      
-      const body = new URLSearchParams();
-      body.append('grant_type', 'refresh_token');
-      body.append('refresh_token', refresh_token);
-      body.append('client_id', CLIENT_ID);
+      const body = qs({
+        grant_type: 'refresh_token',
+        refresh_token: refresh_token,
+        client_id: clientId
+      });
 
-      try {
-        const res = await fetch(TOKEN_URL, {
-          method: 'POST',
-          body: body
-        });
+      const res = await fetch(TOKEN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-form-urlencoded' },
+        body: body
+      });
 
-        if (!res.ok) {
-          setStatus(`Token refresh failed: ${res.status}. Please sign in again.`);
-          localStorage.clear(); // Auth failed, clear everything
-          updateUI(null);
-          return;
-        }
-
-        const data = await res.json();
-        localStorage.setItem('sp_access_token', data.access_token);
-        // Spotify *may* send a new refresh token
-        if (data.refresh_token) {
-          localStorage.setItem('sp_refresh_token', data.refresh_token);
-        }
-        const expiresAtNew = Date.now() + (data.expires_in || 3600) * 1000;
-        localStorage.setItem('sp_expires_at', expiresAtNew);
-        setStatus('Token refreshed.');
-        
-      } catch (e) {
-        setStatus(`Network error: ${e.message}`);
+      if (!res.ok) {
+        setStatus(`Token refresh failed: ${res.status}. Please sign in again.`);
+        localStorage.removeItem('sp_access_token');
+        localStorage.removeItem('sp_refresh_token');
+        return;
       }
+
+      const data = await res.json();
+      localStorage.setItem('sp_access_token', data.access_token);
+      if (data.refresh_token) {
+        localStorage.setItem('sp_refresh_token', data.refresh_token);
+      }
+      const expiresAtNew = Date.now() + (data.expires_in || 3600) * 1000;
+      localStorage.setItem('sp_expires_at', expiresAtNew);
+      setStatus('Token refreshed.');
     }
 
     // --- API Wrapper ---
     async function api(path, method = 'GET', body = null) {
-      // Check for token first. If none, don't even try.
-      if (!localStorage.getItem('sp_access_token')) {
-        setStatus('Not signed in.');
-        return null;
-      }
-      
       await refreshTokenIfNeeded();
-      
-      // Check again, refreshToken might have failed
-      const token = localStorage.getItem('sp_access_token');
-      if (!token) {
-        setStatus('Sign in required.');
-        return null;
-      }
-
-      const headers = { 'Authorization': `Bearer ${token}` };
+      const headers = { 'Authorization': `Bearer ${localStorage.getItem('sp_access_token')}` };
       if (body && !(body instanceof FormData)) {
         headers['Content-Type'] = 'application/json';
       }
 
-      try {
-        const res = await fetch(API_BASE_URL + path, {
-          method,
-          headers,
-          body: body && (typeof body === 'string' ? body : JSON.stringify(body))
-        });
+      const res = await fetch(API_BASE_URL + path, {
+        method,
+        headers,
+        body: body && (typeof body === 'string' ? body : JSON.stringify(body))
+      });
 
-        if (res.status === 204) return null; // No Content
-        
-        const text = await res.text(); // Get text first
-        
-        if (!res.ok) {
-          // Try to parse JSON error from Spotify
-          try {
-            const jsonError = JSON.parse(text);
-            if (jsonError.error && jsonError.error.message) {
-              throw new Error(jsonError.error.message);
-            }
-          } catch (e) {
-            // Not JSON, just throw text
-          }
-          throw new Error(`API Error: ${res.status} ${text}`);
-        }
-        
-        return text ? JSON.parse(text) : null; // OK response
-        
-      } catch (e) {
-        setStatus(e.message);
-        throw e; // Re-throw to stop calling function
+      if (res.status === 204) return null;
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(`API Error: ${res.status} ${t}`);
       }
+      const text = await res.text();
+      return text ? JSON.parse(text) : null;
     }
 
     // --- Playback Control Functions ---
+
+    /**
+     * Updates the UI (Play/Pause icon and track info)
+     */
     function updateUI(state) {
       if (!state) {
-        currentPlaybackState = { is_playing: false, device: null };
+        currentPlaybackState = { is_playing: false };
         $iconPlay.style.display = 'block';
         $iconPause.style.display = 'none';
         $trackName.textContent = 'No active device';
         $trackArtist.textContent = 'Please start playing on Spotify';
         return;
       }
+
       currentPlaybackState = state;
+      
+      // Update Play/Pause Icon
       if (state.is_playing) {
         $iconPlay.style.display = 'none';
         $iconPause.style.display = 'block';
@@ -530,6 +555,8 @@
         $iconPlay.style.display = 'block';
         $iconPause.style.display = 'none';
       }
+
+      // Update Track Info
       if (state.item) {
         const artists = state.item.artists.map(a => a.name).join(', ');
         $trackName.textContent = state.item.name;
@@ -540,43 +567,50 @@
       }
     }
 
+    /**
+     * Fetches the current playback state and updates the UI
+     */
     async function getPlaybackState() {
       try {
         const state = await api('/me/player');
         updateUI(state);
       } catch (e) {
-        // API wrapper already set status
+        setStatus(e.message);
         updateUI(null); // Show default state on error
       }
     }
     
+    /**
+     * Toggles Play/Pause with optimistic UI update
+     */
     async function togglePlayPause() {
-      if (!currentPlaybackState.device) {
-        setStatus("No active device. Play on Spotify first.");
-        return; // Don't try to play if no device
-      }
       const wasPlaying = currentPlaybackState.is_playing;
       try {
         if (wasPlaying) {
           await api('/me/player/pause', 'PUT');
           setStatus('Paused');
+          // Optimistic update: show PLAY icon now
           $iconPlay.style.display = 'block';
           $iconPause.style.display = 'none';
           currentPlaybackState.is_playing = false;
         } else {
           await api('/me/player/play', 'PUT');
           setStatus('Playing');
+          // Optimistic update: show PAUSE icon now
           $iconPlay.style.display = 'none';
           $iconPause.style.display = 'block';
           currentPlaybackState.is_playing = true;
         }
+        // Refresh state after 500ms to confirm
         setTimeout(getPlaybackState, 500);
       } catch (e) {
-        // API wrapper sets status
+        setStatus(e.message);
+        // If API call failed, re-fetch true state
         setTimeout(getPlaybackState, 100);
       }
     }
     
+    // --- Other Playback Functions ---
     async function next() {
       await api('/me/player/next', 'POST');
       setStatus('Next track');
@@ -591,6 +625,7 @@
       await api(`/me/player/volume?volume_percent=${v}`, 'PUT');
     }
     
+    // --- New "Play Liked Songs" Function ---
     async function playLikedSongs() {
       try {
         setStatus('Getting user info...');
@@ -606,10 +641,11 @@
         await api('/me/player/play', 'PUT', { context_uri: contextUri });
         setTimeout(getPlaybackState, 1000); 
       } catch (e) {
-        // API wrapper sets status
+        setStatus(e.message);
       }
     }
     
+    // --- Clock Function ---
     function updateClock() {
       const now = new Date();
       const hours = String(now.getHours()).padStart(2, '0');
@@ -617,21 +653,25 @@
       $clock.textContent = `${hours}:${minutes}`;
     }
     
+    // --- Fullscreen Function ---
     function toggleFullscreen() {
       if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        // Enter fullscreen
         const el = document.documentElement;
         if (el.requestFullscreen) {
           el.requestFullscreen({ navigationUI: "hide" });
-        } else if (el.webkitRequestFullscreen) {
+        } else if (el.webkitRequestFullscreen) { /* Safari */
           el.webkitRequestFullscreen();
         }
+        // Try to lock landscape
         if (screen.orientation && screen.orientation.lock) {
-          screen.orientation.lock('landscape').catch(() => {});
+          screen.orientation.lock('landscape').catch(() => {}); // Best effort
         }
       } else {
+        // Exit fullscreen
         if (document.exitFullscreen) {
           document.exitFullscreen();
-        } else if (document.webkitExitFullscreen) {
+        } else if (document.webkitExitFullscreen) { /* Safari */
           document.webkitExitFullscreen();
         }
       }
@@ -643,17 +683,14 @@
     document.getElementById('btnSignOut').addEventListener('click', () => {
       localStorage.clear();
       setStatus('Signed out');
+      $clientId.value = '';
+      $redirectUri.value = '';
       updateUI(null);
     });
 
     // Helper to wrap API calls with status updates
     function addApiListener(id, action) {
       document.getElementById(id).addEventListener('click', () => {
-        // Check for token before trying any API action
-        if (!localStorage.getItem('sp_access_token')) {
-          setStatus('Please sign in first.');
-          return;
-        }
         action().catch(e => setStatus(e.message));
       });
     }
@@ -661,17 +698,13 @@
     addApiListener('playPause', togglePlayPause);
     addApiListener('next', next);
     addApiListener('prev', previous);
-    
-    // --- THIS IS THE FIXED LINE ---
     addApiListener('playLiked', playLikedSongs);
     
+    // Add listener for clock/fullscreen
     $clock.addEventListener('click', toggleFullscreen);
 
+    // --- Fixed Volume Listeners ---
     document.getElementById('volUp').addEventListener('click', async () => {
-      if (!localStorage.getItem('sp_access_token')) {
-          setStatus('Please sign in first.');
-          return;
-      }
       try {
         if (!currentPlaybackState.device) {
           setStatus('No active device to control volume.');
@@ -685,10 +718,6 @@
     });
 
     document.getElementById('volDown').addEventListener('click', async () => {
-      if (!localStorage.getItem('sp_access_token')) {
-          setStatus('Please sign in first.');
-          return;
-      }
       try {
         if (!currentPlaybackState.device) {
           setStatus('No active device to control volume.');
@@ -703,21 +732,21 @@
     
     // --- Page Load ---
     window.addEventListener('load', async () => {
+      // Start the clock
       updateClock();
       setInterval(updateClock, 1000);
       
-      // Check if we are on the redirect page
-      if (window.location.search.includes('code=')) {
-        await handleCallback();
-      }
+      const ci = localStorage.getItem('sp_client_id');
+      const ru = localStorage.getItem('sp_redirect_uri');
+      if (ci) $clientId.value = ci;
+      if (ru) $redirectUri.value = ru;
+
+      await handleCallback();
       
-      // Regular page load
       if (localStorage.getItem('sp_access_token')) {
         setStatus('Signed in');
         await getPlaybackState();
-        setInterval(getPlaybackState, 15000); // Poll for changes
-      } else {
-        setStatus('Not signed in');
+        setInterval(getPlaybackState, 15000);
       }
     });
   </script>
