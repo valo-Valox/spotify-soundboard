@@ -105,7 +105,7 @@
       width: 100%;
       max-width: 420px;
       gap: 12px;
-      /* Updated grid: removed shuffle, 'liked' spans bottom row */
+      /* Default Portrait grid */
       grid-template-areas:
         "prev next"
         "clock play"
@@ -149,7 +149,7 @@
     #volUp { grid-area: volUp; }
     #playLiked { grid-area: liked; }
     
-    /* Special styling for large Play button */
+    /* Special styling for large Play button (Portrait) */
     #playPause {
       grid-area: play;
       min-height: 276px; /* Span 3 rows + 2 gaps */
@@ -178,13 +178,43 @@
       background: #1a1a1e;
     }
 
+    /* --- FIX 1: Landscape (Non-Fullscreen) Layout --- */
+    /* This new rule handles the layout when rotated to landscape
+       but NOT in fullscreen mode. */
+    @media (orientation: landscape) {
+      /* Widen all the main elements */
+      .auth-area, .track-info, .board, hr {
+        max-width: 600px;
+      }
+      hr {
+        width: 100%;
+      }
+      
+      /* Rearrange the board to be wider and shorter */
+      .board {
+        grid-template-areas:
+          "prev play next"
+          "volDown play volUp"
+          "clock liked liked";
+        grid-template-columns: 1fr 1.5fr 1fr; /* Give play more space */
+        grid-template-rows: 1fr 1fr 1fr;
+      }
+      
+      /* Reset the tall play button for the new layout */
+      #playPause {
+        grid-area: play;
+        min-height: 0; /* Remove portrait min-height */
+        height: 100%; /* Fill its new grid area */
+      }
+    }
+
     /* --- Fullscreen Mode --- */
-    /* Helper class for vendor prefixes */
     body:fullscreen,
     body:-webkit-full-screen {
       padding: 0;
       gap: 0;
       background: #0a0a0e; /* Match UI background */
+      max-width: 100%; /* Ensure body fills screen */
     }
 
     /* Hide auth section when in fullscreen */
@@ -197,7 +227,7 @@
       display: none;
     }
     
-    /* Make board and track info fill the screen */
+    /* Make board and track info fill the screen (Portrait Fullscreen) */
     body:fullscreen .track-info,
     body:fullscreen .board,
     body:-webkit-full-screen .track-info,
@@ -217,61 +247,70 @@
       height: 100%;
       padding: 16px;
       box-sizing: border-box;
+      /* Re-apply portrait defaults for fullscreen */
+      grid-template-areas:
+        "prev next"
+        "clock play"
+        "volDown play"
+        "volUp play"
+        "liked liked";
+      grid-template-columns: 1fr 1fr;
     }
     
-    /* Bigger play button in fullscreen */
+    /* Bigger play button in fullscreen (Portrait) */
     body:fullscreen #playPause,
     body:-webkit-full-screen #playPause {
         min-height: 0; /* Remove portrait min-height */
         height: 100%; /* Fill its grid area */
+        grid-area: play;
     }
     
-    /* Landscape-specific layout for fullscreen */
+    /* --- FIX 2: Landscape-specific layout for fullscreen --- */
     @media (orientation: landscape) {
-      body:fullscreen .board,
-      body:-webkit-full-screen .board {
-        /* New layout: Track info on left, controls on right */
-        grid-template-areas:
-          "track prev next"
-          "track play play"
-          "track play play"
-          "track volDown volUp"
-          "track clock liked";
-        grid-template-columns: 2fr 1fr 1fr;
-        grid-template-rows: repeat(5, 1fr);
+      
+      /* FIX: Make BODY the grid container */
+      body:fullscreen,
+      body:-webkit-full-screen {
+        display: grid;
+        /* A 2-column layout: track info on left, controls on right */
+        grid-template-areas: "track controls";
+        grid-template-columns: 2fr 3fr; /* 40% track, 60% controls */
+        padding: 12px;
         gap: 12px;
+        box-sizing: border-box;
       }
       
-      /* Move track info into the grid */
+      /* FIX: Place .track-info in the 'track' area of the BODY grid */
       body:fullscreen .track-info,
       body:-webkit-full-screen .track-info {
-        display: flex;
         grid-area: track;
         height: 100%;
         min-height: 0;
       }
       
-      /* Redefine grid areas for the buttons */
-      body:fullscreen #prev,
-      body:-webkit-full-screen #prev { grid-area: prev; }
+      /* FIX: Place .board in 'controls' area and make it a NEW sub-grid */
+      body:fullscreen .board,
+      body:-webkit-full-screen .board {
+        grid-area: controls;
+        height: 100%;
+        width: 100%;
+        padding: 0; /* Body has padding now */
+        
+        /* This is the NEW grid for the buttons */
+        grid-template-areas:
+          "prev next"
+          "play play"
+          "volDown volUp"
+          "clock liked";
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 2fr 1fr 1fr; /* Give play more space */
+      }
       
-      body:fullscreen #next,
-      body:-webkit-full-screen #next { grid-area: next; }
-      
-      body:fullscreen #clock,
-      body:-webkit-full-screen #clock { grid-area: clock; }
-      
-      body:fullscreen #volDown,
-      body:-webkit-full-screen #volDown { grid-area: volDown; }
-      
-      body:fullscreen #volUp,
-      body:-webkit-full-screen #volUp { grid-area: volUp; }
-      
-      body:fullscreen #playLiked,
-      body:-webkit-full-screen #playLiked { grid-area: liked; }
-      
-      body:fullscreen #playPause,
-      body:-webkit-full-screen #playPause { grid-area: play; }
+      /* NOTE: The specific button grid-area overrides below
+        are no longer needed, as the button IDs (#prev, #playPause)
+        already map to the correct grid-area names used in the
+        new layout above (prev, play).
+      */
     }
   </style>
 </head>
@@ -595,7 +634,7 @@
           currentPlaybackState.is_playing = false;
         } else {
           await api('/me/player/play', 'PUT');
-          setStatus('Playing');
+setStatus('Playing');
           // Optimistic update: show PAUSE icon now
           $iconPlay.style.display = 'none';
           $iconPause.style.display = 'block';
