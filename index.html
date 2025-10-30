@@ -3,49 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spotify Soundboard Login</title>
+    <title>Spotify Soundboard Login (PKCE)</title>
     <style>
-        body { font-family: sans-serif; display: grid; place-items: center; min-height: 100vh; }
-        button { font-size: 1.2rem; padding: 10px 20px; cursor: pointer; }
+        body { font-family: sans-serif; display: grid; place-items: center; min-height: 100vh; background: #f0f0f0; }
+        #container { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        button { font-size: 1.2rem; padding: 10px 20px; cursor: pointer; background: #1DB954; color: white; border: none; border-radius: 50px; }
+        pre { background: #eee; padding: 10px; border-radius: 4px; word-wrap: break-word; }
     </style>
 </head>
 <body>
 
-    <div id="login-section">
-        <h1>Spotify Soundboard</h1>
-        <button id="loginButton">Login with Spotify</button>
-    </div>
+    <div id="container">
+        <div id="login-section">
+            <h1>Spotify Soundboard</h1>
+            <p>Please log in to continue.</p>
+            <button id="loginButton">Login with Spotify</button>
+        </div>
 
-    <div id="app-section" style="display: none;">
-        <h2>Welcome to your Soundboard!</h2>
-        <p>You are successfully logged in.</p>
-        <pre id="token-display" style="word-wrap: break-word;"></pre>
+        <div id="loading-section" style="display: none;">
+            <p>Logging in, please wait...</p>
+        </div>
+
+        <div id="app-section" style="display: none;">
+            <h2>Welcome to your Soundboard!</h2>
+            <p>You are successfully logged in.</p>
+            <h3>Access Token (Secret):</h3>
+            <pre id="token-display"></pre>
+        </div>
     </div>
 
     <script>
         // --- 1. Configuration ---
         const clientId = 'bb82c1e306e44bc681b5fc345b2b493f';
         const redirectUri = 'https://valo-valox.github.io/spotify-soundboard/';
+        const scope = 'streaming user-read-email user-read-private';
         
-        // Define the "scopes" your app needs.
-        // 'streaming' is required for the Web Playback SDK.
-        const scopes = [
-            'streaming',
-            'user-read-playback-state',
-            'user-modify-playback-state',
-            'user-read-private',
-            'user-read-email'
-        ];
+        const tokenEndpoint = "https://accounts.spotify.com/authorize?";
 
         // --- 2. Page Load Logic ---
         window.addEventListener('load', () => {
-            // Check if there's an access token in the URL hash
-            const token = getAccessTokenFromHash();
-            
-            if (token) {
-                // User is logged in
-                console.log('Access Token:', token);
-                showApp(token);
+            const params = new URLSearchParams(window.location.search);
+            const code = params.get('code');
+            const storedToken = localStorage.getItem('spotify_access_token');
+
+            if (code) {
+                // User has been redirected back from Spotify with a code
+                showLoading();
+                handleRedirect(code);
+            } else if (storedToken) {
+                // User is already logged in
+                console.log("Found existing token in localStorage.");
+                showApp(storedToken);
             } else {
                 // User needs to log in
                 showLogin();
@@ -54,67 +62,127 @@
             // Bind the login button
             document.getElementById('loginButton').addEventListener('click', redirectToSpotifyLogin);
         });
+        
+        async function redirectToSpotifyLogin() {
+            // 1. Generate a Code Verifier
+            const codeVerifier = generateRandomString(64);
+            // 2. Generate a Code Challenge
+            const codeChallenge = await generateCodeChallenge(codeVerifier);
 
-        // --- 3. Authentication Functions ---
+            // 3. Store the verifier in sessionStorage to use it later
+            sessionStorage.setItem('spotify_code_verifier', codeVerifier);
 
-        function redirectToSpotifyLogin() {
-            // Construct the Spotify authorization URL
-            let url = 'https://accounts.spotify.com/authorize';
-            url += '?response_type=token'; // Use 'token' for Implicit Grant
-            url += '&client_id=' + encodeURIComponent(clientId);
-            url += '&scope=' + encodeURIComponent(scopes.join(' '));
-            url += '&redirect_uri=' + encodeURIComponent(redirectUri);
-            
-            // Redirect the user to the Spotify login page
-            window.location = url;
+            // 4. Build the auth URL and redirect
+            const params = new URLSearchParams();
+            params.append('client_id', clientId);
+            params.append('response_type', 'code');
+            params.append('redirect_uri', redirectUri);
+            params.append('scope', scope);
+            params.append('code_challenge_method', 'S256');
+            params.append('code_challenge', codeChallenge);
+
+            document.location = `https://accounts.spotify.com/authorize?${params.toString()}`;
         }
 
-        function getAccessTokenFromHash() {
-            // Parse the hash fragment from the URL
-            const hash = window.location.hash
-                .substring(1) // Remove the '#'
-                .split('&')
-                .reduce((initial, item) => {
-                    if (item) {
-                        let parts = item.split('=');
-                        initial[parts[0]] = decodeURIComponent(parts[1]);
-                    }
-                    return initial;
-                }, {});
-            
-            // Clear the hash from the URL so we don't try to re-login
-            window.location.hash = '';
+        async function handleRedirect(code) {
+            // This function is called when the page loads with a ?code=...
+            const codeVerifier = sessionStorage.getItem('spotify_code_verifier');
 
-            // Return the access token if it exists
-            return hash.access_token;
+            if (!codeVerifier) {
+                console.error("Error: No code verifier found in session storage.");
+                showLogin();
+                return;
+            }
+
+            // Exchange the code for an access token
+            try {
+                const token = await getAccessToken(code, codeVerifier);
+                
+                // Store the token securely
+                localStorage.setItem('spotify_access_token', token.access_token);
+                // You should also store the refresh_token and expiry time
+                localStorage.setItem('spotify_refresh_token', token.refresh_token);
+                
+                // Clean up URL and session storage
+                window.history.pushState({}, null, '/'); // Remove code from URL
+                sessionStorage.removeItem('spotify_code_verifier');
+                
+                // Show the main app
+                showApp(token.access_token);
+
+            } catch (error) {
+                console.error("Error exchanging code for token:", error);
+                showLogin(); // Show login on error
+            }
+        }
+        
+        async function getAccessToken(code, codeVerifier) {
+            const body = new URLSearchParams();
+            body.append('grant_type', 'authorization_code');
+            body.append('code', code);
+            body.append('redirect_uri', redirectUri);
+            body.append('client_id', clientId);
+            body.append('code_verifier', codeVerifier);
+
+            const response = await fetch(tokenEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: body.toString(),
+            });
+
+            if (!response.ok) {
+                throw new Error('HTTP status ' + response.status);
+            }
+            
+            return await response.json();
+        }
+
+        // --- 3. PKCE Helper Functions ---
+
+        function generateRandomString(length) {
+            let text = '';
+            const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+            for (let i = 0; i < length; i++) {
+                text += possible.charAt(Math.floor(Math.random() * possible.length));
+            }
+            return text;
+        }
+
+        async function generateCodeChallenge(codeVerifier) {
+            const data = new TextEncoder().encode(codeVerifier);
+            const digest = await window.crypto.subtle.digest('SHA-256', data);
+            return btoa(String.fromCharCode.apply(null, [...new Uint8Array(digest)]))
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_')
+                .replace(/=+$/, '');
         }
 
         // --- 4. UI Functions ---
 
         function showLogin() {
             document.getElementById('login-section').style.display = 'block';
+            document.getElementById('loading-section').style.display = 'none';
+            document.getElementById('app-section').style.display = 'none';
+        }
+        
+        function showLoading() {
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('loading-section').style.display = 'block';
             document.getElementById('app-section').style.display = 'none';
         }
 
         function showApp(token) {
             document.getElementById('login-section').style.display = 'none';
+            document.getElementById('loading-section').style.display = 'none';
             document.getElementById('app-section').style.display = 'block';
-            // Display the token (for testing)
-            document.getElementById('token-display').textContent = 'Your Token: ' + token;
             
-            // 
+            // Display the token (for testing)
+            document.getElementById('token-display').textContent = token;
+
             // ** This is where you would initialize your app **
-            // For example, initialize the Spotify Web Playback SDK:
-            // 
-            // window.onSpotifyWebPlaybackSDKReady = () => {
-            //   const player = new Spotify.Player({
-            //     name: 'My Soundboard',
-            //     getOAuthToken: cb => { cb(token); }
-            //   });
-            //   // ... add player event listeners ...
-            //   player.connect();
-            // };
-            //
+            // e.g., load the Spotify Web Playback SDK
         }
     </script>
 </body>
