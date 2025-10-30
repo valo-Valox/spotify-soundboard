@@ -101,9 +101,8 @@
     const TOKEN_URL = 'https://accounts.spotify.com/api/token';
     const API_BASE_URL = 'https://api.spotify.com/v1';
 
-    // --- 2. ADDED 'streaming' SCOPE ---
     const SCOPES = [
-      'streaming', // Required for Web Playback SDK
+      'streaming', 
       'user-modify-playback-state',
       'user-read-playback-state',
       'user-read-currently-playing',
@@ -121,9 +120,9 @@
     const $clock = document.getElementById('clock');
 
     // --- State ---
-    let player = null; // Will hold the SDK player instance
-    let deviceId = null; // Will hold the new device_id
-    let currentVolume = 0.5; // SDK uses 0.0 to 1.0
+    let player = null; 
+    let deviceId = null; 
+    let currentVolume = 0.5;
 
     // --- Helpers ---
     function setStatus(s) { $status.textContent = s; }
@@ -147,7 +146,7 @@
       return base64UrlEncode(hashed);
     }
 
-    // --- Authentication Flow (Same as before) ---
+    // --- Authentication Flow ---
     async function startAuth() {
       const state = randomString(16);
       const codeVerifier = randomString(64);
@@ -247,7 +246,7 @@
       }
     }
 
-    // --- API Wrapper (Still needed for 'playLikedSongs') ---
+    // --- API Wrapper ---
     async function api(path, method = 'GET', body = null) {
       const token = await refreshTokenIfNeeded();
       if (!token) throw new Error('Not signed in.');
@@ -271,17 +270,30 @@
       return text ? JSON.parse(text) : null;
     }
 
-    // --- 3. NEW: WEB PLAYBACK SDK INITIALIZATION ---
-    
+    // --- NEW: Function to transfer playback ---
+    async function transferPlayback(newDeviceId) {
+      try {
+        setStatus('Transferring playback to browser...');
+        // This is the Web API call to change active device
+        await api('/me/player', 'PUT', { 
+          device_ids: [newDeviceId],
+          play: false // Set to false to just transfer, not auto-play
+        });
+        setStatus('Soundboard is active.');
+      } catch (e) {
+        // This can fail if the user is in a private session
+        setStatus(`Could not transfer: ${e.message}`);
+        console.warn("Could not auto-transfer playback. User may need to do it manually.");
+      }
+    }
+
+    // --- Web Playback SDK Initialization ---
     function initializeSpotifyPlayer(token) {
-      // This is called by the SDK's script tag
       window.onSpotifyWebPlaybackSDKReady = () => {
         setStatus('Web Playback SDK ready.');
         player = new Spotify.Player({
           name: 'Valo-Valox Soundboard',
           getOAuthToken: cb => { 
-            // This function is vital. It gives the SDK the token.
-            // We refresh it *just in case* it's expired.
             refreshTokenIfNeeded().then(freshToken => {
               cb(freshToken);
             });
@@ -292,8 +304,12 @@
         // --- Player Event Listeners ---
         player.addListener('ready', ({ device_id }) => {
           console.log('Player ready with Device ID', device_id);
-          setStatus('Soundboard is ready.');
           deviceId = device_id; // Store the new device_id
+          
+          // --- THIS IS THE NEW, CRITICAL STEP ---
+          // Automatically make this browser the active player
+          transferPlayback(device_id);
+          // --- END NEW STEP ---
         });
 
         player.addListener('not_ready', ({ device_id }) => {
@@ -304,10 +320,10 @@
 
         player.addListener('player_state_changed', (state) => {
           if (!state) {
-            updateUI(null); // No track
+            updateUI(null);
             return;
           }
-          // The SDK state is different from the API state. We adapt it.
+          // This event now controls the UI
           updateUI(state);
         });
 
@@ -315,7 +331,6 @@
         player.addListener('authentication_error', ({ message }) => { setStatus(`Auth Error: ${message}`); localStorage.clear(); });
         player.addListener('account_error', ({ message }) => { setStatus(`Account Error: ${message}`); });
 
-        // Connect the player!
         player.connect().then(success => {
           if (success) {
             console.log('The Web Playback SDK successfully connected!');
@@ -324,12 +339,7 @@
       };
     }
     
-    // --- 4. MODIFIED: Playback Control Functions ---
-
-    /**
-     * Updates the UI (Play/Pause icon and track info)
-     * This now accepts the SDK's state object
-     */
+    // --- Playback Control Functions ---
     function updateUI(state) {
       if (!state) {
         $iconPlay.style.display = 'block';
@@ -339,7 +349,6 @@
         return;
       }
 
-      // Update Play/Pause Icon based on 'paused' boolean
       if (state.paused) {
         $iconPlay.style.display = 'block';
         $iconPause.style.display = 'none';
@@ -348,10 +357,9 @@
         $iconPause.style.display = 'block';
       }
 
-      // Update Track Info
       const currentTrack = state.track_window.current_track;
       if (currentTrack) {
-        const artists = currentTrack.artists.map(a => a.name).join(', ');
+        const artists = currentTrack.artists..map(a => a.name).join(', ');
         $trackName.textContent = currentTrack.name;
         $trackArtist.textContent = artists;
       } else {
@@ -360,14 +368,10 @@
       }
     }
 
-    // --- 5. MODIFIED: Playback Functions now use the SDK Player ---
-
+    // --- SDK Player Functions ---
     async function togglePlayPause() {
       if (!player) return;
-      // This is an SDK command, not a Web API call.
-      // It's simpler and controls *this* player.
       await player.togglePlay();
-      setStatus(null); // Status will update via 'player_state_changed'
     }
     
     async function next() {
@@ -382,12 +386,12 @@
     
     async function setVolume(v) {
       if (!player) return;
-      // SDK uses 0.0 to 1.0, not 0-100
       currentVolume = Math.max(0, Math.min(1, v));
       await player.setVolume(currentVolume);
       setStatus(`Volume ${Math.round(currentVolume * 100)}%`);
     }
     
+    // --- Web API Function (for playing specific context) ---
     async function playLikedSongs() {
       if (!deviceId) {
         setStatus('Player not ready yet.');
@@ -403,18 +407,16 @@
         const contextUri = `spotify:user:${userProfile.id}:collection`;
         
         setStatus('Playing Liked Songs...');
-        // This *still* uses the Web API, but we give it our
-        // new deviceId to tell it *where* to play.
         await api('/me/player/play', 'PUT', { 
           context_uri: contextUri,
-          device_id: deviceId // <-- This is the magic part
+          device_id: deviceId // Target *this* browser
         });
       } catch (e) {
         setStatus(e.message);
       }
     }
     
-    // --- Clock & Fullscreen (Same as before) ---
+    // --- Clock & Fullscreen ---
     function updateClock() {
       const now = new Date();
       const hours = String(now.getHours()).padStart(2, '0');
@@ -438,7 +440,7 @@
     document.getElementById('btnAuth').addEventListener('click', startAuth);
 
     document.getElementById('btnSignOut').addEventListener('click', () => {
-      if (player) player.disconnect(); // Disconnect the player
+      if (player) player.disconnect(); 
       player = null;
       deviceId = null;
       localStorage.clear();
@@ -449,7 +451,7 @@
     function addApiListener(id, action) {
       document.getElementById(id).addEventListener('click', () => {
         if (!player || !deviceId) {
-          setStatus('Please sign in and wait for player.');
+          setStatus('Player not ready. Please wait.');
           return;
         }
         action().catch(e => setStatus(e.message));
@@ -462,7 +464,6 @@
     addApiListener('playLiked', playLikedSongs);
     $clock.addEventListener('click', toggleFullscreen);
 
-    // --- 6. MODIFIED: Volume Listeners use new setVolume ---
     document.getElementById('volUp').addEventListener('click', () => {
       if (!player) return;
       setVolume(currentVolume + 0.1).catch(e => setStatus(e.message));
@@ -473,7 +474,7 @@
       setVolume(currentVolume - 0.1).catch(e => setStatus(e.message));
     });
     
-    // --- 7. MODIFIED: Page Load ---
+    // --- Page Load ---
     window.addEventListener('load', async () => {
       updateClock();
       setInterval(updateClock, 1000);
@@ -486,9 +487,7 @@
       
       if (token) {
         setStatus('Signed in. Loading player...');
-        // --- This is the new, crucial step ---
         initializeSpotifyPlayer(token);
-        // We no longer need getPlaybackState or setInterval
       } else {
         setStatus('Not signed in');
       }
