@@ -1,891 +1,469 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>A E T H E R | Deep Space Learning</title>
-<style>
-:root {
-    --space-dark: #050508;
-    --space-navy: #0b0f19;
-    --nebula-violet: #6d28d9;
-    --nebula-glow: #8b5cf6;
-    --star-amber: #f59e0b;
-    --starlight: #e2e8f0;
-    --glass-bg: rgba(15, 23, 42, 0.65);
-    --glass-border: rgba(255, 255, 255, 0.08);
-    --ui-font: 'Inter', system-ui, -apple-system, sans-serif;
-    --header-font: 'Orbitron', 'Segoe UI', sans-serif;
-    --ease-elastic: cubic-bezier(0.34, 1.56, 0.64, 1);
-    --ease-orbit: cubic-bezier(0.4, 0.0, 0.2, 1);
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sonic Laboratory | Real-time Audio DSP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+        
+        body {
+            font-family: 'Space Mono', monospace;
+            background-color: #0f172a;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
 
-@font-face {
-    font-family: 'OpenDyslexic';
-    src: local('Arial'); 
-}
+        .knob-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
 
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        /* Custom Range Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
 
-body {
-    margin: 0;
-    background-color: var(--space-dark);
-    color: var(--starlight);
-    font-family: var(--ui-font);
-    overflow: hidden;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    user-select: none;
-}
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #22d3ee;
+            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
+            transition: transform 0.1s;
+        }
 
-body.dyslexic-mode { font-family: 'OpenDyslexic', sans-serif; }
-body.high-contrast { --glass-bg: #000000; --starlight: #ffffff; --nebula-violet: #ff00ff; }
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
 
-#canvas-layer {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 0;
-    pointer-events: none;
-}
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #334155;
+            border-radius: 2px;
+        }
 
-#app-shell {
-    position: relative;
-    z-index: 10;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    background: radial-gradient(circle at 50% 120%, #1e1b4b 0%, transparent 60%);
-}
+        input[type=range]:focus {
+            outline: none;
+        }
 
-header {
-    padding: 1rem 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--glass-border);
-}
+        .neon-text {
+            text-shadow: 0 0 5px rgba(34, 211, 238, 0.7);
+        }
+        
+        .visualizer-container {
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid #334155;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
 
-.brand {
-    font-family: var(--header-font);
-    font-weight: 800;
-    letter-spacing: 2px;
-    font-size: 1.2rem;
-    background: linear-gradient(to right, #c4b5fd, #fff);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    text-transform: uppercase;
-}
+        .drop-zone {
+            border: 2px dashed #475569;
+            transition: all 0.3s ease;
+        }
+        
+        .drop-zone.dragover {
+            border-color: #22d3ee;
+            background: rgba(34, 211, 238, 0.1);
+        }
 
-.stats-pod {
-    display: flex;
-    gap: 1rem;
-    font-size: 0.8rem;
-    font-weight: 600;
-}
+        .btn-glow:hover {
+            box-shadow: 0 0 15px rgba(34, 211, 238, 0.4);
+        }
 
-.stat-item {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    background: rgba(255,255,255,0.05);
-    padding: 0.3rem 0.8rem;
-    border-radius: 20px;
-    border: 1px solid var(--glass-border);
-}
+        /* Loading Spinner */
+        .loader {
+            border: 3px solid #1e293b;
+            border-top: 3px solid #22d3ee;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
 
-.stat-icon { color: var(--star-amber); }
-
-main {
-    flex: 1;
-    position: relative;
-    overflow: hidden;
-    perspective: 1000px;
-}
-
-.view-container {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    padding: 1.5rem;
-    overflow-y: auto;
-    opacity: 0;
-    transform: scale(0.95) translateY(20px);
-    transition: opacity 0.4s var(--ease-orbit), transform 0.4s var(--ease-orbit);
-    pointer-events: none;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.view-container.active {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-    pointer-events: all;
-    z-index: 5;
-}
-
-.card-stack {
-    width: 100%;
-    max-width: 500px;
-    aspect-ratio: 3/4;
-    position: relative;
-    margin: 2rem auto;
-}
-
-.flashcard {
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    transform-style: preserve-3d;
-    transition: transform 0.6s var(--ease-elastic);
-    cursor: pointer;
-}
-
-.flashcard.flipped { transform: rotateY(180deg); }
-
-.card-face {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    backface-visibility: hidden;
-    border-radius: 24px;
-    background: var(--glass-bg);
-    backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 2rem;
-    text-align: center;
-    box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5);
-}
-
-.card-back { transform: rotateY(180deg); background: rgba(20, 20, 35, 0.85); border: 1px solid var(--nebula-glow); }
-
-.card-content { font-size: 1.5rem; line-height: 1.6; }
-.card-label { 
-    position: absolute; 
-    top: 1.5rem; 
-    left: 1.5rem; 
-    font-size: 0.7rem; 
-    text-transform: uppercase; 
-    letter-spacing: 2px; 
-    color: var(--nebula-glow); 
-    opacity: 0.8;
-}
-
-.srs-controls {
-    position: absolute;
-    bottom: 2rem;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    opacity: 0;
-    transform: translateY(20px);
-    transition: 0.3s;
-    pointer-events: none;
-}
-
-.flashcard.flipped .srs-controls { opacity: 1; transform: translateY(0); pointer-events: all; }
-
-.btn {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid var(--glass-border);
-    color: white;
-    padding: 0.8rem 1.5rem;
-    border-radius: 12px;
-    cursor: pointer;
-    font-family: var(--ui-font);
-    font-weight: 600;
-    transition: all 0.2s;
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.btn:active { transform: scale(0.95); }
-.btn-primary { background: var(--nebula-violet); border-color: var(--nebula-glow); box-shadow: 0 0 15px rgba(109, 40, 217, 0.4); }
-.btn-fail { border-color: #ef4444; color: #ef4444; }
-.btn-hard { border-color: #f59e0b; color: #f59e0b; }
-.btn-good { border-color: #3b82f6; color: #3b82f6; }
-.btn-easy { border-color: #10b981; color: #10b981; }
-
-.bottom-nav {
-    display: flex;
-    justify-content: space-around;
-    padding: 1rem;
-    background: rgba(5, 5, 8, 0.8);
-    backdrop-filter: blur(20px);
-    border-top: 1px solid var(--glass-border);
-}
-
-.nav-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.4rem;
-    color: rgba(255,255,255,0.4);
-    font-size: 0.7rem;
-    cursor: pointer;
-    transition: 0.3s;
-}
-
-.nav-item.active { color: var(--nebula-glow); text-shadow: 0 0 10px var(--nebula-violet); }
-.nav-icon { width: 24px; height: 24px; fill: currentColor; }
-
-.fab {
-    position: absolute;
-    bottom: 90px;
-    right: 20px;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--nebula-violet), #4c1d95);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 20px rgba(109, 40, 217, 0.5);
-    cursor: pointer;
-    transition: transform 0.3s var(--ease-elastic);
-    z-index: 20;
-}
-
-.fab:hover { transform: scale(1.1) rotate(90deg); }
-.fab::after { content: '+'; font-size: 2rem; color: white; }
-
-/* Dashboard Specifics */
-.mission-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 1rem;
-    width: 100%;
-    max-width: 800px;
-}
-
-.mission-card {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: 16px;
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-    transition: 0.3s;
-}
-
-.mission-card:hover { border-color: var(--nebula-glow); transform: translateY(-5px); }
-
-.progress-ring {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    background: conic-gradient(var(--nebula-violet) var(--progress), rgba(255,255,255,0.1) 0deg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-}
-
-.progress-ring::before {
-    content: '';
-    position: absolute;
-    width: 70px;
-    height: 70px;
-    background: var(--space-navy);
-    border-radius: 50%;
-}
-
-.progress-val { position: relative; z-index: 2; font-weight: bold; }
-
-/* Game Mode */
-.game-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0.8rem;
-    width: 100%;
-    max-width: 600px;
-}
-
-.planet-card {
-    aspect-ratio: 1;
-    background: var(--glass-bg);
-    border-radius: 50%;
-    border: 2px solid var(--glass-border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.4s var(--ease-elastic);
-    font-size: 1.5rem;
-    position: relative;
-    overflow: hidden;
-}
-
-.planet-card.matched { border-color: var(--star-amber); box-shadow: 0 0 20px var(--star-amber); transform: scale(0.9); opacity: 0.6; }
-.planet-card.selected { border-color: var(--nebula-glow); box-shadow: 0 0 15px var(--nebula-glow); transform: scale(1.1); background: rgba(109, 40, 217, 0.3); }
-
-/* Modal */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.8);
-    backdrop-filter: blur(8px);
-    z-index: 100;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    opacity: 0;
-    pointer-events: none;
-    transition: 0.3s;
-}
-
-.modal-overlay.open { opacity: 1; pointer-events: all; }
-
-.modal {
-    background: #1e1b4b;
-    width: 90%;
-    max-width: 500px;
-    padding: 2rem;
-    border-radius: 24px;
-    border: 1px solid var(--nebula-glow);
-    box-shadow: 0 0 50px rgba(109, 40, 217, 0.3);
-    transform: translateY(50px);
-    transition: 0.4s var(--ease-elastic);
-}
-
-.modal-overlay.open .modal { transform: translateY(0); }
-
-.input-group { margin-bottom: 1.5rem; }
-.input-group label { display: block; margin-bottom: 0.5rem; color: #a5b4fc; font-size: 0.8rem; letter-spacing: 1px; }
-.input-field {
-    width: 100%;
-    background: rgba(0,0,0,0.3);
-    border: 1px solid var(--glass-border);
-    padding: 1rem;
-    border-radius: 12px;
-    color: white;
-    font-family: var(--ui-font);
-    font-size: 1rem;
-}
-.input-field:focus { outline: none; border-color: var(--nebula-glow); }
-
-.toggle-row { display: flex; justify-content: space-between; margin-bottom: 1rem; align-items: center; }
-
-/* Micro-interactions */
-@keyframes particle-explode {
-    0% { transform: translate(0,0) scale(1); opacity: 1; }
-    100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
-}
-
-.particle {
-    position: absolute;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 999;
-}
-
-</style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
 
-<canvas id="canvas-layer"></canvas>
-
-<div id="app-shell">
-    <header>
-        <div class="brand">Aether</div>
-        <div class="stats-pod">
-            <div class="stat-item"><span class="stat-icon">★</span> <span id="xp-display">0</span> XP</div>
-            <div class="stat-item"><span class="stat-icon">🔥</span> <span id="streak-display">1</span></div>
-        </div>
-    </header>
-
-    <main>
-        <!-- DASHBOARD VIEW -->
-        <div id="view-dashboard" class="view-container active">
-            <h2 style="font-family: var(--header-font); width: 100%; max-width: 800px; margin-bottom: 1.5rem;">Mission Control</h2>
-            <div class="mission-grid">
-                <div class="mission-card" onclick="app.router.navigate('study')">
-                    <div class="progress-ring" style="--progress: 75%">
-                        <div class="progress-val">Daily</div>
-                    </div>
-                    <h3>Core Systems</h3>
-                    <p style="font-size: 0.8rem; opacity: 0.7">12 Reviews Pending</p>
-                </div>
-                <div class="mission-card" onclick="app.router.navigate('games')">
-                    <div class="progress-ring" style="--progress: 30%">
-                        <div class="progress-val">Sim</div>
-                    </div>
-                    <h3>Nebula Match</h3>
-                    <p style="font-size: 0.8rem; opacity: 0.7">Memory Calibration</p>
-                </div>
+    <!-- Main Interface -->
+    <div class="w-full max-w-4xl bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden relative">
+        
+        <!-- Header -->
+        <div class="p-6 border-b border-slate-700 flex justify-between items-center bg-slate-800">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-wave-square text-cyan-400 text-2xl"></i>
+                <h1 class="text-2xl font-bold tracking-tighter neon-text">SONIC<span class="text-cyan-400">LAB</span></h1>
             </div>
+            <div class="text-xs text-slate-400">DSP ENGINE: TONE.JS</div>
+        </div>
+
+        <!-- Visualizer Area -->
+        <div class="relative h-48 w-full bg-black visualizer-container flex items-center justify-center">
+            <canvas id="waveformCanvas" class="w-full h-full absolute top-0 left-0"></canvas>
             
-            <div style="margin-top: 3rem; width: 100%; max-width: 800px;">
-                <h3 style="opacity: 0.7; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px;">Recent Signals</h3>
-                <div id="activity-log" style="margin-top: 1rem; border-left: 2px solid var(--glass-border); padding-left: 1rem;">
-                    <!-- Activity items injected here -->
-                </div>
+            <!-- File Upload Overlay -->
+            <div id="dropZone" class="drop-zone absolute inset-4 rounded-lg flex flex-col items-center justify-center cursor-pointer z-10 bg-slate-900/80 hover:bg-slate-900/90">
+                <input type="file" id="fileInput" accept="audio/*" class="hidden">
+                <i class="fas fa-cloud-upload-alt text-4xl text-slate-400 mb-2"></i>
+                <p class="text-sm text-slate-300 font-bold">DROP AUDIO FILE HERE</p>
+                <p class="text-xs text-slate-500 mt-1">MP3, WAV, OGG supported</p>
+                <div id="loader" class="loader mt-3"></div>
+                <p id="fileName" class="text-cyan-400 text-sm mt-2 hidden font-bold"></p>
             </div>
         </div>
 
-        <!-- STUDY VIEW -->
-        <div id="view-study" class="view-container">
-            <div class="card-stack">
-                <div class="flashcard" id="current-card">
-                    <div class="card-face card-front">
-                        <div class="card-label">Query</div>
-                        <div class="card-content" id="card-front-text">Initiating Sequence...</div>
+        <!-- Controls Area -->
+        <div class="p-8 grid grid-cols-1 md:grid-cols-2 gap-8 bg-slate-900">
+            
+            <!-- Playback Controls -->
+            <div class="col-span-1 md:col-span-2 flex justify-center gap-4 mb-4">
+                <button id="btnPlay" class="btn-glow w-16 h-16 rounded-full bg-cyan-500 text-slate-900 flex items-center justify-center text-xl hover:bg-cyan-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <i class="fas fa-play pl-1"></i>
+                </button>
+                <button id="btnStop" class="btn-glow w-16 h-16 rounded-full bg-slate-700 text-white flex items-center justify-center text-xl hover:bg-slate-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <i class="fas fa-stop"></i>
+                </button>
+            </div>
+
+            <!-- Pitch Control -->
+            <div class="bg-slate-800 p-6 rounded-lg border border-slate-700">
+                <div class="flex justify-between mb-4">
+                    <label class="text-cyan-400 text-sm font-bold uppercase"><i class="fas fa-music mr-2"></i>Pitch Shift</label>
+                    <span id="pitchVal" class="text-white text-sm font-mono">0 st</span>
+                </div>
+                <input type="range" id="pitchSlider" min="-12" max="12" step="0.5" value="0">
+                <div class="flex justify-between mt-2 text-xs text-slate-500">
+                    <span>-12</span>
+                    <span>0</span>
+                    <span>+12</span>
+                </div>
+                <p class="text-xs text-slate-500 mt-4">Changes key without affecting tempo.</p>
+            </div>
+
+            <!-- Speed Control -->
+            <div class="bg-slate-800 p-6 rounded-lg border border-slate-700">
+                <div class="flex justify-between mb-4">
+                    <label class="text-purple-400 text-sm font-bold uppercase"><i class="fas fa-tachometer-alt mr-2"></i>Playback Rate</label>
+                    <span id="speedVal" class="text-white text-sm font-mono">1.0x</span>
+                </div>
+                <input type="range" id="speedSlider" min="0.5" max="2.0" step="0.05" value="1.0">
+                <div class="flex justify-between mt-2 text-xs text-slate-500">
+                    <span>0.5x</span>
+                    <span>1.0x</span>
+                    <span>2.0x</span>
+                </div>
+                 <p class="text-xs text-slate-500 mt-4">Changes tempo. (Preserves pitch if Pitch Shift active)</p>
+            </div>
+
+            <!-- Autonomous Mode -->
+            <div class="col-span-1 md:col-span-2 bg-slate-800 p-6 rounded-lg border border-slate-700 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-500">
+                        <i class="fas fa-robot"></i>
                     </div>
-                    <div class="card-face card-back">
-                        <div class="card-label">Data</div>
-                        <div class="card-content" id="card-back-text">...</div>
-                        <div class="srs-controls">
-                            <button class="btn btn-fail" onclick="app.srs.answer(1)">Reset</button>
-                            <button class="btn btn-hard" onclick="app.srs.answer(2)">Hard</button>
-                            <button class="btn btn-good" onclick="app.srs.answer(3)">Good</button>
-                            <button class="btn btn-easy" onclick="app.srs.answer(4)">Easy</button>
-                        </div>
+                    <div>
+                        <h3 class="text-white font-bold">Autonomous Drift</h3>
+                        <p class="text-xs text-slate-400">AI Logic gently warps pitch & speed over time.</p>
                     </div>
                 </div>
-            </div>
-            <div style="margin-top: 1rem; opacity: 0.5; font-size: 0.8rem;">Tap card to reveal</div>
-        </div>
-
-        <!-- GAME VIEW -->
-        <div id="view-games" class="view-container">
-            <div style="display: flex; justify-content: space-between; width: 100%; max-width: 600px; margin-bottom: 1rem;">
-                <h2>Nebula Match</h2>
-                <button class="btn" onclick="app.game.reset()">Reset Gravity</button>
-            </div>
-            <div class="game-grid" id="game-board"></div>
-        </div>
-
-        <!-- SETTINGS VIEW -->
-        <div id="view-settings" class="view-container">
-            <h2 style="font-family: var(--header-font);">Ship Configuration</h2>
-            <div style="background: var(--glass-bg); padding: 1.5rem; border-radius: 16px; width: 100%; max-width: 600px; border: 1px solid var(--glass-border);">
-                <div class="toggle-row">
-                    <span>High Contrast HUD</span>
-                    <button class="btn" id="toggle-contrast" onclick="app.settings.toggle('contrast')">OFF</button>
-                </div>
-                <div class="toggle-row">
-                    <span>Dyslexic Font Support</span>
-                    <button class="btn" id="toggle-font" onclick="app.settings.toggle('dyslexic')">OFF</button>
-                </div>
-                <div class="toggle-row">
-                    <span>Reduce Particle Motion</span>
-                    <button class="btn" id="toggle-motion" onclick="app.settings.toggle('motion')">OFF</button>
-                </div>
-                <div class="toggle-row">
-                    <span>Export Neural Data</span>
-                    <button class="btn" onclick="app.data.export()">JSON</button>
-                </div>
-                <div style="margin-top: 2rem; border-top: 1px solid var(--glass-border); padding-top: 1rem;">
-                    <button class="btn btn-fail" onclick="localStorage.clear(); location.reload()">Factory Reset</button>
+                
+                <div class="flex items-center gap-4">
+                     <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="driftToggle" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-pink-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-500"></div>
+                    </label>
                 </div>
             </div>
-        </div>
-    </main>
 
-    <nav class="bottom-nav">
-        <div class="nav-item active" onclick="app.router.navigate('dashboard')" id="nav-dashboard">
-            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
-            <span>Orbit</span>
         </div>
-        <div class="nav-item" onclick="app.router.navigate('study')" id="nav-study">
-            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H9v2H7.5V7H10c.83 0 1.5.67 1.5 1.5v1zm5 2c0 .83-.67 1.5-1.5 1.5h-2.5V7H15c.83 0 1.5.67 1.5 1.5v3zm4-3H19v1h1.5V11H19v2h-1.5V7h3v1.5zM9 9.5h1v-1H9v1zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm10 5.5h1v-3h-1v3z"/></svg>
-            <span>Study</span>
-        </div>
-        <div class="nav-item" onclick="app.router.navigate('games')" id="nav-games">
-            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M21.58 16.09l-1.09-7.66C20.21 6.46 18.52 5 16.53 5H7.47C5.48 5 3.79 6.46 3.51 8.43l-1.09 7.66C2.2 18.19 3.91 20 6 20h12c2.09 0 3.8-1.81 3.58-3.91zM5.5 13c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm13 0c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
-            <span>Sims</span>
-        </div>
-        <div class="nav-item" onclick="app.router.navigate('settings')" id="nav-settings">
-            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L3.16 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.58 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
-            <span>Config</span>
-        </div>
-    </nav>
 
-    <div class="fab" onclick="app.ui.openModal()"></div>
-</div>
-
-<div class="modal-overlay" id="add-card-modal">
-    <div class="modal">
-        <h3 style="margin-top:0">New Data Entry</h3>
-        <div class="input-group">
-            <label>FRONT</label>
-            <input type="text" class="input-field" id="new-front" placeholder="Concept or Term">
-        </div>
-        <div class="input-group">
-            <label>BACK</label>
-            <input type="text" class="input-field" id="new-back" placeholder="Definition or Answer">
-        </div>
-        <div style="display:flex; gap:1rem; justify-content: flex-end;">
-            <button class="btn" onclick="app.ui.closeModal()">Cancel</button>
-            <button class="btn btn-primary" onclick="app.srs.addCard()">Upload</button>
+        <!-- Footer Info -->
+        <div class="bg-slate-950 p-4 text-center text-xs text-slate-600 border-t border-slate-800">
+            Note: Due to Spotify DRM, this tool works with uploaded audio files only.
         </div>
     </div>
-</div>
 
-<script>
-const Utils = {
-    id: () => Math.random().toString(36).substr(2, 9),
-    shuffle: (arr) => arr.sort(() => Math.random() - 0.5),
-    playTone: (freq, type, duration) => {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = type;
-        osc.frequency.setValueAtTime(freq, ctx.currentTime);
-        gain.gain.setValueAtTime(0.1, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + duration);
-    }
-};
+    <script>
+        // --- State Management ---
+        let player = null;
+        let pitchShift = null;
+        let waveform = null;
+        let isLoaded = false;
+        let isPlaying = false;
+        let driftLFO = null;
+        let driftInterval = null;
 
-const Bg = {
-    canvas: document.getElementById('canvas-layer'),
-    ctx: null,
-    stars: [],
-    init() {
-        this.ctx = this.canvas.getContext('2d');
-        this.resize();
-        window.addEventListener('resize', () => this.resize());
-        for(let i=0; i<150; i++) this.stars.push(this.createStar());
-        this.animate();
-    },
-    resize() {
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight;
-    },
-    createStar() {
-        return {
-            x: Math.random() * this.canvas.width,
-            y: Math.random() * this.canvas.height,
-            size: Math.random() * 2,
-            speed: Math.random() * 0.5 + 0.1,
-            bright: Math.random()
-        };
-    },
-    animate() {
-        if(!app.state.settings.motion) {
-            requestAnimationFrame(() => this.animate());
-            return; 
+        // UI Elements
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const loader = document.getElementById('loader');
+        const fileNameDisplay = document.getElementById('fileName');
+        const btnPlay = document.getElementById('btnPlay');
+        const btnStop = document.getElementById('btnStop');
+        const pitchSlider = document.getElementById('pitchSlider');
+        const pitchVal = document.getElementById('pitchVal');
+        const speedSlider = document.getElementById('speedSlider');
+        const speedVal = document.getElementById('speedVal');
+        const driftToggle = document.getElementById('driftToggle');
+        const canvas = document.getElementById('waveformCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // --- Initialization ---
+        async function initAudio() {
+            await Tone.start();
+            console.log("Audio Context Started");
         }
-        this.ctx.fillStyle = app.state.settings.contrast ? '#000' : '#050508';
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        function setupAudioChain(buffer) {
+            // Dispose previous instances to free memory
+            if (player) player.dispose();
+            if (pitchShift) pitchShift.dispose();
+            if (waveform) waveform.dispose();
+
+            // Create PitchShift Effect (for changing key without speed, or independent manipulation)
+            // Note: Tone.PitchShift uses granular synthesis. 
+            // WindowSize: small = robotic, large = smoother but smeary.
+            pitchShift = new Tone.PitchShift({
+                pitch: 0,
+                windowSize: 0.1, 
+                delayTime: 0,
+                feedback: 0
+            }).toDestination();
+
+            // Create Waveform Visualizer
+            waveform = new Tone.Waveform(1024);
+
+            // Create Player
+            player = new Tone.Player(buffer).connect(pitchShift);
+            player.loop = true;
+            
+            // Connect visualizer to master output
+            Tone.Destination.connect(waveform);
+
+            // Enable Controls
+            btnPlay.disabled = false;
+            btnStop.disabled = false;
+            isLoaded = true;
+            
+            // Reset Sliders
+            pitchSlider.value = 0;
+            speedSlider.value = 1;
+            updateDisplay();
+        }
+
+        // --- File Handling ---
+        dropZone.addEventListener('click', () => fileInput.click());
         
-        this.stars.forEach(star => {
-            this.ctx.fillStyle = `rgba(255, 255, 255, ${star.bright})`;
-            this.ctx.beginPath();
-            this.ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-            this.ctx.fill();
-            star.y -= star.speed;
-            if(star.y < 0) {
-                star.y = this.canvas.height;
-                star.x = Math.random() * this.canvas.width;
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            handleFile(file);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            handleFile(file);
+        });
+
+        async function handleFile(file) {
+            if (!file || !file.type.startsWith('audio/')) return;
+
+            // UI Update
+            loader.style.display = 'block';
+            fileNameDisplay.classList.add('hidden');
+            document.querySelector('.fa-cloud-upload-alt').classList.add('hidden');
+            
+            // Initialize Tone Context on first user interaction
+            await initAudio();
+
+            const url = URL.createObjectURL(file);
+            const buffer = new Tone.Buffer(url, () => {
+                setupAudioChain(buffer);
+                
+                // UI Success
+                loader.style.display = 'none';
+                fileNameDisplay.textContent = file.name;
+                fileNameDisplay.classList.remove('hidden');
+                dropZone.classList.add('hidden'); // Hide dropzone to show visualizer
+                
+                // Auto play
+                togglePlay();
+            });
+        }
+
+        // --- Controls Logic ---
+        function togglePlay() {
+            if (!isLoaded) return;
+            
+            if (player.state === "started") {
+                player.stop();
+                btnPlay.innerHTML = '<i class="fas fa-play pl-1"></i>';
+                isPlaying = false;
+            } else {
+                player.start();
+                btnPlay.innerHTML = '<i class="fas fa-pause"></i>';
+                isPlaying = true;
+                drawVisualizer();
+            }
+        }
+
+        function stopAudio() {
+            if (!isLoaded) return;
+            player.stop();
+            btnPlay.innerHTML = '<i class="fas fa-play pl-1"></i>';
+            isPlaying = false;
+        }
+
+        btnPlay.addEventListener('click', togglePlay);
+        btnStop.addEventListener('click', stopAudio);
+
+        // Slider Listeners
+        pitchSlider.addEventListener('input', (e) => {
+            if (!pitchShift) return;
+            const val = parseFloat(e.target.value);
+            pitchShift.pitch = val;
+            pitchVal.innerText = (val > 0 ? '+' : '') + val + ' st';
+        });
+
+        speedSlider.addEventListener('input', (e) => {
+            if (!player) return;
+            const val = parseFloat(e.target.value);
+            player.playbackRate = val;
+            speedVal.innerText = val.toFixed(2) + 'x';
+        });
+
+        // --- Autonomous Drift Logic ---
+        driftToggle.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                startDrift();
+            } else {
+                stopDrift();
             }
         });
-        requestAnimationFrame(() => this.animate());
-    }
-};
 
-const app = {
-    state: {
-        cards: [],
-        stats: { xp: 0, streak: 1 },
-        settings: { contrast: false, dyslexic: false, motion: true }
-    },
-
-    init() {
-        const stored = localStorage.getItem('aether_data');
-        if (stored) {
-            this.state = JSON.parse(stored);
-        } else {
-            this.seedData();
-        }
-        this.applySettings();
-        Bg.init();
-        this.router.navigate('dashboard');
-        this.srs.load();
-        this.game.init();
-    },
-
-    save() {
-        localStorage.setItem('aether_data', JSON.stringify(this.state));
-        document.getElementById('xp-display').innerText = this.state.stats.xp;
-    },
-
-    seedData() {
-        this.state.cards = [
-            { id: Utils.id(), f: "Dark Matter", b: "Invisible mass halo", next: Date.now(), int: 1, ef: 2.5 },
-            { id: Utils.id(), f: "Event Horizon", b: "Point of no return", next: Date.now(), int: 1, ef: 2.5 },
-            { id: Utils.id(), f: "Nebula", b: "Giant cloud of dust and gas", next: Date.now(), int: 1, ef: 2.5 },
-            { id: Utils.id(), f: "Pulsar", b: "Rotating neutron star", next: Date.now(), int: 1, ef: 2.5 },
-            { id: Utils.id(), f: "Quasar", b: "Active galactic nucleus", next: Date.now(), int: 1, ef: 2.5 }
-        ];
-    },
-
-    applySettings() {
-        const body = document.body;
-        const s = this.state.settings;
-        s.dyslexic ? body.classList.add('dyslexic-mode') : body.classList.remove('dyslexic-mode');
-        s.contrast ? body.classList.add('high-contrast') : body.classList.remove('high-contrast');
-        
-        document.getElementById('toggle-contrast').innerText = s.contrast ? 'ON' : 'OFF';
-        document.getElementById('toggle-font').innerText = s.dyslexic ? 'ON' : 'OFF';
-        document.getElementById('toggle-motion').innerText = !s.motion ? 'ON' : 'OFF';
-    },
-
-    router: {
-        navigate(viewId) {
-            document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active'));
-            document.getElementById(`view-${viewId}`).classList.add('active');
+        function startDrift() {
+            // We use simple JS intervals to gently wiggle the sliders
+            // This simulates "Autonomy" by creating a lo-fi warped tape effect
+            let time = 0;
             
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            const navEl = document.getElementById(`nav-${viewId}`);
-            if(navEl) navEl.classList.add('active');
-            
-            if(viewId === 'study') app.srs.loadNext();
-        }
-    },
-
-    srs: {
-        current: null,
-        queue: [],
-        
-        load() {
-            const now = Date.now();
-            this.queue = app.state.cards.filter(c => c.next <= now).sort((a,b) => a.next - b.next);
-            document.querySelector('.mission-card p').innerText = `${this.queue.length} Reviews Pending`;
-        },
-
-        loadNext() {
-            this.load();
-            const cardEl = document.getElementById('current-card');
-            cardEl.classList.remove('flipped');
-            
-            if (this.queue.length === 0) {
-                document.getElementById('card-front-text').innerText = "Orbit Clear.";
-                document.getElementById('card-back-text').innerText = "All systems nominal. Check back later.";
-                this.current = null;
-                return;
-            }
-            
-            this.current = this.queue[0];
-            setTimeout(() => {
-                document.getElementById('card-front-text').innerText = this.current.f;
-                document.getElementById('card-back-text').innerText = this.current.b;
-            }, 200);
-        },
-
-        flip() {
-            if(!this.current) return;
-            document.getElementById('current-card').classList.add('flipped');
-            Utils.playTone(400, 'sine', 0.1);
-        },
-
-        answer(quality) {
-            if (!this.current) return;
-            
-            // Simplified SM-2 Algorithm
-            let c = this.current;
-            if (quality >= 3) {
-                c.int = c.int === 0 ? 1 : c.int === 1 ? 6 : Math.round(c.int * c.ef);
-                app.state.stats.xp += 10 * (quality - 2);
-                app.ui.spawnParticles(window.innerWidth/2, window.innerHeight - 100, quality === 4 ? '#10b981' : '#3b82f6');
-                Utils.playTone(600 + (quality*100), 'triangle', 0.2);
-            } else {
-                c.int = 1;
-                c.ef = Math.max(1.3, c.ef - 0.2);
-                Utils.playTone(200, 'sawtooth', 0.3);
-            }
-            
-            c.ef = c.ef + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
-            if (c.ef < 1.3) c.ef = 1.3;
-            
-            c.next = Date.now() + (c.int * 24 * 60 * 60 * 1000);
-            
-            app.save();
-            this.loadNext();
-        },
-        
-        addCard() {
-            const f = document.getElementById('new-front').value;
-            const b = document.getElementById('new-back').value;
-            if(f && b) {
-                app.state.cards.push({ id: Utils.id(), f, b, next: Date.now(), int: 0, ef: 2.5 });
-                app.save();
-                app.ui.closeModal();
-                document.getElementById('new-front').value = '';
-                document.getElementById('new-back').value = '';
-                this.load();
-                alert('Data Uploaded');
-            }
-        }
-    },
-
-    game: {
-        items: [],
-        first: null,
-        locked: false,
-        
-        init() {
-            this.reset();
-        },
-        
-        reset() {
-            const board = document.getElementById('game-board');
-            board.innerHTML = '';
-            // Pick 4 cards
-            const subset = Utils.shuffle([...app.state.cards]).slice(0, 4);
-            // Create pairs
-            let gridItems = [];
-            subset.forEach(c => {
-                gridItems.push({ id: c.id, content: c.f, type: 'q' });
-                gridItems.push({ id: c.id, content: c.b, type: 'a' });
-            });
-            
-            Utils.shuffle(gridItems).forEach(item => {
-                const el = document.createElement('div');
-                el.className = 'planet-card';
-                el.innerText = item.content.length > 10 ? '...' : item.content; // Simplify for visual
-                el.title = item.content;
+            driftInterval = setInterval(() => {
+                time += 0.05;
                 
-                // Assign visual style based on hash
-                const hue = (item.content.length * 50) % 360;
-                el.style.background = `radial-gradient(circle at 30% 30%, hsla(${hue}, 70%, 60%, 0.8), hsla(${hue}, 80%, 20%, 0.9))`;
+                // Drifting Pitch (Sinewave modulation)
+                // Wiggles between -0.5 and +0.5 semitones slowly
+                const driftPitch = Math.sin(time) * 0.5;
+                const currentPitchBase = parseFloat(pitchSlider.value);
                 
-                el.onclick = () => this.handleTap(el, item);
-                board.appendChild(el);
-            });
-        },
-        
-        handleTap(el, item) {
-            if(this.locked || el.classList.contains('matched') || el === this.first?.el) return;
+                // Drifting Speed
+                // Wiggles slightly around the current speed setting
+                const driftSpeed = Math.sin(time * 0.7) * 0.05; 
+                const currentSpeedBase = parseFloat(speedSlider.value);
+
+                if(pitchShift) pitchShift.pitch = currentPitchBase + driftPitch;
+                if(player) player.playbackRate = Math.max(0.1, currentSpeedBase + driftSpeed);
+
+                // Update UI visually to show "Ghost" movement? 
+                // No, let's keep UI static so user knows their base setting, 
+                // but update the value text to show it's alive.
+                pitchVal.style.color = "#ec4899"; // Pink to show active AI
+                speedVal.style.color = "#ec4899";
+
+            }, 50); // Update every 50ms
+        }
+
+        function stopDrift() {
+            clearInterval(driftInterval);
             
-            el.classList.add('selected');
-            Utils.playTone(500, 'sine', 0.1);
+            // Reset to slider values
+            if(pitchShift) pitchShift.pitch = parseFloat(pitchSlider.value);
+            if(player) player.playbackRate = parseFloat(speedSlider.value);
             
-            if(!this.first) {
-                this.first = { el, item };
-            } else {
-                this.locked = true;
-                if(this.first.item.id === item.id) {
-                    // Match
-                    setTimeout(() => {
-                        this.first.el.classList.add('matched');
-                        el.classList.add('matched');
-                        this.first.el.classList.remove('selected');
-                        el.classList.remove('selected');
-                        app.ui.spawnParticles(el.getBoundingClientRect().left + 40, el.getBoundingClientRect().top + 40, '#f59e0b');
-                        Utils.playTone(800, 'sine', 0.3);
-                        this.first = null;
-                        this.locked = false;
-                        app.state.stats.xp += 5;
-                        app.save();
-                    }, 500);
+            // Reset Colors
+            pitchVal.style.color = "white";
+            speedVal.style.color = "white";
+        }
+
+        function updateDisplay() {
+            pitchVal.innerText = pitchSlider.value + ' st';
+            speedVal.innerText = parseFloat(speedSlider.value).toFixed(2) + 'x';
+        }
+
+
+        // --- Visualizer ---
+        function drawVisualizer() {
+            if (!isPlaying) return;
+            
+            requestAnimationFrame(drawVisualizer);
+            
+            // Get waveform data
+            const buffer = waveform.getValue();
+            
+            // Resize canvas if needed
+            const w = canvas.width = canvas.offsetWidth;
+            const h = canvas.height = canvas.offsetHeight;
+            
+            ctx.clearRect(0, 0, w, h);
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#22d3ee';
+            ctx.beginPath();
+
+            const sliceWidth = w * 1.0 / buffer.length;
+            let x = 0;
+
+            for (let i = 0; i < buffer.length; i++) {
+                const v = buffer[i] * 2; // Amplify visual
+                const y = (h / 2) + (v * h / 2);
+
+                if (i === 0) {
+                    ctx.moveTo(x, y);
                 } else {
-                    // Fail
-                    setTimeout(() => {
-                        this.first.el.classList.remove('selected');
-                        el.classList.remove('selected');
-                        Utils.playTone(200, 'sawtooth', 0.2);
-                        this.first = null;
-                        this.locked = false;
-                    }, 800);
+                    ctx.lineTo(x, y);
                 }
+
+                x += sliceWidth;
             }
-        }
-    },
 
-    ui: {
-        openModal() { document.getElementById('add-card-modal').classList.add('open'); },
-        closeModal() { document.getElementById('add-card-modal').classList.remove('open'); },
-        
-        spawnParticles(x, y, color) {
-            if(!app.state.settings.motion) return;
-            for(let i=0; i<20; i++) {
-                const p = document.createElement('div');
-                p.className = 'particle';
-                p.style.backgroundColor = color;
-                p.style.left = x + 'px';
-                p.style.top = y + 'px';
-                
-                const angle = Math.random() * Math.PI * 2;
-                const dist = Math.random() * 100;
-                const tx = Math.cos(angle) * dist + 'px';
-                const ty = Math.sin(angle) * dist + 'px';
-                
-                p.style.setProperty('--tx', tx);
-                p.style.setProperty('--ty', ty);
-                p.style.animation = `particle-explode 0.8s ease-out forwards`;
-                
-                document.body.appendChild(p);
-                setTimeout(() => p.remove(), 800);
+            ctx.lineTo(w, h / 2);
+            ctx.stroke();
+        }
+
+        // Handle Window Resize for Canvas
+        window.addEventListener('resize', () => {
+            if(canvas) {
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
             }
-        }
-    },
-    
-    settings: {
-        toggle(key) {
-            app.state.settings[key] = !app.state.settings[key];
-            app.applySettings();
-            app.save();
-        }
-    },
-    
-    data: {
-        export() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(app.state));
-            const node = document.createElement('a');
-            node.setAttribute("href", dataStr);
-            node.setAttribute("download", "aether_data.json");
-            document.body.appendChild(node);
-            node.click();
-            node.remove();
-        }
-    }
-};
+        });
 
-// Event Listeners
-document.addEventListener('DOMContentLoaded', () => app.init());
-
-document.getElementById('current-card').addEventListener('click', (e) => {
-    // Only flip if not clicking buttons
-    if(!e.target.closest('button')) app.srs.flip();
-});
-
-// Keyboard
-document.addEventListener('keydown', (e) => {
-    if(document.getElementById('view-study').classList.contains('active')) {
-        if(e.code === 'Space') app.srs.flip();
-        if(document.getElementById('current-card').classList.contains('flipped')) {
-            if(e.key === '1') app.srs.answer(1);
-            if(e.key === '2') app.srs.answer(2);
-            if(e.key === '3') app.srs.answer(3);
-            if(e.key === '4') app.srs.answer(4);
-        }
-    }
-});
-
-</script>
+    </script>
 </body>
 </html>
 
