@@ -1,469 +1,344 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sonic Laboratory | Real-time Audio DSP</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <title>Ruotsi Unit 4: Ultimate Trainer</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
-        
-        body {
-            font-family: 'Space Mono', monospace;
-            background-color: #0f172a;
-            color: #e2e8f0;
-            overflow-x: hidden;
+        :root {
+            --bg: #f4f7f6;
+            --card: #ffffff;
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --success: #27ae60;
+            --warning: #f1c40f;
+            --error: #e74c3c;
+            --text: #34495e;
         }
 
-        .knob-container {
-            position: relative;
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .app {
+            width: 100%;
+            max-width: 550px;
+            background: var(--card);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            min-height: 550px;
             display: flex;
             flex-direction: column;
-            align-items: center;
+            overflow: hidden;
         }
 
-        /* Custom Range Slider Styling */
-        input[type=range] {
-            -webkit-appearance: none;
-            width: 100%;
-            background: transparent;
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            text-align: center;
         }
+        header h1 { margin: 0; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px; }
 
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 20px;
-            width: 20px;
-            border-radius: 50%;
-            background: #22d3ee;
+        .screen { display: none; flex: 1; padding: 20px; flex-direction: column; }
+        .active { display: flex; }
+
+        /* Menu */
+        .level-card {
+            background: #fff;
+            border: 2px solid #edf2f7;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 12px;
             cursor: pointer;
-            margin-top: -8px;
-            box-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
-            transition: transform 0.1s;
+            transition: all 0.2s;
         }
+        .level-card:hover { border-color: var(--accent); background: #f8fbff; }
+        .level-card h3 { margin: 0 0 5px; color: var(--accent); }
+        .level-card p { margin: 0; font-size: 0.85rem; color: #7f8c8d; }
 
-        input[type=range]::-webkit-slider-thumb:hover {
-            transform: scale(1.2);
-        }
+        /* Game */
+        .progress { height: 6px; background: #eee; border-radius: 3px; margin-bottom: 20px; }
+        .progress-bar { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s; }
 
-        input[type=range]::-webkit-slider-runnable-track {
+        .question { text-align: center; margin-bottom: 30px; }
+        .q-lang { font-size: 0.8rem; color: #95a5a6; text-transform: uppercase; }
+        .q-word { font-size: 2.2rem; font-weight: 800; margin: 10px 0; color: var(--primary); }
+        .q-hint { font-size: 0.9rem; color: #7f8c8d; font-style: italic; }
+
+        input {
             width: 100%;
-            height: 4px;
-            cursor: pointer;
-            background: #334155;
-            border-radius: 2px;
-        }
-
-        input[type=range]:focus {
+            padding: 18px;
+            font-size: 1.2rem;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            text-align: center;
+            box-sizing: border-box;
             outline: none;
         }
+        input:focus { border-color: var(--accent); }
+        .correct-input { border-color: var(--success) !important; background: #f0fff4; }
+        .typo-input { border-color: var(--warning) !important; background: #fffcf0; }
+        .wrong-input { border-color: var(--error) !important; background: #fff5f5; }
 
-        .neon-text {
-            text-shadow: 0 0 5px rgba(34, 211, 238, 0.7);
-        }
-        
-        .visualizer-container {
-            background: rgba(15, 23, 42, 0.5);
-            backdrop-filter: blur(10px);
-            border: 1px solid #334155;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
-        }
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+        .btn { padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 1rem; }
+        .btn-check { background: var(--accent); color: white; grid-column: span 2; }
+        .btn-skip { background: #eee; color: #666; }
+        .btn-ans { background: #eee; color: #666; }
+        .btn-next { background: var(--primary); color: white; grid-column: span 2; }
 
-        .drop-zone {
-            border: 2px dashed #475569;
-            transition: all 0.3s ease;
-        }
-        
-        .drop-zone.dragover {
-            border-color: #22d3ee;
-            background: rgba(34, 211, 238, 0.1);
-        }
+        .msg { margin-top: 15px; text-align: center; font-weight: bold; min-height: 1.5em; }
+        .msg.success { color: var(--success); }
+        .msg.warning { color: #b58900; }
+        .msg.error { color: var(--error); }
 
-        .btn-glow:hover {
-            box-shadow: 0 0 15px rgba(34, 211, 238, 0.4);
-        }
-
-        /* Loading Spinner */
-        .loader {
-            border: 3px solid #1e293b;
-            border-top: 3px solid #22d3ee;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-            display: none;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center p-4">
+<body>
 
-    <!-- Main Interface -->
-    <div class="w-full max-w-4xl bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden relative">
+<div class="app">
+    <header>
+        <h1 id="header-title">Ruotsi Unit 4 Trainer</h1>
+    </header>
+
+    <!-- MENU SCREEN -->
+    <div id="screen-menu" class="screen active">
+        <p style="text-align: center; font-weight: bold;">Valitse taso:</p>
         
-        <!-- Header -->
-        <div class="p-6 border-b border-slate-700 flex justify-between items-center bg-slate-800">
-            <div class="flex items-center gap-3">
-                <i class="fas fa-wave-square text-cyan-400 text-2xl"></i>
-                <h1 class="text-2xl font-bold tracking-tighter neon-text">SONIC<span class="text-cyan-400">LAB</span></h1>
-            </div>
-            <div class="text-xs text-slate-400">DSP ENGINE: TONE.JS</div>
+        <div class="level-card" onclick="game.start(1)">
+            <h3>Taso 1: Sanasto (Perus)</h3>
+            <p>Vain ruotsinkielinen sana ilman artikkelia tai taivutusta.<br><em>Esim: saari -> ö</em></p>
+        </div>
+        
+        <div class="level-card" onclick="game.start(2)">
+            <h3>Taso 2: Artikkelit (En/Ett)</h3>
+            <p>Lisää mukaan en tai ett substantiiveihin.<br><em>Esim: saari -> en ö</em></p>
         </div>
 
-        <!-- Visualizer Area -->
-        <div class="relative h-48 w-full bg-black visualizer-container flex items-center justify-center">
-            <canvas id="waveformCanvas" class="w-full h-full absolute top-0 left-0"></canvas>
-            
-            <!-- File Upload Overlay -->
-            <div id="dropZone" class="drop-zone absolute inset-4 rounded-lg flex flex-col items-center justify-center cursor-pointer z-10 bg-slate-900/80 hover:bg-slate-900/90">
-                <input type="file" id="fileInput" accept="audio/*" class="hidden">
-                <i class="fas fa-cloud-upload-alt text-4xl text-slate-400 mb-2"></i>
-                <p class="text-sm text-slate-300 font-bold">DROP AUDIO FILE HERE</p>
-                <p class="text-xs text-slate-500 mt-1">MP3, WAV, OGG supported</p>
-                <div id="loader" class="loader mt-3"></div>
-                <p id="fileName" class="text-cyan-400 text-sm mt-2 hidden font-bold"></p>
-            </div>
+        <div class="level-card" onclick="game.start(3)">
+            <h3>Taso 3: Adjektiivien vertailu</h3>
+            <p>Kirjoita komparatiivi ja superlatiivi.<br><em>Esim: hyvä -> bättre, bäst</em></p>
         </div>
 
-        <!-- Controls Area -->
-        <div class="p-8 grid grid-cols-1 md:grid-cols-2 gap-8 bg-slate-900">
-            
-            <!-- Playback Controls -->
-            <div class="col-span-1 md:col-span-2 flex justify-center gap-4 mb-4">
-                <button id="btnPlay" class="btn-glow w-16 h-16 rounded-full bg-cyan-500 text-slate-900 flex items-center justify-center text-xl hover:bg-cyan-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                    <i class="fas fa-play pl-1"></i>
-                </button>
-                <button id="btnStop" class="btn-glow w-16 h-16 rounded-full bg-slate-700 text-white flex items-center justify-center text-xl hover:bg-slate-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                    <i class="fas fa-stop"></i>
-                </button>
-            </div>
-
-            <!-- Pitch Control -->
-            <div class="bg-slate-800 p-6 rounded-lg border border-slate-700">
-                <div class="flex justify-between mb-4">
-                    <label class="text-cyan-400 text-sm font-bold uppercase"><i class="fas fa-music mr-2"></i>Pitch Shift</label>
-                    <span id="pitchVal" class="text-white text-sm font-mono">0 st</span>
-                </div>
-                <input type="range" id="pitchSlider" min="-12" max="12" step="0.5" value="0">
-                <div class="flex justify-between mt-2 text-xs text-slate-500">
-                    <span>-12</span>
-                    <span>0</span>
-                    <span>+12</span>
-                </div>
-                <p class="text-xs text-slate-500 mt-4">Changes key without affecting tempo.</p>
-            </div>
-
-            <!-- Speed Control -->
-            <div class="bg-slate-800 p-6 rounded-lg border border-slate-700">
-                <div class="flex justify-between mb-4">
-                    <label class="text-purple-400 text-sm font-bold uppercase"><i class="fas fa-tachometer-alt mr-2"></i>Playback Rate</label>
-                    <span id="speedVal" class="text-white text-sm font-mono">1.0x</span>
-                </div>
-                <input type="range" id="speedSlider" min="0.5" max="2.0" step="0.05" value="1.0">
-                <div class="flex justify-between mt-2 text-xs text-slate-500">
-                    <span>0.5x</span>
-                    <span>1.0x</span>
-                    <span>2.0x</span>
-                </div>
-                 <p class="text-xs text-slate-500 mt-4">Changes tempo. (Preserves pitch if Pitch Shift active)</p>
-            </div>
-
-            <!-- Autonomous Mode -->
-            <div class="col-span-1 md:col-span-2 bg-slate-800 p-6 rounded-lg border border-slate-700 flex flex-col md:flex-row items-center justify-between gap-4">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-500">
-                        <i class="fas fa-robot"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-white font-bold">Autonomous Drift</h3>
-                        <p class="text-xs text-slate-400">AI Logic gently warps pitch & speed over time.</p>
-                    </div>
-                </div>
-                
-                <div class="flex items-center gap-4">
-                     <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="driftToggle" class="sr-only peer">
-                        <div class="w-11 h-6 bg-slate-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-pink-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-500"></div>
-                    </label>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- Footer Info -->
-        <div class="bg-slate-950 p-4 text-center text-xs text-slate-600 border-t border-slate-800">
-            Note: Due to Spotify DRM, this tool works with uploaded audio files only.
+        <div class="level-card" onclick="game.start(4)">
+            <h3>Taso 4: Täysi taivutus (RIMSU) 🔥</h3>
+            <p>Kaikki muodot textbookin listan mukaan.<br><em>Esim: saari -> en ö, ön, öar, öarna</em></p>
         </div>
     </div>
 
-    <script>
-        // --- State Management ---
-        let player = null;
-        let pitchShift = null;
-        let waveform = null;
-        let isLoaded = false;
-        let isPlaying = false;
-        let driftLFO = null;
-        let driftInterval = null;
-
-        // UI Elements
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('fileInput');
-        const loader = document.getElementById('loader');
-        const fileNameDisplay = document.getElementById('fileName');
-        const btnPlay = document.getElementById('btnPlay');
-        const btnStop = document.getElementById('btnStop');
-        const pitchSlider = document.getElementById('pitchSlider');
-        const pitchVal = document.getElementById('pitchVal');
-        const speedSlider = document.getElementById('speedSlider');
-        const speedVal = document.getElementById('speedVal');
-        const driftToggle = document.getElementById('driftToggle');
-        const canvas = document.getElementById('waveformCanvas');
-        const ctx = canvas.getContext('2d');
-
-        // --- Initialization ---
-        async function initAudio() {
-            await Tone.start();
-            console.log("Audio Context Started");
-        }
-
-        function setupAudioChain(buffer) {
-            // Dispose previous instances to free memory
-            if (player) player.dispose();
-            if (pitchShift) pitchShift.dispose();
-            if (waveform) waveform.dispose();
-
-            // Create PitchShift Effect (for changing key without speed, or independent manipulation)
-            // Note: Tone.PitchShift uses granular synthesis. 
-            // WindowSize: small = robotic, large = smoother but smeary.
-            pitchShift = new Tone.PitchShift({
-                pitch: 0,
-                windowSize: 0.1, 
-                delayTime: 0,
-                feedback: 0
-            }).toDestination();
-
-            // Create Waveform Visualizer
-            waveform = new Tone.Waveform(1024);
-
-            // Create Player
-            player = new Tone.Player(buffer).connect(pitchShift);
-            player.loop = true;
-            
-            // Connect visualizer to master output
-            Tone.Destination.connect(waveform);
-
-            // Enable Controls
-            btnPlay.disabled = false;
-            btnStop.disabled = false;
-            isLoaded = true;
-            
-            // Reset Sliders
-            pitchSlider.value = 0;
-            speedSlider.value = 1;
-            updateDisplay();
-        }
-
-        // --- File Handling ---
-        dropZone.addEventListener('click', () => fileInput.click());
+    <!-- GAME SCREEN -->
+    <div id="screen-game" class="screen">
+        <div class="progress"><div id="progress-bar" class="progress-bar"></div></div>
         
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('dragover');
-        });
+        <div class="question">
+            <div class="q-lang">Suomi → Ruotsi</div>
+            <div id="q-word" class="q-word">Sana</div>
+            <div id="q-hint" class="q-hint">Vihje</div>
+        </div>
 
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('dragover');
-        });
+        <input type="text" id="answer-input" placeholder="Kirjoita vastaus..." autocomplete="off" spellcheck="false">
 
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
-            const file = e.dataTransfer.files[0];
-            handleFile(file);
-        });
+        <div id="msg" class="msg"></div>
 
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            handleFile(file);
-        });
+        <div id="controls-play" class="controls">
+            <button class="btn btn-skip" onclick="game.skip()">Ohita</button>
+            <button class="btn btn-ans" onclick="game.showAnswer()">Näytä vastaus</button>
+            <button class="btn btn-check" onclick="game.check()">TARKISTA</button>
+        </div>
 
-        async function handleFile(file) {
-            if (!file || !file.type.startsWith('audio/')) return;
+        <div id="controls-next" class="controls" style="display: none;">
+            <button class="btn btn-next" onclick="game.next()">SEURAAVA →</button>
+        </div>
+    </div>
 
-            // UI Update
-            loader.style.display = 'block';
-            fileNameDisplay.classList.add('hidden');
-            document.querySelector('.fa-cloud-upload-alt').classList.add('hidden');
-            
-            // Initialize Tone Context on first user interaction
-            await initAudio();
+    <!-- RESULT SCREEN -->
+    <div id="screen-result" class="screen" style="text-align: center; justify-content: center;">
+        <h2 style="font-size: 3rem;">🏆</h2>
+        <h2>Harjoitus tehty!</h2>
+        <p id="result-text">Sait X oikein.</p>
+        <button class="btn btn-check" onclick="game.toMenu()">Takaisin valikkoon</button>
+    </div>
+</div>
 
-            const url = URL.createObjectURL(file);
-            const buffer = new Tone.Buffer(url, () => {
-                setupAudioChain(buffer);
-                
-                // UI Success
-                loader.style.display = 'none';
-                fileNameDisplay.textContent = file.name;
-                fileNameDisplay.classList.remove('hidden');
-                dropZone.classList.add('hidden'); // Hide dropzone to show visualizer
-                
-                // Auto play
-                togglePlay();
-            });
-        }
+<script>
+const VOCAB = [
+    { fi: "saari", perus: "ö", art: "en ö", rimsu: "en ö, ön, öar, öarna" },
+    { fi: "elämä", perus: "liv", art: "ett liv", rimsu: "ett liv, livet, liv, liven" },
+    { fi: "kertoa jostakin", perus: "berätta om", art: "berätta om", rimsu: "berätta, berättar, berättade om" },
+    { fi: "vuodenaika", perus: "årstid", art: "en årstid", rimsu: "en årstid, årstiden, årstider, årstiderna" },
+    { fi: "lempipaikka", perus: "favoritställe", art: "ett favoritställe", rimsu: "ett favoritställe, favoritstället, favoritställen, favoritställena" },
+    { fi: "pulla", perus: "bulle", art: "en bulle", rimsu: "en bulle, bullen, bullar, bullarna" },
+    { fi: "jäätelö", perus: "glass", art: "en glass", rimsu: "en glass, glassen, glassar, glassarna" },
+    { fi: "saada", perus: "få", art: "få", rimsu: "få, får, fick" },
+    { fi: "nähdä", perus: "se", art: "se", rimsu: "se, ser, såg" },
+    { fi: "tehdä", perus: "göra", art: "göra", rimsu: "göra, gör, gjorde" },
+    { fi: "tulla", perus: "komma", art: "komma", rimsu: "komma, kommer, kom" },
+    { fi: "turisti", perus: "turist", art: "en turist", rimsu: "en turist, turisten, turister, turisterna" },
+    { fi: "haluta", perus: "vilja", art: "vilja", rimsu: "vilja, vill, ville" },
+    { fi: "kaunis", perus: "vacker", art: "vacker", rimsu: "vacker, vackert, vackra" },
+    { fi: "Gotlanti", perus: "Gotland", art: "Gotland", rimsu: "Gotland" },
+    { fi: "kaupungissa", perus: "i stan", art: "i stan", rimsu: "i stan" },
+    { fi: "niin", perus: "så", art: "så", rimsu: "så" },
+    { fi: "paras", perus: "bäst", art: "bäst", rimsu: "bäst" },
+    { fi: "tulevaisuudessa", perus: "i framtiden", art: "i framtiden", rimsu: "i framtiden" },
+    { fi: "ulkomailla", perus: "utomlands", art: "utomlands", rimsu: "utomlands" }
+];
 
-        // --- Controls Logic ---
-        function togglePlay() {
-            if (!isLoaded) return;
-            
-            if (player.state === "started") {
-                player.stop();
-                btnPlay.innerHTML = '<i class="fas fa-play pl-1"></i>';
-                isPlaying = false;
-            } else {
-                player.start();
-                btnPlay.innerHTML = '<i class="fas fa-pause"></i>';
-                isPlaying = true;
-                drawVisualizer();
+const ADJECTIVES = [
+    { fi: "hyvä", comp: "bättre, bäst" },
+    { fi: "huono", comp: "sämre, sämst" },
+    { fi: "vanha", comp: "äldre, äldst" },
+    { fi: "suuri", comp: "större, störst" },
+    { fi: "pieni", comp: "mindre, minst" },
+    { fi: "pitkä", comp: "längre, längst" },
+    { fi: "matala", comp: "lägre, lägst" },
+    { fi: "korkea", comp: "högre, högst" },
+    { fi: "nuori", comp: "yngre, yngst" },
+    { fi: "painava", comp: "tyngre, tyngst" },
+    { fi: "kaunis", comp: "vackrare, vackrast" }
+];
+
+const game = {
+    state: { level: 1, queue: [], idx: 0, score: 0, active: true },
+
+    levenshtein: (a, b) => {
+        if (!a || !b) return 99;
+        const matrix = [];
+        for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+        for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+        for (let i = 1; i <= b.length; i++) {
+            for (let j = 1; j <= a.length; j++) {
+                if (b.charAt(i - 1) === a.charAt(j - 1)) matrix[i][j] = matrix[i - 1][j - 1];
+                else matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j] + 1);
             }
         }
+        return matrix[b.length][a.length];
+    },
 
-        function stopAudio() {
-            if (!isLoaded) return;
-            player.stop();
-            btnPlay.innerHTML = '<i class="fas fa-play pl-1"></i>';
-            isPlaying = false;
+    toMenu: () => {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('screen-menu').classList.add('active');
+        document.getElementById('header-title').textContent = "Ruotsi Unit 4 Trainer";
+    },
+
+    start: (lvl) => {
+        game.state.level = lvl;
+        game.state.idx = 0;
+        game.state.score = 0;
+        game.state.active = true;
+
+        if (lvl === 3) {
+            game.state.queue = [...ADJECTIVES].sort(() => Math.random() - 0.5);
+        } else {
+            game.state.queue = [...VOCAB].sort(() => Math.random() - 0.5);
         }
 
-        btnPlay.addEventListener('click', togglePlay);
-        btnStop.addEventListener('click', stopAudio);
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('screen-game').classList.add('active');
+        game.render();
+    },
 
-        // Slider Listeners
-        pitchSlider.addEventListener('input', (e) => {
-            if (!pitchShift) return;
-            const val = parseFloat(e.target.value);
-            pitchShift.pitch = val;
-            pitchVal.innerText = (val > 0 ? '+' : '') + val + ' st';
-        });
+    render: () => {
+        const item = game.state.queue[game.state.idx];
+        document.getElementById('q-word').textContent = item.fi;
+        document.getElementById('answer-input').value = "";
+        document.getElementById('answer-input').className = "";
+        document.getElementById('answer-input').focus();
+        document.getElementById('msg').textContent = "";
+        document.getElementById('progress-bar').style.width = `${(game.state.idx / game.state.queue.length) * 100}%`;
+        
+        let hint = "";
+        if (game.state.level === 1) hint = "Vain perusmuoto (esim. ö)";
+        if (game.state.level === 2) hint = "Artikkeli mukaan (esim. en ö)";
+        if (game.state.level === 3) hint = "Kirjoita: komparatiivi, superlatiivi";
+        if (game.state.level === 4) hint = "Täysi rimsu textbookin mukaan";
+        document.getElementById('q-hint').textContent = hint;
 
-        speedSlider.addEventListener('input', (e) => {
-            if (!player) return;
-            const val = parseFloat(e.target.value);
-            player.playbackRate = val;
-            speedVal.innerText = val.toFixed(2) + 'x';
-        });
+        document.getElementById('controls-play').style.display = 'grid';
+        document.getElementById('controls-next').style.display = 'none';
+        game.state.active = true;
+    },
 
-        // --- Autonomous Drift Logic ---
-        driftToggle.addEventListener('change', (e) => {
-            if (e.target.checked) {
-                startDrift();
-            } else {
-                stopDrift();
-            }
-        });
+    check: () => {
+        if (!game.state.active) return;
+        const item = game.state.queue[game.state.idx];
+        const input = document.getElementById('answer-input').value.trim().toLowerCase().replace(/\s*,\s*/g, ', ');
+        
+        let target = "";
+        if (game.state.level === 1) target = item.perus;
+        if (game.state.level === 2) target = item.art;
+        if (game.state.level === 3) target = item.comp;
+        if (game.state.level === 4) target = item.rimsu;
 
-        function startDrift() {
-            // We use simple JS intervals to gently wiggle the sliders
-            // This simulates "Autonomy" by creating a lo-fi warped tape effect
-            let time = 0;
-            
-            driftInterval = setInterval(() => {
-                time += 0.05;
-                
-                // Drifting Pitch (Sinewave modulation)
-                // Wiggles between -0.5 and +0.5 semitones slowly
-                const driftPitch = Math.sin(time) * 0.5;
-                const currentPitchBase = parseFloat(pitchSlider.value);
-                
-                // Drifting Speed
-                // Wiggles slightly around the current speed setting
-                const driftSpeed = Math.sin(time * 0.7) * 0.05; 
-                const currentSpeedBase = parseFloat(speedSlider.value);
+        target = target.toLowerCase().replace(/\s*,\s*/g, ', ');
 
-                if(pitchShift) pitchShift.pitch = currentPitchBase + driftPitch;
-                if(player) player.playbackRate = Math.max(0.1, currentSpeedBase + driftSpeed);
+        const dist = game.levenshtein(input, target);
+        const inputEl = document.getElementById('answer-input');
+        const msgEl = document.getElementById('msg');
 
-                // Update UI visually to show "Ghost" movement? 
-                // No, let's keep UI static so user knows their base setting, 
-                // but update the value text to show it's alive.
-                pitchVal.style.color = "#ec4899"; // Pink to show active AI
-                speedVal.style.color = "#ec4899";
-
-            }, 50); // Update every 50ms
+        if (input === target) {
+            inputEl.className = "correct-input";
+            msgEl.textContent = "Oikein! 🌟";
+            msgEl.className = "msg success";
+            game.state.score++;
+            game.finishTurn();
+        } else if (dist <= 2 && target.length > 4) {
+            inputEl.className = "typo-input";
+            msgEl.innerHTML = `Melkein oikein! Typo korjattu:<br><strong>${target}</strong>`;
+            msgEl.className = "msg warning";
+            game.state.score++;
+            game.finishTurn();
+        } else {
+            inputEl.className = "wrong-input";
+            msgEl.innerHTML = `Väärin. Oikea vastaus:<br><strong>${target}</strong>`;
+            msgEl.className = "msg error";
+            game.finishTurn();
         }
+    },
 
-        function stopDrift() {
-            clearInterval(driftInterval);
-            
-            // Reset to slider values
-            if(pitchShift) pitchShift.pitch = parseFloat(pitchSlider.value);
-            if(player) player.playbackRate = parseFloat(speedSlider.value);
-            
-            // Reset Colors
-            pitchVal.style.color = "white";
-            speedVal.style.color = "white";
+    showAnswer: () => {
+        const item = game.state.queue[game.state.idx];
+        let target = (game.state.level === 1) ? item.perus : (game.state.level === 2) ? item.art : (game.state.level === 3) ? item.comp : item.rimsu;
+        document.getElementById('answer-input').value = target;
+        document.getElementById('msg').textContent = "Tässä vastaus. Opettele se!";
+        document.getElementById('msg').className = "msg error";
+        game.finishTurn();
+    },
+
+    skip: () => game.next(),
+
+    finishTurn: () => {
+        game.state.active = false;
+        document.getElementById('controls-play').style.display = 'none';
+        document.getElementById('controls-next').style.display = 'grid';
+    },
+
+    next: () => {
+        game.state.idx++;
+        if (game.state.idx >= game.state.queue.length) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('screen-result').classList.add('active');
+            document.getElementById('result-text').textContent = `Sait ${game.state.score} / ${game.state.queue.length} oikein.`;
+        } else {
+            game.render();
         }
+    }
+};
 
-        function updateDisplay() {
-            pitchVal.innerText = pitchSlider.value + ' st';
-            speedVal.innerText = parseFloat(speedSlider.value).toFixed(2) + 'x';
-        }
-
-
-        // --- Visualizer ---
-        function drawVisualizer() {
-            if (!isPlaying) return;
-            
-            requestAnimationFrame(drawVisualizer);
-            
-            // Get waveform data
-            const buffer = waveform.getValue();
-            
-            // Resize canvas if needed
-            const w = canvas.width = canvas.offsetWidth;
-            const h = canvas.height = canvas.offsetHeight;
-            
-            ctx.clearRect(0, 0, w, h);
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = '#22d3ee';
-            ctx.beginPath();
-
-            const sliceWidth = w * 1.0 / buffer.length;
-            let x = 0;
-
-            for (let i = 0; i < buffer.length; i++) {
-                const v = buffer[i] * 2; // Amplify visual
-                const y = (h / 2) + (v * h / 2);
-
-                if (i === 0) {
-                    ctx.moveTo(x, y);
-                } else {
-                    ctx.lineTo(x, y);
-                }
-
-                x += sliceWidth;
-            }
-
-            ctx.lineTo(w, h / 2);
-            ctx.stroke();
-        }
-
-        // Handle Window Resize for Canvas
-        window.addEventListener('resize', () => {
-            if(canvas) {
-                canvas.width = canvas.offsetWidth;
-                canvas.height = canvas.offsetHeight;
-            }
-        });
-
-    </script>
+document.getElementById('answer-input').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        if (game.state.active) game.check();
+        else game.next();
+    }
+});
+</script>
 </body>
 </html>
 
