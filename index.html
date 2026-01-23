@@ -3,39 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ruotsi Unit 4: Ultimate Trainer</title>
+    <title>Ruotsi Unit 4: Korjattu</title>
     <style>
         :root {
-            --bg: #f4f7f6;
+            --primary: #1e293b;
+            --accent: #2563eb;
+            --success: #16a34a;
+            --warning: #ca8a04;
+            --error: #dc2626;
+            --bg: #f1f5f9;
             --card: #ffffff;
-            --primary: #2c3e50;
-            --accent: #3498db;
-            --success: #27ae60;
-            --warning: #f1c40f;
-            --error: #e74c3c;
-            --text: #34495e;
         }
 
         body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background: var(--bg);
-            color: var(--text);
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg);
+            color: var(--primary);
             margin: 0;
-            padding: 15px;
+            padding: 10px;
             display: flex;
             justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
 
-        .app {
+        .container {
             width: 100%;
-            max-width: 550px;
+            max-width: 500px;
             background: var(--card);
             border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            min-height: 550px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
         }
 
         header {
@@ -44,131 +44,171 @@
             padding: 20px;
             text-align: center;
         }
-        header h1 { margin: 0; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px; }
 
-        .screen { display: none; flex: 1; padding: 20px; flex-direction: column; }
+        header h1 { margin: 0; font-size: 1.2rem; font-weight: 700; letter-spacing: 0.5px; }
+        header p { margin: 4px 0 0; font-size: 0.8rem; opacity: 0.8; }
+
+        .screen { display: none; padding: 20px; flex-direction: column; min-height: 450px; }
         .active { display: flex; }
 
-        /* Menu */
+        /* Menu Grid */
+        .menu-section { margin-bottom: 20px; }
+        .menu-title { font-size: 0.8rem; font-weight: 700; color: #64748b; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+        
         .level-card {
             background: #fff;
-            border: 2px solid #edf2f7;
+            border: 1px solid #e2e8f0;
             padding: 15px;
             border-radius: 12px;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 15px;
             transition: all 0.2s;
         }
-        .level-card:hover { border-color: var(--accent); background: #f8fbff; }
-        .level-card h3 { margin: 0 0 5px; color: var(--accent); }
-        .level-card p { margin: 0; font-size: 0.85rem; color: #7f8c8d; }
+        .level-card:hover { border-color: var(--accent); background: #eff6ff; transform: translateY(-1px); }
+        .lvl-icon { font-size: 1.4rem; background: #f8fafc; padding: 10px; border-radius: 10px; }
+        .lvl-info h3 { margin: 0; font-size: 0.95rem; color: var(--primary); font-weight: 600; }
+        .lvl-info p { margin: 2px 0 0; font-size: 0.8rem; color: #64748b; }
 
-        /* Game */
-        .progress { height: 6px; background: #eee; border-radius: 3px; margin-bottom: 20px; }
-        .progress-bar { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s; }
+        /* Game Area */
+        .progress-container { height: 6px; background: #e2e8f0; border-radius: 3px; margin-bottom: 25px; overflow: hidden; }
+        .progress-bar { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s ease; }
 
-        .question { text-align: center; margin-bottom: 30px; }
-        .q-lang { font-size: 0.8rem; color: #95a5a6; text-transform: uppercase; }
-        .q-word { font-size: 2.2rem; font-weight: 800; margin: 10px 0; color: var(--primary); }
-        .q-hint { font-size: 0.9rem; color: #7f8c8d; font-style: italic; }
+        .q-area { text-align: center; margin-bottom: 25px; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
+        .q-label { font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px; }
+        .q-word { font-size: 2rem; font-weight: 800; color: var(--primary); margin: 0; line-height: 1.2; }
+        .q-hint { font-size: 0.9rem; color: #64748b; font-style: italic; margin-top: 8px; }
 
         input {
             width: 100%;
-            padding: 18px;
-            font-size: 1.2rem;
-            border: 2px solid #ddd;
-            border-radius: 12px;
+            padding: 14px;
+            font-size: 1.1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
             text-align: center;
             box-sizing: border-box;
             outline: none;
+            transition: all 0.2s;
+            margin-bottom: 15px;
         }
-        input:focus { border-color: var(--accent); }
-        .correct-input { border-color: var(--success) !important; background: #f0fff4; }
-        .typo-input { border-color: var(--warning) !important; background: #fffcf0; }
-        .wrong-input { border-color: var(--error) !important; background: #fff5f5; }
+        input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        .correct-in { border-color: var(--success); background: #f0fdf4; }
+        .typo-in { border-color: var(--warning); background: #fefce8; }
+        .error-in { border-color: var(--error); background: #fef2f2; }
 
-        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
-        .btn { padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 1rem; }
+        .feedback { text-align: center; font-weight: 600; min-height: 20px; font-size: 0.95rem; margin-bottom: 15px; }
+        .fb-success { color: var(--success); }
+        .fb-warning { color: var(--warning); }
+        .fb-error { color: var(--error); }
+
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn { padding: 12px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: background 0.2s; }
         .btn-check { background: var(--accent); color: white; grid-column: span 2; }
-        .btn-skip { background: #eee; color: #666; }
-        .btn-ans { background: #eee; color: #666; }
+        .btn-check:hover { background: #1d4ed8; }
+        .btn-sec { background: #e2e8f0; color: #475569; }
+        .btn-sec:hover { background: #cbd5e1; }
         .btn-next { background: var(--primary); color: white; grid-column: span 2; }
-
-        .msg { margin-top: 15px; text-align: center; font-weight: bold; min-height: 1.5em; }
-        .msg.success { color: var(--success); }
-        .msg.warning { color: #b58900; }
-        .msg.error { color: var(--error); }
 
     </style>
 </head>
 <body>
 
-<div class="app">
+<div class="container">
     <header>
-        <h1 id="header-title">Ruotsi Unit 4 Trainer</h1>
+        <h1>🇸🇪 RUOTSI UNIT 4</h1>
+        <p>Korjattu sanalistasuodatus</p>
     </header>
 
     <!-- MENU SCREEN -->
-    <div id="screen-menu" class="screen active">
-        <p style="text-align: center; font-weight: bold;">Valitse taso:</p>
+    <div id="scr-menu" class="screen active">
         
-        <div class="level-card" onclick="game.start(1)">
-            <h3>Taso 1: Sanasto (Perus)</h3>
-            <p>Vain ruotsinkielinen sana ilman artikkelia tai taivutusta.<br><em>Esim: saari -> ö</em></p>
-        </div>
-        
-        <div class="level-card" onclick="game.start(2)">
-            <h3>Taso 2: Artikkelit (En/Ett)</h3>
-            <p>Lisää mukaan en tai ett substantiiveihin.<br><em>Esim: saari -> en ö</em></p>
+        <div class="menu-section">
+            <div class="menu-title">Lukeminen (Tunnistaminen)</div>
+            <div class="level-card" onclick="game.start('1a')">
+                <div class="lvl-icon">📖</div>
+                <div class="lvl-info">
+                    <h3>Taso 1A: Ruotsi → Suomi</h3>
+                    <p>Kaikki sanat (Tummat + Vaaleat). Tunnista merkitys.</p>
+                </div>
+            </div>
         </div>
 
-        <div class="level-card" onclick="game.start(3)">
-            <h3>Taso 3: Adjektiivien vertailu</h3>
-            <p>Kirjoita komparatiivi ja superlatiivi.<br><em>Esim: hyvä -> bättre, bäst</em></p>
-        </div>
+        <div class="menu-section">
+            <div class="menu-title">Kirjoittaminen (Koealue)</div>
+            <div class="level-card" onclick="game.start('1b')">
+                <div class="lvl-icon">✍️</div>
+                <div class="lvl-info">
+                    <h3>Taso 1B: Suomi → Ruotsi</h3>
+                    <p>Vain tummat sanat! Kirjoita perusmuoto.</p>
+                </div>
+            </div>
 
-        <div class="level-card" onclick="game.start(4)">
-            <h3>Taso 4: Täysi taivutus (RIMSU) 🔥</h3>
-            <p>Kaikki muodot textbookin listan mukaan.<br><em>Esim: saari -> en ö, ön, öar, öarna</em></p>
+            <div class="level-card" onclick="game.start(2)">
+                <div class="lvl-icon">⚖️</div>
+                <div class="lvl-info">
+                    <h3>Taso 2: Artikkelit</h3>
+                    <p>Vain tummat sanat. Lisää en/ett.</p>
+                </div>
+            </div>
+
+            <div class="level-card" onclick="game.start(3)">
+                <div class="lvl-icon">🔥</div>
+                <div class="lvl-info">
+                    <h3>Taso 3: Täysi Rimsu</h3>
+                    <p>Vain tummat sanat. Kaikki muodot.</p>
+                </div>
+            </div>
+
+             <div class="level-card" onclick="game.start(4)">
+                <div class="lvl-icon">⭐</div>
+                <div class="lvl-info">
+                    <h3>Bonus: Adjektiivit</h3>
+                    <p>Epäsäännölliset (bra, sämre, bäst).</p>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- GAME SCREEN -->
-    <div id="screen-game" class="screen">
-        <div class="progress"><div id="progress-bar" class="progress-bar"></div></div>
+    <div id="scr-game" class="screen">
+        <div class="progress-container"><div id="prog-bar" class="progress-bar"></div></div>
         
-        <div class="question">
-            <div class="q-lang">Suomi → Ruotsi</div>
-            <div id="q-word" class="q-word">Sana</div>
-            <div id="q-hint" class="q-hint">Vihje</div>
+        <div class="q-area">
+            <div id="q-label" class="q-label"></div>
+            <div id="q-text" class="q-word">Sana</div>
+            <div id="q-hint" class="q-hint"></div>
         </div>
 
-        <input type="text" id="answer-input" placeholder="Kirjoita vastaus..." autocomplete="off" spellcheck="false">
+        <div id="fb" class="feedback"></div>
+        <input type="text" id="ans-in" placeholder="Kirjoita vastaus..." autocomplete="off" spellcheck="false">
 
-        <div id="msg" class="msg"></div>
-
-        <div id="controls-play" class="controls">
-            <button class="btn btn-skip" onclick="game.skip()">Ohita</button>
-            <button class="btn btn-ans" onclick="game.showAnswer()">Näytä vastaus</button>
+        <div id="ctrl-play" class="controls">
+            <button class="btn btn-sec" onclick="game.skip()">Ohita</button>
+            <button class="btn btn-sec" onclick="game.show()">Vastaus</button>
             <button class="btn btn-check" onclick="game.check()">TARKISTA</button>
         </div>
 
-        <div id="controls-next" class="controls" style="display: none;">
+        <div id="ctrl-next" class="controls" style="display: none;">
             <button class="btn btn-next" onclick="game.next()">SEURAAVA →</button>
         </div>
     </div>
 
-    <!-- RESULT SCREEN -->
-    <div id="screen-result" class="screen" style="text-align: center; justify-content: center;">
-        <h2 style="font-size: 3rem;">🏆</h2>
-        <h2>Harjoitus tehty!</h2>
-        <p id="result-text">Sait X oikein.</p>
+    <!-- RESULTS -->
+    <div id="scr-res" class="screen" style="text-align: center; justify-content: center;">
+        <div style="font-size: 3rem; margin-bottom: 15px;">🏁</div>
+        <h2 style="margin: 0; color: var(--primary);">Harjoitus tehty!</h2>
+        <p id="res-score" style="margin: 10px 0 30px; color: #64748b; font-size: 1.1rem;"></p>
         <button class="btn btn-check" onclick="game.toMenu()">Takaisin valikkoon</button>
     </div>
 </div>
 
 <script>
-const VOCAB = [
+// --- DATASETS ---
+
+// 1. ACTIVE VOCAB (Tummat sanat) - NEED TO WRITE
+const ACTIVE = [
     { fi: "saari", perus: "ö", art: "en ö", rimsu: "en ö, ön, öar, öarna" },
     { fi: "elämä", perus: "liv", art: "ett liv", rimsu: "ett liv, livet, liv, liven" },
     { fi: "kertoa jostakin", perus: "berätta om", art: "berätta om", rimsu: "berätta, berättar, berättade om" },
@@ -191,154 +231,170 @@ const VOCAB = [
     { fi: "ulkomailla", perus: "utomlands", art: "utomlands", rimsu: "utomlands" }
 ];
 
-const ADJECTIVES = [
-    { fi: "hyvä", comp: "bättre, bäst" },
-    { fi: "huono", comp: "sämre, sämst" },
-    { fi: "vanha", comp: "äldre, äldst" },
-    { fi: "suuri", comp: "större, störst" },
-    { fi: "pieni", comp: "mindre, minst" },
-    { fi: "pitkä", comp: "längre, längst" },
-    { fi: "matala", comp: "lägre, lägst" },
-    { fi: "korkea", comp: "högre, högst" },
-    { fi: "nuori", comp: "yngre, yngst" },
-    { fi: "painava", comp: "tyngre, tyngst" },
-    { fi: "kaunis", comp: "vackrare, vackrast" }
+// 2. PASSIVE VOCAB (Muut sanat) - ONLY RECOGNIZE (SV -> FI)
+const PASSIVE = [
+    { s: "mysig", f: "viihtyisä" }, { s: "Sveriges östkust", f: "Ruotsin itärannikko" }, { s: "alla", f: "kaikki" },
+    { s: "finast", f: "hienoin" }, { s: "till exempel", f: "esimerkiksi" }, { s: "eller", f: "tai" },
+    { s: "deras", f: "heidän" }, { s: "en båtresa", f: "laivamatka" }, { s: "halv", f: "puoli" },
+    { s: "ta, tar, tog", f: "ottaa" }, { s: "jättelång", f: "tosi pitkä" }, { s: "bli, blir, blev", f: "tulla" },
+    { s: "lätt", f: "helppo / kevyt" }, { s: "sjösjuk", f: "merisairas" }, { s: "på landet", f: "maalla" },
+    { s: "en människa", f: "ihminen" }, { s: "här", f: "täällä" }, { s: "en julkänsla", f: "joulufiilis" },
+    { s: "då", f: "silloin" }, { s: "till fastlandet", f: "mantereelle" }, { s: "oftast", f: "useimmiten" },
+    { s: "hellre", f: "mieluummin" }, { s: "ut", f: "ulos" }, { s: "en promenad", f: "kävely" },
+    { s: "utan att", f: "ilman että" }, { s: "någon / något", f: "joku" }, { s: "jobbigare", f: "työläämpää" },
+    { s: "hit", f: "tänne" }, { s: "speciellt", f: "erityisesti" }, { s: "tro, tror, trodde", f: "uskoa" },
+    { s: "nästan", f: "melkein" }, { s: "sjunka", f: "upota" }, { s: "en Hansastad", f: "Hansakaupunki" },
+    { s: "därför", f: "siksi" }, { s: "ett utbyte", f: "vaihto" }
 ];
 
-const game = {
-    state: { level: 1, queue: [], idx: 0, score: 0, active: true },
+// 3. GRAMMAR (Adjectives)
+const ADJECTIVES = [
+    { fi: "hyvä", ans: "bättre, bäst" }, { fi: "huono", ans: "sämre, sämst" }, { fi: "vanha", ans: "äldre, äldst" },
+    { fi: "suuri", ans: "större, störst" }, { fi: "pieni", ans: "mindre, minst" }, { fi: "pitkä", ans: "längre, längst" },
+    { fi: "matala", ans: "lägre, lägst" }, { fi: "korkea", ans: "högre, högst" }, { fi: "nuori", ans: "yngre, yngst" },
+    { fi: "painava", ans: "tyngre, tyngst" }, { fi: "kaunis", ans: "vackrare, vackrast" }
+];
 
-    levenshtein: (a, b) => {
-        if (!a || !b) return 99;
-        const matrix = [];
-        for (let i = 0; i <= b.length; i++) matrix[i] = [i];
-        for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
-        for (let i = 1; i <= b.length; i++) {
-            for (let j = 1; j <= a.length; j++) {
-                if (b.charAt(i - 1) === a.charAt(j - 1)) matrix[i][j] = matrix[i - 1][j - 1];
-                else matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j] + 1);
+// --- GAME LOGIC ---
+
+const game = {
+    state: { lvl: 0, q: [], idx: 0, score: 0, active: true },
+
+    // Levenshtein distance for typos
+    lev: (a, b) => {
+        const m = [];
+        for(let i=0; i<=b.length; i++) m[i]=[i];
+        for(let j=0; j<=a.length; j++) m[0][j]=j;
+        for(let i=1; i<=b.length; i++) {
+            for(let j=1; j<=a.length; j++) {
+                m[i][j] = b[i-1]===a[j-1] ? m[i-1][j-1] : Math.min(m[i-1][j-1]+1, m[i][j-1]+1, m[i-1][j]+1);
             }
         }
-        return matrix[b.length][a.length];
+        return m[b.length][a.length];
     },
 
     toMenu: () => {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById('screen-menu').classList.add('active');
-        document.getElementById('header-title').textContent = "Ruotsi Unit 4 Trainer";
+        document.getElementById('scr-menu').classList.add('active');
     },
 
     start: (lvl) => {
-        game.state.level = lvl;
+        game.state.lvl = lvl;
         game.state.idx = 0;
         game.state.score = 0;
-        game.state.active = true;
+        
+        // --- LEVEL LOGIC ---
+        if(lvl === '1a') { 
+            // READ SWEDISH -> WRITE FINNISH (All words)
+            // Combine Active (use perus form) + Passive
+            const activeAsPassive = ACTIVE.map(x => ({ q: x.perus, a: x.fi, h: "Kirjoita suomeksi" }));
+            const passive = PASSIVE.map(x => ({ q: x.s, a: x.f, h: "Kirjoita suomeksi" }));
+            game.state.q = [...activeAsPassive, ...passive].sort(()=>Math.random()-0.5);
+        
+        } else if(lvl === '1b') {
+            // WRITE SWEDISH (Active ONLY) - Perusmuoto
+            game.state.q = ACTIVE.map(x => ({ q: x.fi, a: x.perus, h: "Kirjoita sana ruotsiksi" })).sort(()=>Math.random()-0.5);
 
-        if (lvl === 3) {
-            game.state.queue = [...ADJECTIVES].sort(() => Math.random() - 0.5);
-        } else {
-            game.state.queue = [...VOCAB].sort(() => Math.random() - 0.5);
+        } else if(lvl === 2) {
+            // WRITE SWEDISH (Active ONLY) - Article
+            game.state.q = ACTIVE.map(x => ({ q: x.fi, a: x.art, h: "Sana + artikkeli (en/ett)" })).sort(()=>Math.random()-0.5);
+
+        } else if(lvl === 3) {
+            // WRITE SWEDISH (Active ONLY) - Full Rimsu
+            game.state.q = ACTIVE.map(x => ({ q: x.fi, a: x.rimsu, h: "Kaikki muodot (rimsu)" })).sort(()=>Math.random()-0.5);
+
+        } else if(lvl === 4) {
+            // ADJECTIVES
+            game.state.q = ADJECTIVES.map(x => ({ q: x.fi, a: x.ans, h: "komparatiivi, superlatiivi" })).sort(()=>Math.random()-0.5);
         }
 
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById('screen-game').classList.add('active');
+        document.getElementById('scr-game').classList.add('active');
         game.render();
     },
 
     render: () => {
-        const item = game.state.queue[game.state.idx];
-        document.getElementById('q-word').textContent = item.fi;
-        document.getElementById('answer-input').value = "";
-        document.getElementById('answer-input').className = "";
-        document.getElementById('answer-input').focus();
-        document.getElementById('msg').textContent = "";
-        document.getElementById('progress-bar').style.width = `${(game.state.idx / game.state.queue.length) * 100}%`;
+        const item = game.state.q[game.state.idx];
+        const lvl = game.state.lvl;
         
-        let hint = "";
-        if (game.state.level === 1) hint = "Vain perusmuoto (esim. ö)";
-        if (game.state.level === 2) hint = "Artikkeli mukaan (esim. en ö)";
-        if (game.state.level === 3) hint = "Kirjoita: komparatiivi, superlatiivi";
-        if (game.state.level === 4) hint = "Täysi rimsu textbookin mukaan";
-        document.getElementById('q-hint').textContent = hint;
+        let label = "";
+        if(lvl === '1a') label = "RUOTSI → SUOMI (LUKEMINEN)";
+        else if(lvl === '1b') label = "SUOMI → RUOTSI (PERUS)";
+        else if(lvl === 2) label = "ARTIKKELIT";
+        else if(lvl === 3) label = "RIMSU";
+        else label = "ADJEKTIIVIT";
 
-        document.getElementById('controls-play').style.display = 'grid';
-        document.getElementById('controls-next').style.display = 'none';
+        document.getElementById('q-label').textContent = label;
+        document.getElementById('q-text').textContent = item.q;
+        document.getElementById('q-hint').textContent = item.h;
+
+        const input = document.getElementById('ans-in');
+        input.value = ""; input.className = ""; input.focus();
+        document.getElementById('fb').textContent = "";
+        
+        const pct = Math.round((game.state.idx / game.state.q.length) * 100);
+        document.getElementById('prog-bar').style.width = `${pct}%`;
+        
+        document.getElementById('ctrl-play').style.display = 'grid';
+        document.getElementById('ctrl-next').style.display = 'none';
         game.state.active = true;
     },
 
     check: () => {
-        if (!game.state.active) return;
-        const item = game.state.queue[game.state.idx];
-        const input = document.getElementById('answer-input').value.trim().toLowerCase().replace(/\s*,\s*/g, ', ');
-        
-        let target = "";
-        if (game.state.level === 1) target = item.perus;
-        if (game.state.level === 2) target = item.art;
-        if (game.state.level === 3) target = item.comp;
-        if (game.state.level === 4) target = item.rimsu;
+        if(!game.state.active) return;
+        const item = game.state.q[game.state.idx];
+        const val = document.getElementById('ans-in').value.trim().toLowerCase().replace(/\s*,\s*/g, ', ');
+        const target = item.a.toLowerCase().replace(/\s*,\s*/g, ', ');
 
-        target = target.toLowerCase().replace(/\s*,\s*/g, ', ');
+        const dist = game.lev(val, target);
+        const fb = document.getElementById('fb');
+        const inp = document.getElementById('ans-in');
 
-        const dist = game.levenshtein(input, target);
-        const inputEl = document.getElementById('answer-input');
-        const msgEl = document.getElementById('msg');
-
-        if (input === target) {
-            inputEl.className = "correct-input";
-            msgEl.textContent = "Oikein! 🌟";
-            msgEl.className = "msg success";
-            game.state.score++;
-            game.finishTurn();
-        } else if (dist <= 2 && target.length > 4) {
-            inputEl.className = "typo-input";
-            msgEl.innerHTML = `Melkein oikein! Typo korjattu:<br><strong>${target}</strong>`;
-            msgEl.className = "msg warning";
-            game.state.score++;
-            game.finishTurn();
-        } else {
-            inputEl.className = "wrong-input";
-            msgEl.innerHTML = `Väärin. Oikea vastaus:<br><strong>${target}</strong>`;
-            msgEl.className = "msg error";
-            game.finishTurn();
+        // Allow loose matching for synonyms in Level 1A if they contain /
+        let isCorrect = val === target;
+        if(item.a.includes('/')) {
+            const parts = item.a.split('/').map(s => s.trim().toLowerCase());
+            if(parts.includes(val)) isCorrect = true;
         }
+
+        if(isCorrect) {
+            inp.classList.add('correct-in'); fb.innerHTML = "Oikein! 🌟"; fb.className = "feedback fb-success"; game.state.score++;
+        } else if(dist <= 2 && target.length > 4) {
+            inp.classList.add('typo-in'); fb.innerHTML = `Melkein oikein! (Typo)<br>Oikein: <strong>${item.a}</strong>`; fb.className = "feedback fb-warning"; game.state.score++;
+        } else {
+            inp.classList.add('error-in'); fb.innerHTML = `Väärin. Oikea vastaus:<br><strong>${item.a}</strong>`; fb.className = "feedback fb-error";
+        }
+        
+        game.state.active = false;
+        document.getElementById('ctrl-play').style.display = 'none';
+        document.getElementById('ctrl-next').style.display = 'grid';
     },
 
-    showAnswer: () => {
-        const item = game.state.queue[game.state.idx];
-        let target = (game.state.level === 1) ? item.perus : (game.state.level === 2) ? item.art : (game.state.level === 3) ? item.comp : item.rimsu;
-        document.getElementById('answer-input').value = target;
-        document.getElementById('msg').textContent = "Tässä vastaus. Opettele se!";
-        document.getElementById('msg').className = "msg error";
-        game.finishTurn();
+    show: () => {
+        const item = game.state.q[game.state.idx];
+        document.getElementById('ans-in').value = item.a;
+        document.getElementById('fb').textContent = "Yritä muistaa tämä!";
+        document.getElementById('fb').className = "feedback fb-error";
+        game.state.active = false;
+        document.getElementById('ctrl-play').style.display = 'none';
+        document.getElementById('ctrl-next').style.display = 'grid';
     },
 
     skip: () => game.next(),
 
-    finishTurn: () => {
-        game.state.active = false;
-        document.getElementById('controls-play').style.display = 'none';
-        document.getElementById('controls-next').style.display = 'grid';
-    },
-
     next: () => {
         game.state.idx++;
-        if (game.state.idx >= game.state.queue.length) {
+        if(game.state.idx >= game.state.q.length) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById('screen-result').classList.add('active');
-            document.getElementById('result-text').textContent = `Sait ${game.state.score} / ${game.state.queue.length} oikein.`;
-        } else {
-            game.render();
-        }
+            document.getElementById('scr-res').classList.add('active');
+            document.getElementById('res-score').textContent = `Sait ${game.state.score} / ${game.state.q.length} oikein!`;
+        } else game.render();
     }
 };
 
-document.getElementById('answer-input').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        if (game.state.active) game.check();
-        else game.next();
-    }
-});
+document.getElementById('ans-in').addEventListener('keypress', e => { if(e.key==='Enter') game.state.active ? game.check() : game.next(); });
 </script>
 </body>
 </html>
+
 
