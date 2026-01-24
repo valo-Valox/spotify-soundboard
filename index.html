@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ruotsi Unit 4: Korjattu</title>
+    <title>Ruotsi Unit 4: Nappipeli</title>
     <style>
         :root {
             --primary: #1e293b;
-            --accent: #2563eb;
-            --success: #16a34a;
-            --warning: #ca8a04;
-            --error: #dc2626;
-            --bg: #f1f5f9;
+            --accent: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --bg: #f8fafc;
             --card: #ffffff;
         }
 
         body {
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             background-color: var(--bg);
             color: var(--primary);
             margin: 0;
@@ -31,8 +31,8 @@
             width: 100%;
             max-width: 500px;
             background: var(--card);
-            border-radius: 20px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -41,75 +41,91 @@
         header {
             background: var(--primary);
             color: white;
-            padding: 20px;
+            padding: 25px;
             text-align: center;
         }
 
-        header h1 { margin: 0; font-size: 1.2rem; font-weight: 700; letter-spacing: 0.5px; }
-        header p { margin: 4px 0 0; font-size: 0.8rem; opacity: 0.8; }
+        header h1 { margin: 0; font-size: 1.3rem; font-weight: 800; letter-spacing: 0.5px; }
+        header p { margin: 5px 0 0; font-size: 0.8rem; opacity: 0.8; }
 
-        .screen { display: none; padding: 20px; flex-direction: column; min-height: 450px; }
+        .screen { display: none; padding: 25px; flex-direction: column; min-height: 450px; }
         .active { display: flex; }
 
-        /* Menu Grid */
-        .menu-section { margin-bottom: 20px; }
-        .menu-title { font-size: 0.8rem; font-weight: 700; color: #64748b; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+        /* Menu */
+        .menu-title { font-size: 0.75rem; font-weight: 800; color: #94a3b8; margin: 15px 0 8px; text-transform: uppercase; }
         
         .level-card {
             background: #fff;
-            border: 1px solid #e2e8f0;
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 10px;
+            border: 2px solid #f1f5f9;
+            padding: 16px;
+            border-radius: 16px;
+            margin-bottom: 12px;
             cursor: pointer;
             display: flex;
             align-items: center;
             gap: 15px;
             transition: all 0.2s;
         }
-        .level-card:hover { border-color: var(--accent); background: #eff6ff; transform: translateY(-1px); }
-        .lvl-icon { font-size: 1.4rem; background: #f8fafc; padding: 10px; border-radius: 10px; }
-        .lvl-info h3 { margin: 0; font-size: 0.95rem; color: var(--primary); font-weight: 600; }
-        .lvl-info p { margin: 2px 0 0; font-size: 0.8rem; color: #64748b; }
+        .level-card:hover { border-color: var(--accent); background: #f8fafc; transform: translateY(-2px); }
+        .lvl-icon { font-size: 1.5rem; background: #f1f5f9; padding: 12px; border-radius: 12px; }
+        .lvl-info h3 { margin: 0; font-size: 1rem; color: var(--primary); font-weight: 700; }
+        .lvl-info p { margin: 4px 0 0; font-size: 0.85rem; color: #64748b; }
 
-        /* Game Area */
-        .progress-container { height: 6px; background: #e2e8f0; border-radius: 3px; margin-bottom: 25px; overflow: hidden; }
+        /* Game UI */
+        .progress-box { height: 8px; background: #f1f5f9; border-radius: 4px; margin-bottom: 30px; overflow: hidden; }
         .progress-bar { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s ease; }
 
-        .q-area { text-align: center; margin-bottom: 25px; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
-        .q-label { font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px; }
-        .q-word { font-size: 2rem; font-weight: 800; color: var(--primary); margin: 0; line-height: 1.2; }
-        .q-hint { font-size: 0.9rem; color: #64748b; font-style: italic; margin-top: 8px; }
+        .q-area { text-align: center; margin-bottom: 30px; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
+        .q-label { font-size: 0.75rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 10px; }
+        .q-word { font-size: 2.2rem; font-weight: 900; color: var(--primary); margin: 0; line-height: 1.2; }
+        .q-hint { font-size: 0.9rem; color: #64748b; font-style: italic; margin-top: 10px; }
 
+        /* Input Area (Text) */
+        #input-area { width: 100%; margin-bottom: 15px; }
         input {
             width: 100%;
-            padding: 14px;
+            padding: 18px;
             font-size: 1.1rem;
             border: 2px solid #e2e8f0;
-            border-radius: 10px;
+            border-radius: 14px;
             text-align: center;
             box-sizing: border-box;
             outline: none;
-            transition: all 0.2s;
-            margin-bottom: 15px;
+            transition: 0.2s;
         }
-        input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
-        .correct-in { border-color: var(--success); background: #f0fdf4; }
-        .typo-in { border-color: var(--warning); background: #fefce8; }
+        input:focus { border-color: var(--accent); }
+        .correct-in { border-color: var(--success); background: #ecfdf5; }
+        .typo-in { border-color: var(--warning); background: #fffbeb; }
         .error-in { border-color: var(--error); background: #fef2f2; }
 
-        .feedback { text-align: center; font-weight: 600; min-height: 20px; font-size: 0.95rem; margin-bottom: 15px; }
+        /* Button Area (Level 2) */
+        #btn-area { display: none; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .btn-choice {
+            padding: 20px 10px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 14px;
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: var(--primary);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-choice:hover { border-color: var(--accent); background: #f8fafc; }
+        .btn-choice.selected-correct { background: var(--success); color: white; border-color: var(--success); }
+        .btn-choice.selected-wrong { background: var(--error); color: white; border-color: var(--error); }
+
+        .feedback { text-align: center; font-weight: 700; min-height: 24px; font-size: 1rem; margin-bottom: 20px; }
         .fb-success { color: var(--success); }
         .fb-warning { color: var(--warning); }
         .fb-error { color: var(--error); }
 
-        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .btn { padding: 12px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: background 0.2s; }
-        .btn-check { background: var(--accent); color: white; grid-column: span 2; }
-        .btn-check:hover { background: #1d4ed8; }
-        .btn-sec { background: #e2e8f0; color: #475569; }
-        .btn-sec:hover { background: #cbd5e1; }
-        .btn-next { background: var(--primary); color: white; grid-column: span 2; }
+        /* Controls */
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .btn { padding: 14px; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 0.95rem; }
+        .btn-p { background: var(--accent); color: white; grid-column: span 2; }
+        .btn-s { background: #f1f5f9; color: #475569; }
+        .btn-n { background: var(--primary); color: white; grid-column: span 2; }
 
     </style>
 </head>
@@ -117,97 +133,102 @@
 
 <div class="container">
     <header>
-        <h1>🇸🇪 RUOTSI UNIT 4</h1>
-        <p>Korjattu sanalistasuodatus</p>
+        <h1>🇸🇪 UNIT 4 FINAL</h1>
+        <p>Valmis kokeeseen</p>
     </header>
 
-    <!-- MENU SCREEN -->
+    <!-- MENU -->
     <div id="scr-menu" class="screen active">
         
-        <div class="menu-section">
-            <div class="menu-title">Lukeminen (Tunnistaminen)</div>
-            <div class="level-card" onclick="game.start('1a')">
-                <div class="lvl-icon">📖</div>
-                <div class="lvl-info">
-                    <h3>Taso 1A: Ruotsi → Suomi</h3>
-                    <p>Kaikki sanat (Tummat + Vaaleat). Tunnista merkitys.</p>
-                </div>
+        <div class="menu-title">Sanasto</div>
+        <div class="level-card" onclick="game.start('1a')">
+            <div class="lvl-icon">📖</div>
+            <div class="lvl-info">
+                <h3>Taso 1A: Tunnista</h3>
+                <p>Ruotsi → Suomi (Kaikki sanat)</p>
             </div>
         </div>
 
-        <div class="menu-section">
-            <div class="menu-title">Kirjoittaminen (Koealue)</div>
-            <div class="level-card" onclick="game.start('1b')">
-                <div class="lvl-icon">✍️</div>
-                <div class="lvl-info">
-                    <h3>Taso 1B: Suomi → Ruotsi</h3>
-                    <p>Vain tummat sanat! Kirjoita perusmuoto.</p>
-                </div>
+        <div class="level-card" onclick="game.start('1b')">
+            <div class="lvl-icon">✍️</div>
+            <div class="lvl-info">
+                <h3>Taso 1B: Kirjoita</h3>
+                <p>Suomi → Ruotsi (Vain tummat)</p>
             </div>
+        </div>
 
-            <div class="level-card" onclick="game.start(2)">
-                <div class="lvl-icon">⚖️</div>
-                <div class="lvl-info">
-                    <h3>Taso 2: Artikkelit</h3>
-                    <p>Vain tummat sanat. Lisää en/ett.</p>
-                </div>
+        <div class="menu-title">Kielioppi</div>
+        <div class="level-card" onclick="game.start(2)">
+            <div class="lvl-icon">🔘</div>
+            <div class="lvl-info">
+                <h3>Taso 2: En, Ett vai Ei mitään?</h3>
+                <p>Valitse nappia painamalla</p>
             </div>
+        </div>
 
-            <div class="level-card" onclick="game.start(3)">
-                <div class="lvl-icon">🔥</div>
-                <div class="lvl-info">
-                    <h3>Taso 3: Täysi Rimsu</h3>
-                    <p>Vain tummat sanat. Kaikki muodot.</p>
-                </div>
+        <div class="level-card" onclick="game.start(3)">
+            <div class="lvl-icon">🔥</div>
+            <div class="lvl-info">
+                <h3>Taso 3: Täysi Rimsu</h3>
+                <p>Kirjoita kaikki muodot</p>
             </div>
+        </div>
 
-             <div class="level-card" onclick="game.start(4)">
-                <div class="lvl-icon">⭐</div>
-                <div class="lvl-info">
-                    <h3>Bonus: Adjektiivit</h3>
-                    <p>Epäsäännölliset (bra, sämre, bäst).</p>
-                </div>
+         <div class="level-card" onclick="game.start(4)">
+            <div class="lvl-icon">⭐</div>
+            <div class="lvl-info">
+                <h3>Bonus: Adjektiivit</h3>
+                <p>Epäsäännölliset (bra, sämre, bäst)</p>
             </div>
         </div>
     </div>
 
-    <!-- GAME SCREEN -->
+    <!-- GAME -->
     <div id="scr-game" class="screen">
-        <div class="progress-container"><div id="prog-bar" class="progress-bar"></div></div>
+        <div class="progress-box"><div id="prog-bar" class="progress-bar"></div></div>
         
         <div class="q-area">
-            <div id="q-label" class="q-label"></div>
-            <div id="q-text" class="q-word">Sana</div>
-            <div id="q-hint" class="q-hint"></div>
+            <div id="q-label" class="q-label">Label</div>
+            <div id="q-text" class="q-word">Word</div>
+            <div id="q-hint" class="q-hint">Hint</div>
+        </div>
+
+        <!-- Text Input Mode -->
+        <div id="input-area">
+            <input type="text" id="ans-in" placeholder="Kirjoita vastaus..." autocomplete="off" spellcheck="false">
+        </div>
+
+        <!-- Button Mode (Level 2) -->
+        <div id="btn-area">
+            <button class="btn btn-choice" onclick="game.checkBtn('en', this)">En</button>
+            <button class="btn btn-choice" onclick="game.checkBtn('ett', this)">Ett</button>
+            <button class="btn btn-choice" onclick="game.checkBtn('none', this)">Ei artikkelia</button>
         </div>
 
         <div id="fb" class="feedback"></div>
-        <input type="text" id="ans-in" placeholder="Kirjoita vastaus..." autocomplete="off" spellcheck="false">
 
         <div id="ctrl-play" class="controls">
-            <button class="btn btn-sec" onclick="game.skip()">Ohita</button>
-            <button class="btn btn-sec" onclick="game.show()">Vastaus</button>
-            <button class="btn btn-check" onclick="game.check()">TARKISTA</button>
+            <button class="btn btn-s" onclick="game.skip()">Ohita</button>
+            <button class="btn btn-s" onclick="game.show()">Vastaus</button>
+            <button class="btn btn-p" onclick="game.checkTxt()">TARKISTA</button>
         </div>
 
         <div id="ctrl-next" class="controls" style="display: none;">
-            <button class="btn btn-next" onclick="game.next()">SEURAAVA →</button>
+            <button class="btn btn-n" onclick="game.next()">SEURAAVA →</button>
         </div>
     </div>
 
     <!-- RESULTS -->
     <div id="scr-res" class="screen" style="text-align: center; justify-content: center;">
-        <div style="font-size: 3rem; margin-bottom: 15px;">🏁</div>
+        <div style="font-size: 3.5rem; margin-bottom: 20px;">🏆</div>
         <h2 style="margin: 0; color: var(--primary);">Harjoitus tehty!</h2>
-        <p id="res-score" style="margin: 10px 0 30px; color: #64748b; font-size: 1.1rem;"></p>
-        <button class="btn btn-check" onclick="game.toMenu()">Takaisin valikkoon</button>
+        <p id="res-score" style="margin: 15px 0 30px; color: #64748b; font-size: 1.1rem;"></p>
+        <button class="btn btn-p" onclick="game.toMenu()">Takaisin valikkoon</button>
     </div>
 </div>
 
 <script>
-// --- DATASETS ---
-
-// 1. ACTIVE VOCAB (Tummat sanat) - NEED TO WRITE
+// --- DATA ---
 const ACTIVE = [
     { fi: "saari", perus: "ö", art: "en ö", rimsu: "en ö, ön, öar, öarna" },
     { fi: "elämä", perus: "liv", art: "ett liv", rimsu: "ett liv, livet, liv, liven" },
@@ -231,7 +252,6 @@ const ACTIVE = [
     { fi: "ulkomailla", perus: "utomlands", art: "utomlands", rimsu: "utomlands" }
 ];
 
-// 2. PASSIVE VOCAB (Muut sanat) - ONLY RECOGNIZE (SV -> FI)
 const PASSIVE = [
     { s: "mysig", f: "viihtyisä" }, { s: "Sveriges östkust", f: "Ruotsin itärannikko" }, { s: "alla", f: "kaikki" },
     { s: "finast", f: "hienoin" }, { s: "till exempel", f: "esimerkiksi" }, { s: "eller", f: "tai" },
@@ -247,7 +267,6 @@ const PASSIVE = [
     { s: "därför", f: "siksi" }, { s: "ett utbyte", f: "vaihto" }
 ];
 
-// 3. GRAMMAR (Adjectives)
 const ADJECTIVES = [
     { fi: "hyvä", ans: "bättre, bäst" }, { fi: "huono", ans: "sämre, sämst" }, { fi: "vanha", ans: "äldre, äldst" },
     { fi: "suuri", ans: "större, störst" }, { fi: "pieni", ans: "mindre, minst" }, { fi: "pitkä", ans: "längre, längst" },
@@ -255,12 +274,9 @@ const ADJECTIVES = [
     { fi: "painava", ans: "tyngre, tyngst" }, { fi: "kaunis", ans: "vackrare, vackrast" }
 ];
 
-// --- GAME LOGIC ---
-
 const game = {
-    state: { lvl: 0, q: [], idx: 0, score: 0, active: true },
+    s: { lvl: 0, q: [], idx: 0, pt: 0, live: true },
 
-    // Levenshtein distance for typos
     lev: (a, b) => {
         const m = [];
         for(let i=0; i<=b.length; i++) m[i]=[i];
@@ -279,33 +295,24 @@ const game = {
     },
 
     start: (lvl) => {
-        game.state.lvl = lvl;
-        game.state.idx = 0;
-        game.state.score = 0;
+        game.s.lvl = lvl; game.s.idx = 0; game.s.pt = 0;
         
-        // --- LEVEL LOGIC ---
         if(lvl === '1a') { 
-            // READ SWEDISH -> WRITE FINNISH (All words)
-            // Combine Active (use perus form) + Passive
-            const activeAsPassive = ACTIVE.map(x => ({ q: x.perus, a: x.fi, h: "Kirjoita suomeksi" }));
-            const passive = PASSIVE.map(x => ({ q: x.s, a: x.f, h: "Kirjoita suomeksi" }));
-            game.state.q = [...activeAsPassive, ...passive].sort(()=>Math.random()-0.5);
-        
+            game.s.q = [...ACTIVE.map(x=>({q:x.perus, a:x.fi, h:"Suomeksi"})), ...PASSIVE.map(x=>({q:x.s, a:x.f, h:"Suomeksi"}))].sort(()=>Math.random()-0.5);
         } else if(lvl === '1b') {
-            // WRITE SWEDISH (Active ONLY) - Perusmuoto
-            game.state.q = ACTIVE.map(x => ({ q: x.fi, a: x.perus, h: "Kirjoita sana ruotsiksi" })).sort(()=>Math.random()-0.5);
-
+            game.s.q = ACTIVE.map(x=>({q:x.fi, a:x.perus, h:"Ruotsiksi (perusmuoto)"})).sort(()=>Math.random()-0.5);
         } else if(lvl === 2) {
-            // WRITE SWEDISH (Active ONLY) - Article
-            game.state.q = ACTIVE.map(x => ({ q: x.fi, a: x.art, h: "Sana + artikkeli (en/ett)" })).sort(()=>Math.random()-0.5);
-
+            // Button mode: Determine type
+            game.s.q = ACTIVE.map(x => {
+                let ans = "none";
+                if(x.art.startsWith("en ")) ans = "en";
+                if(x.art.startsWith("ett ")) ans = "ett";
+                return { q: x.fi, a: ans, h: "Mikä artikkeli?" };
+            }).sort(()=>Math.random()-0.5);
         } else if(lvl === 3) {
-            // WRITE SWEDISH (Active ONLY) - Full Rimsu
-            game.state.q = ACTIVE.map(x => ({ q: x.fi, a: x.rimsu, h: "Kaikki muodot (rimsu)" })).sort(()=>Math.random()-0.5);
-
+            game.s.q = ACTIVE.map(x=>({q:x.fi, a:x.rimsu, h:"Kaikki muodot"})).sort(()=>Math.random()-0.5);
         } else if(lvl === 4) {
-            // ADJECTIVES
-            game.state.q = ADJECTIVES.map(x => ({ q: x.fi, a: x.ans, h: "komparatiivi, superlatiivi" })).sort(()=>Math.random()-0.5);
+            game.s.q = ADJECTIVES.map(x=>({q:x.fi, a:x.ans, h:"komp, sup"})).sort(()=>Math.random()-0.5);
         }
 
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -314,85 +321,128 @@ const game = {
     },
 
     render: () => {
-        const item = game.state.q[game.state.idx];
-        const lvl = game.state.lvl;
-        
-        let label = "";
-        if(lvl === '1a') label = "RUOTSI → SUOMI (LUKEMINEN)";
-        else if(lvl === '1b') label = "SUOMI → RUOTSI (PERUS)";
-        else if(lvl === 2) label = "ARTIKKELIT";
-        else if(lvl === 3) label = "RIMSU";
-        else label = "ADJEKTIIVIT";
+        const item = game.s.q[game.s.idx];
+        const lvl = game.s.lvl;
 
-        document.getElementById('q-label').textContent = label;
         document.getElementById('q-text').textContent = item.q;
         document.getElementById('q-hint').textContent = item.h;
-
-        const input = document.getElementById('ans-in');
-        input.value = ""; input.className = ""; input.focus();
+        document.getElementById('prog-bar').style.width = `${(game.s.idx/game.s.q.length)*100}%`;
         document.getElementById('fb').textContent = "";
+
+        // UI Switching
+        const inArea = document.getElementById('input-area');
+        const btnArea = document.getElementById('btn-area');
+        const playCtrls = document.getElementById('ctrl-play');
+        const nextCtrls = document.getElementById('ctrl-next');
+
+        // Reset buttons
+        document.querySelectorAll('.btn-choice').forEach(b => {
+            b.className = 'btn btn-choice';
+            b.disabled = false;
+        });
+
+        if(lvl === 2) {
+            // Button Mode
+            inArea.style.display = 'none';
+            btnArea.style.display = 'grid';
+            playCtrls.style.display = 'none'; // No text check button needed
+            document.getElementById('q-label').textContent = "VALITSE ARTIKKELI";
+        } else {
+            // Text Mode
+            inArea.style.display = 'block';
+            btnArea.style.display = 'none';
+            playCtrls.style.display = 'grid';
+            const input = document.getElementById('ans-in');
+            input.value = ""; input.className = ""; input.focus();
+            
+            if(lvl === '1a') document.getElementById('q-label').textContent = "RUOTSI → SUOMI";
+            if(lvl === '1b') document.getElementById('q-label').textContent = "SUOMI → RUOTSI";
+            if(lvl === 3) document.getElementById('q-label').textContent = "TÄYSI RIMSU";
+            if(lvl === 4) document.getElementById('q-label').textContent = "ADJEKTIIVIT";
+        }
         
-        const pct = Math.round((game.state.idx / game.state.q.length) * 100);
-        document.getElementById('prog-bar').style.width = `${pct}%`;
-        
-        document.getElementById('ctrl-play').style.display = 'grid';
-        document.getElementById('ctrl-next').style.display = 'none';
-        game.state.active = true;
+        nextCtrls.style.display = 'none';
+        game.s.live = true;
     },
 
-    check: () => {
-        if(!game.state.active) return;
-        const item = game.state.q[game.state.idx];
-        const val = document.getElementById('ans-in').value.trim().toLowerCase().replace(/\s*,\s*/g, ', ');
-        const target = item.a.toLowerCase().replace(/\s*,\s*/g, ', ');
-
+    // TEXT CHECKER
+    checkTxt: () => {
+        if(!game.s.live) return;
+        const item = game.s.q[game.s.idx];
+        const val = document.getElementById('ans-in').value.trim().toLowerCase();
+        const target = item.a.toLowerCase();
         const dist = game.lev(val, target);
+        
+        let correct = val === target;
+        // Loose match for synonyms in 1a
+        if(game.s.lvl === '1a' && item.a.includes('/')) {
+            if(item.a.split('/').map(s=>s.trim()).includes(val)) correct = true;
+        }
+
         const fb = document.getElementById('fb');
         const inp = document.getElementById('ans-in');
 
-        // Allow loose matching for synonyms in Level 1A if they contain /
-        let isCorrect = val === target;
-        if(item.a.includes('/')) {
-            const parts = item.a.split('/').map(s => s.trim().toLowerCase());
-            if(parts.includes(val)) isCorrect = true;
-        }
-
-        if(isCorrect) {
-            inp.classList.add('correct-in'); fb.innerHTML = "Oikein! 🌟"; fb.className = "feedback fb-success"; game.state.score++;
+        if(correct) {
+            inp.classList.add('correct-in'); fb.innerHTML = "Oikein! 🌟"; fb.className = "feedback fb-success"; game.s.pt++;
         } else if(dist <= 2 && target.length > 4) {
-            inp.classList.add('typo-in'); fb.innerHTML = `Melkein oikein! (Typo)<br>Oikein: <strong>${item.a}</strong>`; fb.className = "feedback fb-warning"; game.state.score++;
+            inp.classList.add('typo-in'); fb.innerHTML = `Melkein! Oikein: <strong>${item.a}</strong>`; fb.className = "feedback fb-warning"; game.s.pt++;
         } else {
-            inp.classList.add('error-in'); fb.innerHTML = `Väärin. Oikea vastaus:<br><strong>${item.a}</strong>`; fb.className = "feedback fb-error";
+            inp.classList.add('error-in'); fb.innerHTML = `Väärin. Oikea: <strong>${item.a}</strong>`; fb.className = "feedback fb-error";
         }
         
-        game.state.active = false;
-        document.getElementById('ctrl-play').style.display = 'none';
+        game.finish();
+    },
+
+    // BUTTON CHECKER (LEVEL 2)
+    checkBtn: (choice, btn) => {
+        if(!game.s.live) return;
+        const item = game.s.q[game.s.idx];
+        const fb = document.getElementById('fb');
+
+        if(choice === item.a) {
+            btn.classList.add('selected-correct');
+            fb.innerHTML = "Oikein! 🌟"; fb.className = "feedback fb-success";
+            game.s.pt++;
+        } else {
+            btn.classList.add('selected-wrong');
+            fb.innerHTML = `Väärin. Oikea oli: <strong>${item.a.toUpperCase()}</strong>`; fb.className = "feedback fb-error";
+        }
+        
+        // Disable all buttons
+        document.querySelectorAll('.btn-choice').forEach(b => b.disabled = true);
+        
+        // Show next button
         document.getElementById('ctrl-next').style.display = 'grid';
+        game.s.live = false;
     },
 
     show: () => {
-        const item = game.state.q[game.state.idx];
+        const item = game.s.q[game.s.idx];
         document.getElementById('ans-in').value = item.a;
-        document.getElementById('fb').textContent = "Yritä muistaa tämä!";
+        document.getElementById('fb').innerHTML = "Tässä vastaus.";
         document.getElementById('fb').className = "feedback fb-error";
-        game.state.active = false;
-        document.getElementById('ctrl-play').style.display = 'none';
-        document.getElementById('ctrl-next').style.display = 'grid';
+        game.finish();
     },
 
     skip: () => game.next(),
 
+    finish: () => {
+        game.s.live = false;
+        document.getElementById('ctrl-play').style.display = 'none';
+        document.getElementById('ctrl-next').style.display = 'grid';
+    },
+
     next: () => {
-        game.state.idx++;
-        if(game.state.idx >= game.state.q.length) {
+        game.s.idx++;
+        if(game.s.idx >= game.s.q.length) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById('scr-res').classList.add('active');
-            document.getElementById('res-score').textContent = `Sait ${game.state.score} / ${game.state.q.length} oikein!`;
+            document.getElementById('res-score').textContent = `Sait ${game.s.pt} / ${game.s.q.length} oikein!`;
         } else game.render();
     }
 };
 
-document.getElementById('ans-in').addEventListener('keypress', e => { if(e.key==='Enter') game.state.active ? game.check() : game.next(); });
+document.getElementById('ans-in').addEventListener('keypress', e => { if(e.key==='Enter') game.s.live ? game.checkTxt() : game.next(); });
 </script>
 </body>
 </html>
