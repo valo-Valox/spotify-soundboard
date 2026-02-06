@@ -1,450 +1,328 @@
 <!DOCTYPE html>
-<html lang="fi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ruotsi Unit 4: Nappipeli</title>
+    <title>Google Nexus</title>
+    
+    <!-- Tailwind CSS (Styling) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Babel (To compile React in the browser) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Import Map for React & Icons -->
+    <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.2.0",
+        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+        "lucide-react": "https://esm.sh/lucide-react@0.263.1"
+      }
+    }
+    </script>
+
     <style>
-        :root {
-            --primary: #1e293b;
-            --accent: #3b82f6;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --error: #ef4444;
-            --bg: #f8fafc;
-            --card: #ffffff;
-        }
-
-        body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background-color: var(--bg);
-            color: var(--primary);
-            margin: 0;
-            padding: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 500px;
-            background: var(--card);
-            border-radius: 24px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        header {
-            background: var(--primary);
-            color: white;
-            padding: 25px;
-            text-align: center;
-        }
-
-        header h1 { margin: 0; font-size: 1.3rem; font-weight: 800; letter-spacing: 0.5px; }
-        header p { margin: 5px 0 0; font-size: 0.8rem; opacity: 0.8; }
-
-        .screen { display: none; padding: 25px; flex-direction: column; min-height: 450px; }
-        .active { display: flex; }
-
-        /* Menu */
-        .menu-title { font-size: 0.75rem; font-weight: 800; color: #94a3b8; margin: 15px 0 8px; text-transform: uppercase; }
-        
-        .level-card {
-            background: #fff;
-            border: 2px solid #f1f5f9;
-            padding: 16px;
-            border-radius: 16px;
-            margin-bottom: 12px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            transition: all 0.2s;
-        }
-        .level-card:hover { border-color: var(--accent); background: #f8fafc; transform: translateY(-2px); }
-        .lvl-icon { font-size: 1.5rem; background: #f1f5f9; padding: 12px; border-radius: 12px; }
-        .lvl-info h3 { margin: 0; font-size: 1rem; color: var(--primary); font-weight: 700; }
-        .lvl-info p { margin: 4px 0 0; font-size: 0.85rem; color: #64748b; }
-
-        /* Game UI */
-        .progress-box { height: 8px; background: #f1f5f9; border-radius: 4px; margin-bottom: 30px; overflow: hidden; }
-        .progress-bar { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s ease; }
-
-        .q-area { text-align: center; margin-bottom: 30px; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
-        .q-label { font-size: 0.75rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 10px; }
-        .q-word { font-size: 2.2rem; font-weight: 900; color: var(--primary); margin: 0; line-height: 1.2; }
-        .q-hint { font-size: 0.9rem; color: #64748b; font-style: italic; margin-top: 10px; }
-
-        /* Input Area (Text) */
-        #input-area { width: 100%; margin-bottom: 15px; }
-        input {
-            width: 100%;
-            padding: 18px;
-            font-size: 1.1rem;
-            border: 2px solid #e2e8f0;
-            border-radius: 14px;
-            text-align: center;
-            box-sizing: border-box;
-            outline: none;
-            transition: 0.2s;
-        }
-        input:focus { border-color: var(--accent); }
-        .correct-in { border-color: var(--success); background: #ecfdf5; }
-        .typo-in { border-color: var(--warning); background: #fffbeb; }
-        .error-in { border-color: var(--error); background: #fef2f2; }
-
-        /* Button Area (Level 2) */
-        #btn-area { display: none; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .btn-choice {
-            padding: 20px 10px;
-            border: 2px solid #e2e8f0;
-            background: white;
-            border-radius: 14px;
-            font-weight: 800;
-            font-size: 1.1rem;
-            color: var(--primary);
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .btn-choice:hover { border-color: var(--accent); background: #f8fafc; }
-        .btn-choice.selected-correct { background: var(--success); color: white; border-color: var(--success); }
-        .btn-choice.selected-wrong { background: var(--error); color: white; border-color: var(--error); }
-
-        .feedback { text-align: center; font-weight: 700; min-height: 24px; font-size: 1rem; margin-bottom: 20px; }
-        .fb-success { color: var(--success); }
-        .fb-warning { color: var(--warning); }
-        .fb-error { color: var(--error); }
-
-        /* Controls */
-        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .btn { padding: 14px; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 0.95rem; }
-        .btn-p { background: var(--accent); color: white; grid-column: span 2; }
-        .btn-s { background: #f1f5f9; color: #475569; }
-        .btn-n { background: var(--primary); color: white; grid-column: span 2; }
-
+        body { font-family: 'Inter', sans-serif; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
     </style>
 </head>
-<body>
+<body class="bg-[#F3F4F6] text-gray-800 h-screen overflow-hidden">
+    <div id="root"></div>
 
-<div class="container">
-    <header>
-        <h1>🇸🇪 UNIT 4 FINAL</h1>
-        <p>Valmis kokeeseen</p>
-    </header>
+    <script type="text/babel" data-type="module">
+        import React, { useState, useEffect } from 'react';
+        import { createRoot } from 'react-dom/client';
+        import { 
+            Calendar, CheckSquare, Mail, LayoutGrid, Search, 
+            Plus, MoreVertical, Clock, Video, Sparkles, 
+            Bell, Menu, X, CloudSun, FileText, ChevronRight,
+            BarChart3, Image as ImageIcon, MapPin
+        } from 'lucide-react';
 
-    <!-- MENU -->
-    <div id="scr-menu" class="screen active">
-        
-        <div class="menu-title">Sanasto</div>
-        <div class="level-card" onclick="game.start('1a')">
-            <div class="lvl-icon">📖</div>
-            <div class="lvl-info">
-                <h3>Taso 1A: Tunnista</h3>
-                <p>Ruotsi → Suomi (Kaikki sanat)</p>
+        // --- Mock Data ---
+        const MOCK_EVENTS = [
+            { id: 1, title: 'Product Design Review', time: '10:00 AM', duration: '1h', type: 'video' },
+            { id: 2, title: 'Lunch with Client', time: '12:30 PM', duration: '1.5h', type: 'location' },
+            { id: 3, title: 'Q4 Strategy Planning', time: '03:00 PM', duration: '2h', type: 'video' },
+        ];
+
+        // --- Components ---
+        const SidebarItem = ({ icon: Icon, label, active, onClick, collapsed }) => (
+            <button 
+                onClick={onClick}
+                className={`flex items-center w-full p-3 mb-2 rounded-xl transition-all duration-200 ${
+                    active ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'text-gray-500 hover:bg-gray-100'
+                }`}
+            >
+                <Icon size={20} />
+                {!collapsed && <span className="ml-3 text-sm font-medium">{label}</span>}
+            </button>
+        );
+
+        const Card = ({ children, className = "" }) => (
+            <div className={`bg-white p-6 rounded-2xl shadow-sm border border-gray-100 ${className}`}>
+                {children}
             </div>
-        </div>
+        );
 
-        <div class="level-card" onclick="game.start('1b')">
-            <div class="lvl-icon">✍️</div>
-            <div class="lvl-info">
-                <h3>Taso 1B: Kirjoita</h3>
-                <p>Suomi → Ruotsi (Vain tummat)</p>
+        // --- Views ---
+        const Dashboard = ({ tasks, toggleTask }) => (
+            <div className="space-y-6 animate-fade-in">
+                {/* Hero Section */}
+                <div className="flex flex-col md:flex-row justify-between items-end gap-4">
+                    <div>
+                        <h2 className="text-3xl font-light text-gray-800">Good Afternoon, <span className="font-semibold">User.</span></h2>
+                        <div className="flex items-center text-gray-500 gap-3 mt-2 text-sm">
+                            <span className="flex items-center bg-white px-3 py-1 rounded-full shadow-sm border border-gray-100">
+                                <CloudSun size={14} className="mr-2 text-orange-400" /> 72°F Sunny
+                            </span>
+                            <span>You have 3 meetings left today.</span>
+                        </div>
+                    </div>
+                    <button className="bg-gray-900 text-white px-5 py-2.5 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center font-medium text-sm">
+                        <Plus size={16} className="mr-2" /> Quick Action
+                    </button>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    {/* Main Column */}
+                    <div className="lg:col-span-8 space-y-6">
+                        {/* Next Up Card */}
+                        <div className="bg-gradient-to-br from-indigo-600 to-purple-700 text-white p-8 rounded-3xl shadow-xl relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 -mr-8 -mt-8 w-40 h-40 bg-white opacity-10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
+                            <div className="flex justify-between items-start mb-6 relative z-10">
+                                <span className="bg-white/20 backdrop-blur-md text-xs font-bold px-3 py-1 rounded-full uppercase border border-white/10">Up Next • 10:00 AM</span>
+                                <MoreVertical size={18} className="text-white/70 cursor-pointer hover:text-white" />
+                            </div>
+                            <h3 className="text-3xl font-bold mb-3 relative z-10">Product Design Review</h3>
+                            <div className="flex items-center text-indigo-100 text-sm mb-6 relative z-10">
+                                <Clock size={16} className="mr-2" /> 1h 
+                                <span className="mx-4 opacity-50">|</span>
+                                <Video size={16} className="mr-2" /> Google Meet
+                            </div>
+                            {/* AI Context */}
+                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10 relative z-10">
+                                <div className="flex items-center text-xs text-indigo-200 mb-3 uppercase font-bold tracking-wider">
+                                    <Sparkles size={12} className="mr-2 text-yellow-300" /> Nexus Context
+                                </div>
+                                <div className="flex gap-3">
+                                    <button className="bg-white text-indigo-900 px-4 py-2 rounded-lg text-xs font-bold shadow-sm hover:bg-indigo-50 transition-colors flex items-center">
+                                        <FileText size={14} className="mr-2 text-indigo-500" /> Agenda.pdf
+                                    </button>
+                                    <button className="bg-white text-indigo-900 px-4 py-2 rounded-lg text-xs font-bold shadow-sm hover:bg-indigo-50 transition-colors flex items-center">
+                                        <Mail size={14} className="mr-2 text-indigo-500" /> 3 Related Emails
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Recent Files */}
+                        <div>
+                            <h3 className="font-bold text-gray-800 mb-4 ml-1">Jump Back In</h3>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                {[
+                                    {name: 'Q3_Report.pdf', type: 'PDF', color: 'bg-red-100 text-red-600', icon: FileText},
+                                    {name: 'Marketing_Assets', type: 'Folder', color: 'bg-blue-100 text-blue-600', icon: ImageIcon},
+                                    {name: 'Budget_2025.xlsx', type: 'Sheet', color: 'bg-green-100 text-green-600', icon: BarChart3}
+                                ].map((f, i) => (
+                                    <div key={i} className="bg-white p-4 rounded-2xl border border-gray-100 flex items-center gap-4 hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer group">
+                                        <div className={`w-12 h-12 rounded-xl ${f.color} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
+                                            <f.icon size={22} />
+                                        </div>
+                                        <div className="overflow-hidden">
+                                            <span className="block text-sm font-bold text-gray-700 truncate">{f.name}</span>
+                                            <span className="block text-xs text-gray-400 mt-0.5">{f.type}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Side Column */}
+                    <div className="lg:col-span-4 space-y-6">
+                        <Card className="h-full">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="font-bold text-gray-800">My Tasks</h3>
+                                <button className="text-indigo-600 hover:bg-indigo-50 p-2 rounded-lg transition-colors"><Plus size={18} /></button>
+                            </div>
+                            <div className="space-y-3">
+                                {tasks.map(task => (
+                                    <div 
+                                        key={task.id} 
+                                        onClick={() => toggleTask(task.id)}
+                                        className="flex items-start group cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition-colors"
+                                    >
+                                        <div className={`mt-0.5 w-5 h-5 rounded border mr-3 flex items-center justify-center transition-all ${task.done ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300 group-hover:border-indigo-500'}`}>
+                                            {task.done && <CheckSquare size={12} className="text-white" />}
+                                        </div>
+                                        <div className="flex-1">
+                                            <span className={`text-sm font-medium ${task.done ? 'text-gray-400 line-through' : 'text-gray-700'}`}>{task.text}</span>
+                                            <p className="text-[10px] text-gray-400 mt-1">{task.tag}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            <button className="w-full mt-4 py-2 text-xs font-semibold text-gray-400 hover:text-indigo-600 flex items-center justify-center transition-colors">
+                                View All Tasks <ChevronRight size={14} className="ml-1" />
+                            </button>
+                        </Card>
+                    </div>
+                </div>
             </div>
-        </div>
+        );
 
-        <div class="menu-title">Kielioppi</div>
-        <div class="level-card" onclick="game.start(2)">
-            <div class="lvl-icon">🔘</div>
-            <div class="lvl-info">
-                <h3>Taso 2: En, Ett vai Ei mitään?</h3>
-                <p>Valitse nappia painamalla</p>
-            </div>
-        </div>
+        const CalendarView = () => (
+            <Card className="h-full animate-fade-in">
+                <div className="flex justify-between items-center mb-8">
+                    <h2 className="text-2xl font-bold text-gray-800">October 2025</h2>
+                    <div className="flex gap-2">
+                        <button className="px-4 py-2 text-sm font-medium bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100">Week</button>
+                        <button className="px-4 py-2 text-sm font-medium bg-indigo-600 text-white rounded-lg shadow-md shadow-indigo-200">Month</button>
+                    </div>
+                </div>
+                <div className="grid grid-cols-7 gap-4 text-center mb-4">
+                    {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => <div key={d} className="text-xs font-bold text-gray-400 uppercase tracking-wider">{d}</div>)}
+                </div>
+                <div className="grid grid-cols-7 gap-2">
+                    {Array.from({length: 31}, (_, i) => i + 1).map(d => (
+                        <div key={d} className={`min-h-[100px] border rounded-xl p-3 text-left hover:bg-gray-50 transition-all cursor-pointer relative ${d===24 ? 'ring-2 ring-indigo-500 border-transparent bg-indigo-50/50' : 'border-gray-100'}`}>
+                            <span className={`text-sm font-bold ${d===24 ? 'text-indigo-600' : 'text-gray-700'}`}>{d}</span>
+                            {d === 24 && <div className="mt-2 bg-indigo-100 text-indigo-700 text-[10px] px-2 py-1 rounded-md font-bold truncate">Design Review</div>}
+                            {d === 12 && <div className="mt-2 bg-orange-100 text-orange-700 text-[10px] px-2 py-1 rounded-md font-bold truncate">Lunch</div>}
+                        </div>
+                    ))}
+                </div>
+            </Card>
+        );
 
-        <div class="level-card" onclick="game.start(3)">
-            <div class="lvl-icon">🔥</div>
-            <div class="lvl-info">
-                <h3>Taso 3: Täysi Rimsu</h3>
-                <p>Kirjoita kaikki muodot</p>
-            </div>
-        </div>
+        const MailView = () => (
+            <Card className="h-full animate-fade-in">
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold text-gray-800">Smart Inbox</h2>
+                    <button className="text-sm text-indigo-600 font-medium hover:underline">Mark all read</button>
+                </div>
+                <div className="space-y-1">
+                    {[
+                        {from: 'Sarah Connor', subject: 'Re: Skynet Project Timeline', time: '10:42 AM', initial: 'S', color: 'bg-purple-100 text-purple-600', ai: 'Meeting Request'},
+                        {from: 'Marketing Team', subject: 'Q4 Assets Final Review', time: '09:15 AM', initial: 'M', color: 'bg-blue-100 text-blue-600', ai: 'Has Attachments'},
+                        {from: 'Cloud Billing', subject: 'Invoice #9921 for October', time: 'Yesterday', initial: 'C', color: 'bg-gray-100 text-gray-600', ai: 'Bill: $450'},
+                    ].map((mail, i) => (
+                        <div key={i} className="flex gap-4 p-4 hover:bg-gray-50 rounded-xl transition-colors cursor-pointer border-b border-gray-50 last:border-0 group">
+                            <div className={`w-12 h-12 rounded-full ${mail.color} flex items-center justify-center font-bold text-lg shrink-0`}>{mail.initial}</div>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-baseline mb-1">
+                                    <h4 className="font-bold text-gray-800 text-sm group-hover:text-indigo-600 transition-colors">{mail.from}</h4>
+                                    <span className="text-xs text-gray-400 font-medium">{mail.time}</span>
+                                </div>
+                                <p className="text-sm text-gray-600 truncate font-medium">{mail.subject}</p>
+                                <p className="text-xs text-gray-400 truncate mt-1">Hey, just checking in on the latest deliverables for the...</p>
+                                <div className="mt-3 inline-flex items-center bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 text-indigo-700 text-[10px] px-2 py-1 rounded-md font-semibold">
+                                    <Sparkles size={10} className="mr-1" /> AI: {mail.ai}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </Card>
+        );
 
-         <div class="level-card" onclick="game.start(4)">
-            <div class="lvl-icon">⭐</div>
-            <div class="lvl-info">
-                <h3>Bonus: Adjektiivit</h3>
-                <p>Epäsäännölliset (bra, sämre, bäst)</p>
-            </div>
-        </div>
-    </div>
+        // --- Main App Shell ---
+        function NexusApp() {
+            const [activeTab, setActiveTab] = useState('dashboard');
+            const [sidebarOpen, setSidebarOpen] = useState(false);
+            const [tasks, setTasks] = useState([
+                { id: 1, text: 'Review Q3 Financials', tag: 'Finance', done: false },
+                { id: 2, text: 'Email Marketing Team', tag: 'Outreach', done: true },
+                { id: 3, text: 'Book Flights for Summit', tag: 'Travel', done: false },
+                { id: 4, text: 'Update Jira Ticket', tag: 'Dev', done: false },
+            ]);
 
-    <!-- GAME -->
-    <div id="scr-game" class="screen">
-        <div class="progress-box"><div id="prog-bar" class="progress-bar"></div></div>
-        
-        <div class="q-area">
-            <div id="q-label" class="q-label">Label</div>
-            <div id="q-text" class="q-word">Word</div>
-            <div id="q-hint" class="q-hint">Hint</div>
-        </div>
+            const toggleTask = (id) => setTasks(tasks.map(t => t.id === id ? {...t, done: !t.done} : t));
 
-        <!-- Text Input Mode -->
-        <div id="input-area">
-            <input type="text" id="ans-in" placeholder="Kirjoita vastaus..." autocomplete="off" spellcheck="false">
-        </div>
+            return (
+                <div className="flex h-screen w-full">
+                    {/* Sidebar */}
+                    <aside className={`fixed lg:relative z-40 h-full bg-white border-r border-gray-200 transition-all duration-300 shadow-xl lg:shadow-none ${sidebarOpen ? 'w-72 translate-x-0' : 'w-72 -translate-x-full lg:translate-x-0'}`}>
+                        <div className="p-8 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-indigo-200">N</div>
+                                <span className="font-bold text-2xl tracking-tight text-gray-800">Nexus</span>
+                            </div>
+                            <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-gray-400 hover:text-gray-800"><X size={24}/></button>
+                        </div>
+                        <nav className="px-6 space-y-2">
+                            <SidebarItem icon={LayoutGrid} label="Dashboard" active={activeTab==='dashboard'} onClick={() => setActiveTab('dashboard')} />
+                            <SidebarItem icon={Calendar} label="Calendar" active={activeTab==='calendar'} onClick={() => setActiveTab('calendar')} />
+                            <SidebarItem icon={CheckSquare} label="Tasks" active={activeTab==='tasks'} onClick={() => setActiveTab('tasks')} />
+                            <SidebarItem icon={Mail} label="Mail" active={activeTab==='mail'} onClick={() => setActiveTab('mail')} />
+                        </nav>
+                        <div className="absolute bottom-0 w-full p-8">
+                            <div className="bg-gray-50 rounded-2xl p-5 border border-gray-100">
+                                <div className="flex justify-between mb-2">
+                                    <div className="text-xs font-bold text-gray-400 uppercase">Storage</div>
+                                    <div className="text-xs font-bold text-indigo-600">75%</div>
+                                </div>
+                                <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
+                                    <div className="bg-indigo-500 h-full w-3/4 rounded-full"></div>
+                                </div>
+                                <div className="text-[10px] text-gray-400 mt-2">11.2 GB of 15 GB Used</div>
+                            </div>
+                        </div>
+                    </aside>
 
-        <!-- Button Mode (Level 2) -->
-        <div id="btn-area">
-            <button class="btn btn-choice" onclick="game.checkBtn('en', this)">En</button>
-            <button class="btn btn-choice" onclick="game.checkBtn('ett', this)">Ett</button>
-            <button class="btn btn-choice" onclick="game.checkBtn('none', this)">Ei artikkelia</button>
-        </div>
+                    {/* Mobile Overlay */}
+                    {sidebarOpen && <div className="fixed inset-0 bg-black/20 z-30 lg:hidden backdrop-blur-sm" onClick={() => setSidebarOpen(false)}></div>}
 
-        <div id="fb" class="feedback"></div>
+                    {/* Main Content */}
+                    <main className="flex-1 flex flex-col min-w-0 bg-[#F8FAFC]">
+                        {/* Header */}
+                        <header className="h-20 bg-white/80 backdrop-blur-md border-b border-gray-200 flex items-center justify-between px-8 sticky top-0 z-20">
+                            <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-gray-500 mr-4"><Menu size={24}/></button>
+                            
+                            <div className="flex-1 max-w-xl relative hidden md:block">
+                                <Search size={20} className="absolute left-4 top-3 text-gray-400" />
+                                <input type="text" placeholder="Ask Nexus..." className="w-full bg-white border border-gray-200 rounded-2xl py-2.5 pl-12 pr-4 text-sm focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 outline-none transition-all shadow-sm" />
+                            </div>
 
-        <div id="ctrl-play" class="controls">
-            <button class="btn btn-s" onclick="game.skip()">Ohita</button>
-            <button class="btn btn-s" onclick="game.show()">Vastaus</button>
-            <button class="btn btn-p" onclick="game.checkTxt()">TARKISTA</button>
-        </div>
+                            <div className="flex items-center gap-6">
+                                <button className="text-gray-400 relative hover:text-gray-600 transition-colors">
+                                    <Bell size={22} />
+                                    <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                                </button>
+                                <div className="w-10 h-10 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-full text-white flex items-center justify-center text-sm font-bold shadow-md ring-4 ring-white cursor-pointer hover:ring-indigo-100 transition-all">JD</div>
+                            </div>
+                        </header>
 
-        <div id="ctrl-next" class="controls" style="display: none;">
-            <button class="btn btn-n" onclick="game.next()">SEURAAVA →</button>
-        </div>
-    </div>
+                        {/* Content Area */}
+                        <div className="flex-1 overflow-y-auto p-4 lg:p-8 scroll-smooth">
+                            <div className="max-w-7xl mx-auto pb-20">
+                                {activeTab === 'dashboard' && <Dashboard tasks={tasks} toggleTask={toggleTask} />}
+                                {activeTab === 'calendar' && <CalendarView />}
+                                {activeTab === 'mail' && <MailView />}
+                                {activeTab === 'tasks' && <Card className="animate-fade-in"><h2 className="text-xl font-bold mb-4">Project Board</h2><p className="text-gray-500">Full Kanban board is loading...</p></Card>}
+                            </div>
+                        </div>
+                    </main>
 
-    <!-- RESULTS -->
-    <div id="scr-res" class="screen" style="text-align: center; justify-content: center;">
-        <div style="font-size: 3.5rem; margin-bottom: 20px;">🏆</div>
-        <h2 style="margin: 0; color: var(--primary);">Harjoitus tehty!</h2>
-        <p id="res-score" style="margin: 15px 0 30px; color: #64748b; font-size: 1.1rem;"></p>
-        <button class="btn btn-p" onclick="game.toMenu()">Takaisin valikkoon</button>
-    </div>
-</div>
-
-<script>
-// --- DATA ---
-const ACTIVE = [
-    { fi: "saari", perus: "ö", art: "en ö", rimsu: "en ö, ön, öar, öarna" },
-    { fi: "elämä", perus: "liv", art: "ett liv", rimsu: "ett liv, livet, liv, liven" },
-    { fi: "kertoa jostakin", perus: "berätta om", art: "berätta om", rimsu: "berätta, berättar, berättade om" },
-    { fi: "vuodenaika", perus: "årstid", art: "en årstid", rimsu: "en årstid, årstiden, årstider, årstiderna" },
-    { fi: "lempipaikka", perus: "favoritställe", art: "ett favoritställe", rimsu: "ett favoritställe, favoritstället, favoritställen, favoritställena" },
-    { fi: "pulla", perus: "bulle", art: "en bulle", rimsu: "en bulle, bullen, bullar, bullarna" },
-    { fi: "jäätelö", perus: "glass", art: "en glass", rimsu: "en glass, glassen, glassar, glassarna" },
-    { fi: "saada", perus: "få", art: "få", rimsu: "få, får, fick" },
-    { fi: "nähdä", perus: "se", art: "se", rimsu: "se, ser, såg" },
-    { fi: "tehdä", perus: "göra", art: "göra", rimsu: "göra, gör, gjorde" },
-    { fi: "tulla", perus: "komma", art: "komma", rimsu: "komma, kommer, kom" },
-    { fi: "turisti", perus: "turist", art: "en turist", rimsu: "en turist, turisten, turister, turisterna" },
-    { fi: "haluta", perus: "vilja", art: "vilja", rimsu: "vilja, vill, ville" },
-    { fi: "kaunis", perus: "vacker", art: "vacker", rimsu: "vacker, vackert, vackra" },
-    { fi: "Gotlanti", perus: "Gotland", art: "Gotland", rimsu: "Gotland" },
-    { fi: "kaupungissa", perus: "i stan", art: "i stan", rimsu: "i stan" },
-    { fi: "niin", perus: "så", art: "så", rimsu: "så" },
-    { fi: "paras", perus: "bäst", art: "bäst", rimsu: "bäst" },
-    { fi: "tulevaisuudessa", perus: "i framtiden", art: "i framtiden", rimsu: "i framtiden" },
-    { fi: "ulkomailla", perus: "utomlands", art: "utomlands", rimsu: "utomlands" }
-];
-
-const PASSIVE = [
-    { s: "mysig", f: "viihtyisä" }, { s: "Sveriges östkust", f: "Ruotsin itärannikko" }, { s: "alla", f: "kaikki" },
-    { s: "finast", f: "hienoin" }, { s: "till exempel", f: "esimerkiksi" }, { s: "eller", f: "tai" },
-    { s: "deras", f: "heidän" }, { s: "en båtresa", f: "laivamatka" }, { s: "halv", f: "puoli" },
-    { s: "ta, tar, tog", f: "ottaa" }, { s: "jättelång", f: "tosi pitkä" }, { s: "bli, blir, blev", f: "tulla" },
-    { s: "lätt", f: "helppo / kevyt" }, { s: "sjösjuk", f: "merisairas" }, { s: "på landet", f: "maalla" },
-    { s: "en människa", f: "ihminen" }, { s: "här", f: "täällä" }, { s: "en julkänsla", f: "joulufiilis" },
-    { s: "då", f: "silloin" }, { s: "till fastlandet", f: "mantereelle" }, { s: "oftast", f: "useimmiten" },
-    { s: "hellre", f: "mieluummin" }, { s: "ut", f: "ulos" }, { s: "en promenad", f: "kävely" },
-    { s: "utan att", f: "ilman että" }, { s: "någon / något", f: "joku" }, { s: "jobbigare", f: "työläämpää" },
-    { s: "hit", f: "tänne" }, { s: "speciellt", f: "erityisesti" }, { s: "tro, tror, trodde", f: "uskoa" },
-    { s: "nästan", f: "melkein" }, { s: "sjunka", f: "upota" }, { s: "en Hansastad", f: "Hansakaupunki" },
-    { s: "därför", f: "siksi" }, { s: "ett utbyte", f: "vaihto" }
-];
-
-const ADJECTIVES = [
-    { fi: "hyvä", ans: "bättre, bäst" }, { fi: "huono", ans: "sämre, sämst" }, { fi: "vanha", ans: "äldre, äldst" },
-    { fi: "suuri", ans: "större, störst" }, { fi: "pieni", ans: "mindre, minst" }, { fi: "pitkä", ans: "längre, längst" },
-    { fi: "matala", ans: "lägre, lägst" }, { fi: "korkea", ans: "högre, högst" }, { fi: "nuori", ans: "yngre, yngst" },
-    { fi: "painava", ans: "tyngre, tyngst" }, { fi: "kaunis", ans: "vackrare, vackrast" }
-];
-
-const game = {
-    s: { lvl: 0, q: [], idx: 0, pt: 0, live: true },
-
-    lev: (a, b) => {
-        const m = [];
-        for(let i=0; i<=b.length; i++) m[i]=[i];
-        for(let j=0; j<=a.length; j++) m[0][j]=j;
-        for(let i=1; i<=b.length; i++) {
-            for(let j=1; j<=a.length; j++) {
-                m[i][j] = b[i-1]===a[j-1] ? m[i-1][j-1] : Math.min(m[i-1][j-1]+1, m[i][j-1]+1, m[i-1][j]+1);
-            }
-        }
-        return m[b.length][a.length];
-    },
-
-    toMenu: () => {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById('scr-menu').classList.add('active');
-    },
-
-    start: (lvl) => {
-        game.s.lvl = lvl; game.s.idx = 0; game.s.pt = 0;
-        
-        if(lvl === '1a') { 
-            game.s.q = [...ACTIVE.map(x=>({q:x.perus, a:x.fi, h:"Suomeksi"})), ...PASSIVE.map(x=>({q:x.s, a:x.f, h:"Suomeksi"}))].sort(()=>Math.random()-0.5);
-        } else if(lvl === '1b') {
-            game.s.q = ACTIVE.map(x=>({q:x.fi, a:x.perus, h:"Ruotsiksi (perusmuoto)"})).sort(()=>Math.random()-0.5);
-        } else if(lvl === 2) {
-            // Button mode: Determine type
-            game.s.q = ACTIVE.map(x => {
-                let ans = "none";
-                if(x.art.startsWith("en ")) ans = "en";
-                if(x.art.startsWith("ett ")) ans = "ett";
-                return { q: x.fi, a: ans, h: "Mikä artikkeli?" };
-            }).sort(()=>Math.random()-0.5);
-        } else if(lvl === 3) {
-            game.s.q = ACTIVE.map(x=>({q:x.fi, a:x.rimsu, h:"Kaikki muodot"})).sort(()=>Math.random()-0.5);
-        } else if(lvl === 4) {
-            game.s.q = ADJECTIVES.map(x=>({q:x.fi, a:x.ans, h:"komp, sup"})).sort(()=>Math.random()-0.5);
+                    {/* AI Button */}
+                    <button className="fixed bottom-8 right-8 w-16 h-16 bg-gray-900 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 hover:-rotate-12 transition-all z-50 group">
+                        <Sparkles size={28} className="text-yellow-300 group-hover:animate-pulse" />
+                    </button>
+                </div>
+            );
         }
 
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById('scr-game').classList.add('active');
-        game.render();
-    },
-
-    render: () => {
-        const item = game.s.q[game.s.idx];
-        const lvl = game.s.lvl;
-
-        document.getElementById('q-text').textContent = item.q;
-        document.getElementById('q-hint').textContent = item.h;
-        document.getElementById('prog-bar').style.width = `${(game.s.idx/game.s.q.length)*100}%`;
-        document.getElementById('fb').textContent = "";
-
-        // UI Switching
-        const inArea = document.getElementById('input-area');
-        const btnArea = document.getElementById('btn-area');
-        const playCtrls = document.getElementById('ctrl-play');
-        const nextCtrls = document.getElementById('ctrl-next');
-
-        // Reset buttons
-        document.querySelectorAll('.btn-choice').forEach(b => {
-            b.className = 'btn btn-choice';
-            b.disabled = false;
-        });
-
-        if(lvl === 2) {
-            // Button Mode
-            inArea.style.display = 'none';
-            btnArea.style.display = 'grid';
-            playCtrls.style.display = 'none'; // No text check button needed
-            document.getElementById('q-label').textContent = "VALITSE ARTIKKELI";
-        } else {
-            // Text Mode
-            inArea.style.display = 'block';
-            btnArea.style.display = 'none';
-            playCtrls.style.display = 'grid';
-            const input = document.getElementById('ans-in');
-            input.value = ""; input.className = ""; input.focus();
-            
-            if(lvl === '1a') document.getElementById('q-label').textContent = "RUOTSI → SUOMI";
-            if(lvl === '1b') document.getElementById('q-label').textContent = "SUOMI → RUOTSI";
-            if(lvl === 3) document.getElementById('q-label').textContent = "TÄYSI RIMSU";
-            if(lvl === 4) document.getElementById('q-label').textContent = "ADJEKTIIVIT";
-        }
-        
-        nextCtrls.style.display = 'none';
-        game.s.live = true;
-    },
-
-    // TEXT CHECKER
-    checkTxt: () => {
-        if(!game.s.live) return;
-        const item = game.s.q[game.s.idx];
-        const val = document.getElementById('ans-in').value.trim().toLowerCase();
-        const target = item.a.toLowerCase();
-        const dist = game.lev(val, target);
-        
-        let correct = val === target;
-        // Loose match for synonyms in 1a
-        if(game.s.lvl === '1a' && item.a.includes('/')) {
-            if(item.a.split('/').map(s=>s.trim()).includes(val)) correct = true;
-        }
-
-        const fb = document.getElementById('fb');
-        const inp = document.getElementById('ans-in');
-
-        if(correct) {
-            inp.classList.add('correct-in'); fb.innerHTML = "Oikein! 🌟"; fb.className = "feedback fb-success"; game.s.pt++;
-        } else if(dist <= 2 && target.length > 4) {
-            inp.classList.add('typo-in'); fb.innerHTML = `Melkein! Oikein: <strong>${item.a}</strong>`; fb.className = "feedback fb-warning"; game.s.pt++;
-        } else {
-            inp.classList.add('error-in'); fb.innerHTML = `Väärin. Oikea: <strong>${item.a}</strong>`; fb.className = "feedback fb-error";
-        }
-        
-        game.finish();
-    },
-
-    // BUTTON CHECKER (LEVEL 2)
-    checkBtn: (choice, btn) => {
-        if(!game.s.live) return;
-        const item = game.s.q[game.s.idx];
-        const fb = document.getElementById('fb');
-
-        if(choice === item.a) {
-            btn.classList.add('selected-correct');
-            fb.innerHTML = "Oikein! 🌟"; fb.className = "feedback fb-success";
-            game.s.pt++;
-        } else {
-            btn.classList.add('selected-wrong');
-            fb.innerHTML = `Väärin. Oikea oli: <strong>${item.a.toUpperCase()}</strong>`; fb.className = "feedback fb-error";
-        }
-        
-        // Disable all buttons
-        document.querySelectorAll('.btn-choice').forEach(b => b.disabled = true);
-        
-        // Show next button
-        document.getElementById('ctrl-next').style.display = 'grid';
-        game.s.live = false;
-    },
-
-    show: () => {
-        const item = game.s.q[game.s.idx];
-        document.getElementById('ans-in').value = item.a;
-        document.getElementById('fb').innerHTML = "Tässä vastaus.";
-        document.getElementById('fb').className = "feedback fb-error";
-        game.finish();
-    },
-
-    skip: () => game.next(),
-
-    finish: () => {
-        game.s.live = false;
-        document.getElementById('ctrl-play').style.display = 'none';
-        document.getElementById('ctrl-next').style.display = 'grid';
-    },
-
-    next: () => {
-        game.s.idx++;
-        if(game.s.idx >= game.s.q.length) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById('scr-res').classList.add('active');
-            document.getElementById('res-score').textContent = `Sait ${game.s.pt} / ${game.s.q.length} oikein!`;
-        } else game.render();
-    }
-};
-
-document.getElementById('ans-in').addEventListener('keypress', e => { if(e.key==='Enter') game.s.live ? game.checkTxt() : game.next(); });
-</script>
+        const root = createRoot(document.getElementById('root'));
+        root.render(<NexusApp />);
+    </script>
 </body>
 </html>
-
 
