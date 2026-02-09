@@ -3,37 +3,622 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Google Tune</title>
+<title>Google Tune Pro</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Rounded" rel="stylesheet">
 <style>
-:root { --primary: #0b57d0; --surface: #f0f2f5; --white: #ffffff; }
-body { font-family: 'Roboto', sans-serif; background: var(--surface); height: 100vh; overflow: hidden; display: flex; flex-direction: column; user-select: none; -webkit-user-select: none; touch-action: none; }
+:root { --primary: #0b57d0; --surface: #f0f2f5; --surface-variant: #e1e3e1; --on-surface: #1f1f1f; --outline: #747775; }
+body { font-family: 'Roboto', sans-serif; background-color: var(--surface); color: var(--on-surface); height: 100vh; width: 100vw; overflow: hidden; display: flex; flex-direction: column; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
 .font-brand { font-family: 'Google Sans', sans-serif; }
+.icon-btn { display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 50%; transition: background-color 0.2s; border: none; outline: none; background: transparent; color: var(--on-surface); cursor: pointer; }
+.icon-btn:active { background-color: rgba(0,0,0,0.1); }
+.tab-btn { flex: 1; padding: 12px 0; text-align: center; font-family: 'Google Sans', sans-serif; font-size: 14px; font-weight: 500; color: #444746; border-radius: 24px; transition: all 0.2s; position: relative; overflow: hidden; }
 .tab-btn.active { background-color: #c2e7ff; color: #001d35; font-weight: 700; }
+.card { background: white; border-radius: 24px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 16px; border: 1px solid rgba(0,0,0,0.05); }
+.control-row { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+.control-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.control-label { font-size: 14px; font-weight: 500; color: #444746; display: flex; align-items: center; gap: 8px; }
+.control-value { font-family: 'Roboto Mono', monospace; font-size: 12px; background: #e3e3e3; padding: 2px 6px; border-radius: 6px; color: #1f1f1f; }
+input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 36px; background: transparent; cursor: pointer; touch-action: none; }
+input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; background: #e0e2e0; border-radius: 3px; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; background: var(--primary); margin-top: -9px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); border: 2px solid white; transition: transform 0.1s; }
+input[type=range]:active::-webkit-slider-thumb { transform: scale(1.2); }
+input[type=range]:focus { outline: none; }
+.vert-slider-container { display: flex; flex-direction: column; align-items: center; flex: 1; height: 280px; min-width: 44px; position: relative; }
+.vert-slider-wrapper { position: relative; width: 44px; height: 220px; display: flex; justify-content: center; align-items: center; }
+input[type=range].vert-slider { width: 220px; height: 44px; transform: rotate(-90deg); position: absolute; margin: 0; }
+input[type=number] { width: 60px; padding: 4px 8px; border: 1px solid #c4c7c5; border-radius: 8px; font-size: 14px; font-family: 'Roboto Mono', monospace; text-align: center; background: white; color: #1f1f1f; }
+input[type=number]:focus { outline: 2px solid var(--primary); border-color: transparent; }
+.toggle-switch { position: relative; width: 52px; height: 32px; flex-shrink: 0; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.slider-switch { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #e0e2e0; transition: .4s; border-radius: 32px; border: 2px solid transparent; }
+.slider-switch:before { position: absolute; content: ""; height: 24px; width: 24px; left: 2px; bottom: 2px; background-color: #747775; transition: .4s; border-radius: 50%; }
+input:checked + .slider-switch { background-color: var(--primary); }
+input:checked + .slider-switch:before { transform: translateX(20px); background-color: white; }
+.pro-control { display: none; }
+body.pro-mode .pro-control { display: flex; }
+body.pro-mode .simple-control { display: none; }
+.safe-padding { padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
+.viz-container { position: relative; width: 100%; height: 100%; background: #000; border-radius: 0 0 24px 24px; overflow: hidden; }
+canvas { width: 100%; height: 100%; display: block; }
+.scrub-container { position: absolute; bottom: 0; left: 0; right: 0; padding: 16px; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); display: flex; flex-direction: column; gap: 8px; }
+.time-display { display: flex; justify-content: space-between; color: rgba(255,255,255,0.9); font-size: 11px; font-weight: 700; font-family: 'Roboto Mono', monospace; }
+.progress-track { position: relative; height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; overflow: visible; }
+.progress-fill { position: absolute; left: 0; top: 0; bottom: 0; background: #a8c7fa; border-radius: 3px; width: 0%; pointer-events: none; }
+input[type=range].seek-slider { position: absolute; top: -15px; left: -2px; width: calc(100% + 4px); height: 36px; opacity: 0; margin: 0; }
 input[type=file] { display: none; }
-.glass-panel { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-radius: 24px; border: 1px solid rgba(255,255,255,0.8); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
-.vert-slider-wrapper { position: relative; width: 44px; height: 260px; display: flex; justify-content: center; align-items: center; }
-input[type=range].vert-slider { -webkit-appearance: none; appearance: none; width: 260px; height: 44px; background: transparent; transform: rotate(-90deg); position: absolute; cursor: pointer; margin: 0; }
-input[type=range].vert-slider::-webkit-slider-runnable-track { width: 100%; height: 6px; background: #e0e0e0; border-radius: 3px; }
-input[type=range].vert-slider::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; background: var(--primary); margin-top: -9px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); border: 2px solid white; }
-input[type=range].vert-slider:focus { outline: none; }
-input[type=range].horz-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 44px; background: transparent; cursor: pointer; }
-input[type=range].horz-slider::-webkit-slider-runnable-track { width: 100%; height: 6px; background: #e0e0e0; border-radius: 3px; }
-input[type=range].horz-slider::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; background: var(--primary); margin-top: -9px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); border: 2px solid white; }
-.safe-pb { padding-bottom: env(safe-area-inset-bottom); }
+.loading-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; color: white; flex-direction: column; gap: 12px; z-index: 50; backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+.loading-overlay.active { opacity: 1; pointer-events: auto; }
 </style>
 </head>
 <body>
 
-<header class="h-16 flex items-center justify-between px-4 bg-white shadow-sm z-30 shrink-0">
-<div class="flex items-center gap-2">
-<span class="material-symbols-rounded text-3xl text-blue-600">equalizer</span>
-<span class="font-brand text-xl text-gray-700 font-medium">Tune</span>
+<header class="h-16 flex items-center justify-between bg-white shadow-sm z-40 shrink-0 safe-padding">
+    <div class="flex items-center gap-3">
+        <span class="material-symbols-rounded text-3xl text-blue-600">equalizer</span>
+        <span class="font-brand text-xl text-gray-800 font-medium">Tune</span>
+        <span id="mode-badge" class="text-[10px] font-bold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full uppercase tracking-wider hidden">Pro</span>
+    </div>
+    <div class="flex items-center gap-2">
+        <label class="flex items-center gap-2 text-sm font-medium text-gray-600 cursor-pointer mr-2">
+            <span>Pro Mode</span>
+            <div class="toggle-switch scale-75">
+                <input type="checkbox" id="pro-toggle">
+                <span class="slider-switch"></span>
+            </div>
+        </label>
+        <button id="reset-btn" class="icon-btn" aria-label="Reset All"><span class="material-symbols-rounded">restart_alt</span></button>
+        <label class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 active:scale-95 transition-transform cursor-pointer shadow-sm">
+            <span class="material-symbols-rounded text-lg">upload_file</span>
+            <span class="hidden sm:inline">Load</span>
+            <input type="file" id="file-input" accept="audio/*">
+        </label>
+    </div>
+</header>
+
+<div class="flex-1 relative shrink-0 min-h-[25vh] max-h-[40vh] bg-black">
+    <div class="viz-container">
+        <canvas id="viz-canvas"></canvas>
+        <div class="loading-overlay" id="loader">
+            <span class="material-symbols-rounded animate-spin text-4xl">progress_activity</span>
+            <span class="text-sm font-medium">Processing Audio...</span>
+        </div>
+        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none transition-opacity duration-300" id="empty-state">
+            <span class="material-symbols-rounded text-6xl text-white/20">music_note</span>
+            <p class="text-white/40 text-sm mt-2 font-medium">Load audio to begin</p>
+        </div>
+        <div class="scrub-container safe-padding">
+            <div class="flex items-center gap-4">
+                <button id="play-btn" class="w-12 h-12 rounded-full bg-white text-blue-600 flex items-center justify-center shadow-lg active:scale-90 transition-transform flex-shrink-0 disabled:opacity-50 disabled:scale-100" disabled aria-label="Play Pause">
+                    <span class="material-symbols-rounded text-3xl">play_arrow</span>
+                </button>
+                <div class="flex-1">
+                    <div class="time-display">
+                        <span id="time-curr">0:00</span>
+                        <span id="time-total">0:00</span>
+                    </div>
+                    <div class="progress-track mt-2">
+                        <div class="progress-fill" id="progress-bar"></div>
+                        <input type="range" class="seek-slider" id="seek-slider" min="0" max="100" step="0.01" value="0" aria-label="Seek">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-<div class="flex gap-2">
-<button onclick="resetApp()" class="px-3 py-2 rounded-full text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">Reset</button>
+
+<div class="bg-white border-b border-gray-200 z-30 shadow-sm shrink-0">
+    <div class="flex items-center justify-around px-2 py-2 safe-padding gap-2">
+        <button onclick="switchTab('eq')" class="tab-btn active" data-tab="eq">EQ</button>
+        <button onclick="switchTab('controls')" class="tab-btn" data-tab="controls">Controls</button>
+        <button onclick="switchTab('fx')" class="tab-btn" data-tab="fx">Effects</button>
+        <button onclick="switchTab('mix')" class="tab-btn" data-tab="mix">Mix</button>
+    </div>
+</div>
+
+<main class="flex-1 overflow-y-auto bg-[#f0f2f5] relative w-full">
+    <div id="tab-eq" class="absolute inset-0 p-6 overflow-x-auto overflow-y-hidden flex items-end pb-8 gap-1 safe-padding hide-scrollbar">
+        <!-- EQ Generated via JS -->
+    </div>
+
+    <div id="tab-controls" class="absolute inset-0 p-6 overflow-y-auto hidden flex-col gap-4 safe-padding">
+        <div class="card">
+            <div class="control-row">
+                <div class="control-header">
+                    <span class="control-label"><span class="material-symbols-rounded text-blue-600">speed</span>Speed</span>
+                    <span id="disp-speed" class="control-value">1.00x</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <input type="range" id="sl-speed" min="0.25" max="3.00" step="0.01" value="1.00" aria-label="Speed">
+                    <input type="number" id="inp-speed" min="0.25" max="3.00" step="0.01" value="1.00" class="pro-control">
+                </div>
+            </div>
+            
+            <div class="control-row pro-control">
+                <div class="control-header">
+                    <span class="control-label"><span class="material-symbols-rounded text-indigo-600">music_note</span>Pitch (Semi)</span>
+                    <span id="disp-pitch" class="control-value">0.00</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <input type="range" id="sl-pitch" min="-12" max="12" step="0.01" value="0" aria-label="Pitch Semitones">
+                    <input type="number" id="inp-pitch" min="-12" max="12" step="0.01" value="0">
+                </div>
+            </div>
+
+            <div class="control-row pro-control">
+                <div class="control-header">
+                    <span class="control-label"><span class="material-symbols-rounded text-pink-600">tune</span>Tune (Cents)</span>
+                    <span id="disp-tune" class="control-value">0.0</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <input type="range" id="sl-tune" min="-100" max="100" step="0.1" value="0" aria-label="Fine Tune Cents">
+                    <input type="number" id="inp-tune" min="-100" max="100" step="0.1" value="0">
+                </div>
+            </div>
+            <p class="text-xs text-gray-500 mt-2 text-center simple-control">Switch to Pro Mode for Pitch & Fine Tune</p>
+        </div>
+    </div>
+
+    <div id="tab-fx" class="absolute inset-0 p-6 overflow-y-auto hidden flex-col gap-4 safe-padding">
+        <div class="card">
+            <div class="control-row">
+                <div class="control-header">
+                    <span class="control-label"><span class="material-symbols-rounded text-purple-600">church</span>Reverb</span>
+                    <span id="disp-reverb" class="control-value">0%</span>
+                </div>
+                <input type="range" id="sl-reverb" min="0" max="100" step="1" value="0" aria-label="Reverb Amount">
+            </div>
+        </div>
+        <div class="card">
+            <div class="control-row">
+                <div class="control-header">
+                    <span class="control-label"><span class="material-symbols-rounded text-orange-600">spatial_audio</span>Echo</span>
+                    <span id="disp-echo" class="control-value">0%</span>
+                </div>
+                <input type="range" id="sl-echo" min="0" max="100" step="1" value="0" aria-label="Echo Amount">
+            </div>
+        </div>
+    </div>
+
+    <div id="tab-mix" class="absolute inset-0 p-6 overflow-y-auto hidden flex-col gap-4 safe-padding">
+        <div class="card">
+            <div class="control-row">
+                <div class="control-header">
+                    <span class="control-label"><span class="material-symbols-rounded text-gray-700">volume_up</span>Master Volume</span>
+                    <span id="disp-vol" class="control-value">40%</span>
+                </div>
+                <input type="range" id="sl-vol" min="0" max="100" step="1" value="40" aria-label="Master Volume">
+            </div>
+        </div>
+        <div class="card flex items-center justify-between py-4">
+            <div class="flex flex-col">
+                <span class="font-medium text-gray-800 text-base">Compressor</span>
+                <span class="text-xs text-gray-500">Normalize loudness & prevent clipping</span>
+            </div>
+            <label class="toggle-switch">
+                <input type="checkbox" id="comp-toggle">
+                <span class="slider-switch"></span>
+            </label>
+        </div>
+    </div>
+</main>
+
+<script>
+const DEFAULT_STATE = {
+    pro: false,
+    speed: 1.00,
+    pitch: 0.00,
+    tune: 0.0,
+    reverb: 0,
+    echo: 0,
+    vol: 40,
+    comp: true,
+    eq: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+};
+
+let state = JSON.parse(localStorage.getItem('gTunePro')) || JSON.parse(JSON.stringify(DEFAULT_STATE));
+let audioCtx, srcNode, gainNode, analyser, buffer, bands = [], reverbNode, revGain, delayNode, delayGain, compNode, masterGain;
+let isPlaying = false, startTime = 0, pauseTime = 0, animId, saveTimer;
+const freqs = [32, 64, 125, 250, 500, '1k', '2k', '4k', '8k', '16k'];
+
+const els = {
+    file: document.getElementById('file-input'),
+    play: document.getElementById('play-btn'),
+    canvas: document.getElementById('viz-canvas'),
+    timeCurr: document.getElementById('time-curr'),
+    timeTotal: document.getElementById('time-total'),
+    progress: document.getElementById('progress-bar'),
+    seek: document.getElementById('seek-slider'),
+    eqContainer: document.getElementById('tab-eq'),
+    proToggle: document.getElementById('pro-toggle'),
+    modeBadge: document.getElementById('mode-badge'),
+    reset: document.getElementById('reset-btn'),
+    loader: document.getElementById('loader'),
+    empty: document.getElementById('empty-state'),
+    
+    slSpeed: document.getElementById('sl-speed'),
+    inpSpeed: document.getElementById('inp-speed'),
+    dispSpeed: document.getElementById('disp-speed'),
+    
+    slPitch: document.getElementById('sl-pitch'),
+    inpPitch: document.getElementById('inp-pitch'),
+    dispPitch: document.getElementById('disp-pitch'),
+    
+    slTune: document.getElementById('sl-tune'),
+    inpTune: document.getElementById('inp-tune'),
+    dispTune: document.getElementById('disp-tune'),
+    
+    slReverb: document.getElementById('sl-reverb'),
+    dispReverb: document.getElementById('disp-reverb'),
+    
+    slEcho: document.getElementById('sl-echo'),
+    dispEcho: document.getElementById('disp-echo'),
+    
+    slVol: document.getElementById('sl-vol'),
+    dispVol: document.getElementById('disp-vol'),
+    
+    comp: document.getElementById('comp-toggle')
+};
+
+const ctx = els.canvas.getContext('2d');
+
+function init() {
+    els.eqContainer.innerHTML = '';
+    freqs.forEach((f, i) => {
+        const div = document.createElement('div');
+        div.className = 'vert-slider-container';
+        div.innerHTML = `
+            <div class="vert-slider-wrapper">
+                <input type="range" class="vert-slider eq-band" data-idx="${i}" min="-12" max="12" step="1" value="${state.eq[i]}" aria-label="EQ ${f}">
+            </div>
+            <span class="text-[10px] font-bold text-gray-400 mt-2">${f}</span>
+            <span class="text-[10px] font-mono text-gray-600 mt-1 eq-val">${state.eq[i]}dB</span>
+        `;
+        els.eqContainer.appendChild(div);
+    });
+
+    els.proToggle.checked = state.pro;
+    els.slSpeed.value = els.inpSpeed.value = state.speed;
+    els.slPitch.value = els.inpPitch.value = state.pitch;
+    els.slTune.value = els.inpTune.value = state.tune;
+    els.slReverb.value = state.reverb;
+    els.slEcho.value = state.echo;
+    els.slVol.value = state.vol;
+    els.comp.checked = state.comp;
+
+    updateUI();
+    toggleProMode();
+}
+
+function updateUI() {
+    els.dispSpeed.textContent = parseFloat(state.speed).toFixed(2) + 'x';
+    els.dispPitch.textContent = parseFloat(state.pitch).toFixed(2);
+    els.dispTune.textContent = parseFloat(state.tune).toFixed(1);
+    els.dispReverb.textContent = state.reverb + '%';
+    els.dispEcho.textContent = state.echo + '%';
+    els.dispVol.textContent = state.pro ? state.vol.toFixed(2) + '%' : Math.round(state.vol) + '%';
+    
+    document.querySelectorAll('.eq-band').forEach((el, i) => {
+        el.value = state.eq[i];
+        el.parentElement.parentElement.querySelector('.eq-val').textContent = state.eq[i] > 0 ? `+${state.eq[i]}dB` : `${state.eq[i]}dB`;
+    });
+}
+
+function toggleProMode() {
+    state.pro = els.proToggle.checked;
+    if(state.pro) {
+        document.body.classList.add('pro-mode');
+        els.modeBadge.classList.remove('hidden');
+    } else {
+        document.body.classList.remove('pro-mode');
+        els.modeBadge.classList.add('hidden');
+    }
+    updateUI();
+    saveState();
+}
+
+function saveState() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => localStorage.setItem('gTunePro', JSON.stringify(state)), 500);
+}
+
+function reset() {
+    if(confirm('Reset all settings to default?')) {
+        state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+        init();
+        saveState();
+        if(audioCtx) applyAudio();
+    }
+}
+
+els.reset.onclick = reset;
+els.proToggle.onchange = toggleProMode;
+
+function applyAudio() {
+    if(!audioCtx) return;
+
+    bands.forEach((b, i) => {
+        b.gain.setTargetAtTime(state.eq[i], audioCtx.currentTime, 0.1);
+    });
+
+    if(srcNode) {
+        srcNode.playbackRate.value = state.speed;
+        const totalDetune = (state.pitch * 100) + state.tune;
+        srcNode.detune.value = totalDetune;
+    }
+
+    revGain.gain.setTargetAtTime(state.reverb / 200, audioCtx.currentTime, 0.1); 
+    delayGain.gain.setTargetAtTime(state.echo / 200, audioCtx.currentTime, 0.1);
+
+    const normVol = Math.pow(state.vol / 100, 2); 
+    masterGain.gain.setTargetAtTime(normVol, audioCtx.currentTime, 0.1);
+
+    if(state.comp) {
+        compNode.threshold.value = -24;
+        compNode.ratio.value = 12;
+    } else {
+        compNode.threshold.value = 0;
+        compNode.ratio.value = 1;
+    }
+}
+
+function initAudio() {
+    if(audioCtx) return;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    audioCtx = new AC();
+
+    masterGain = audioCtx.createGain();
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 256;
+    analyser.smoothingTimeConstant = 0.8;
+
+    compNode = audioCtx.createDynamicsCompressor();
+    compNode.attack.value = 0.003;
+    compNode.release.value = 0.25;
+
+    reverbNode = audioCtx.createConvolver();
+    const rate = audioCtx.sampleRate;
+    const len = rate * 3;
+    const imp = audioCtx.createBuffer(2, len, rate);
+    for(let i=0; i<len; i++) {
+        const decay = Math.pow(1 - i/len, 4);
+        imp.getChannelData(0)[i] = (Math.random()*2-1) * decay;
+        imp.getChannelData(1)[i] = (Math.random()*2-1) * decay;
+    }
+    reverbNode.buffer = imp;
+    revGain = audioCtx.createGain();
+
+    delayNode = audioCtx.createDelay();
+    delayNode.delayTime.value = 0.3;
+    delayGain = audioCtx.createGain();
+    const fb = audioCtx.createGain();
+    fb.gain.value = 0.4;
+    delayNode.connect(fb);
+    fb.connect(delayNode);
+
+    let chain = audioCtx.createGain();
+    let curr = chain;
+    
+    freqs.forEach(() => {
+        const f = audioCtx.createBiquadFilter();
+        f.type = 'peaking';
+        f.Q.value = 1.0;
+        curr.connect(f);
+        curr = f;
+        bands.push(f);
+    });
+
+    curr.connect(compNode);
+    compNode.connect(masterGain);
+
+    compNode.connect(reverbNode);
+    reverbNode.connect(revGain);
+    revGain.connect(masterGain);
+
+    compNode.connect(delayNode);
+    delayNode.connect(delayGain);
+    delayGain.connect(masterGain);
+
+    masterGain.connect(analyser);
+    analyser.connect(audioCtx.destination);
+    gainNode = chain;
+    
+    applyAudio();
+}
+
+els.file.onchange = async (e) => {
+    const f = e.target.files[0];
+    if(!f) return;
+    
+    els.loader.classList.add('active');
+    els.play.disabled = true;
+
+    try {
+        initAudio();
+        if(audioCtx.state === 'suspended') await audioCtx.resume();
+        const ab = await f.arrayBuffer();
+        buffer = await audioCtx.decodeAudioData(ab);
+        
+        els.timeTotal.textContent = fmtTime(buffer.duration);
+        els.empty.style.opacity = 0;
+        els.play.disabled = false;
+        
+        stop();
+        play();
+        els.loader.classList.remove('active');
+    } catch(err) {
+        console.error(err);
+        alert('Error loading audio');
+        els.loader.classList.remove('active');
+    }
+};
+
+function play() {
+    if(!buffer) return;
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+    
+    srcNode = audioCtx.createBufferSource();
+    srcNode.buffer = buffer;
+    
+    const playbackRate = state.speed;
+    const totalDetune = (state.pitch * 100) + state.tune;
+    
+    srcNode.playbackRate.value = playbackRate;
+    srcNode.detune.value = totalDetune;
+    
+    srcNode.connect(gainNode);
+    srcNode.start(0, pauseTime);
+    
+    // Calculate start time based on effective speed including detune
+    // Detune adds 2^(cents/1200) multiplier
+    const detuneMult = Math.pow(2, totalDetune / 1200);
+    const effectiveSpeed = playbackRate * detuneMult;
+    
+    startTime = audioCtx.currentTime - (pauseTime / effectiveSpeed);
+    isPlaying = true;
+    els.play.innerHTML = '<span class="material-symbols-rounded text-3xl">pause</span>';
+    draw();
+}
+
+function pause() {
+    if(srcNode) {
+        try { srcNode.stop(); } catch(e){}
+        srcNode.disconnect();
+    }
+    
+    if(audioCtx) {
+        const playbackRate = state.speed;
+        const totalDetune = (state.pitch * 100) + state.tune;
+        const detuneMult = Math.pow(2, totalDetune / 1200);
+        const effectiveSpeed = playbackRate * detuneMult;
+        pauseTime = (audioCtx.currentTime - startTime) * effectiveSpeed;
+    }
+    
+    isPlaying = false;
+    els.play.innerHTML = '<span class="material-symbols-rounded text-3xl">play_arrow</span>';
+    cancelAnimationFrame(animId);
+}
+
+function stop() {
+    pause();
+    pauseTime = 0;
+    els.progress.style.width = '0%';
+    els.seek.value = 0;
+    els.timeCurr.textContent = "0:00";
+}
+
+els.play.onclick = () => isPlaying ? pause() : play();
+
+els.seek.oninput = (e) => {
+    if(!buffer) return;
+    const pct = parseFloat(e.target.value);
+    pauseTime = (pct / 100) * buffer.duration;
+    els.progress.style.width = pct + '%';
+    els.timeCurr.textContent = fmtTime(pauseTime);
+    if(isPlaying) {
+        if(srcNode) { try { srcNode.stop(); } catch(e){} }
+        play();
+    }
+};
+
+function draw() {
+    if(!isPlaying) return;
+    animId = requestAnimationFrame(draw);
+    
+    const w = els.canvas.width = els.canvas.offsetWidth;
+    const h = els.canvas.height = els.canvas.offsetHeight;
+    const data = new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteFrequencyData(data);
+    
+    const playbackRate = state.speed;
+    const totalDetune = (state.pitch * 100) + state.tune;
+    const detuneMult = Math.pow(2, totalDetune / 1200);
+    const effectiveSpeed = playbackRate * detuneMult;
+    
+    const curr = (audioCtx.currentTime - startTime) * effectiveSpeed;
+    
+    if(curr >= buffer.duration) { stop(); return; }
+    
+    els.timeCurr.textContent = fmtTime(curr);
+    const pct = (curr / buffer.duration) * 100;
+    els.progress.style.width = pct + '%';
+    els.seek.value = pct;
+    
+    ctx.clearRect(0,0,w,h);
+    const barW = (w / data.length) * 2.5;
+    let x = 0;
+    
+    for(let i=0; i<data.length; i++) {
+        const barH = (data[i]/255) * h;
+        ctx.fillStyle = i < data.length/3 ? '#0b57d0' : i < data.length*2/3 ? '#7c3aed' : '#db2777';
+        ctx.fillRect(x, h - barH, barW, barH);
+        x += barW + 1;
+    }
+}
+
+function fmtTime(s) {
+    const m = Math.floor(s/60);
+    const sc = Math.floor(s%60);
+    return `${m}:${sc.toString().padStart(2,'0')}`;
+}
+
+window.switchTab = (id) => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('[id^="tab-"]').forEach(t => { 
+        t.classList.add('hidden'); 
+        t.classList.remove('flex'); 
+    });
+    
+    const btn = document.querySelector(`button[data-tab="${id}"]`);
+    if(btn) btn.classList.add('active');
+    
+    const tab = document.getElementById(`tab-${id}`);
+    if(tab) {
+        tab.classList.remove('hidden');
+        tab.classList.add('flex');
+    }
+};
+
+const handleInput = (key, val, isNum = false) => {
+    state[key] = isNum ? parseFloat(val) : val;
+    if(key === 'speed') { els.slSpeed.value = els.inpSpeed.value = val; }
+    if(key === 'pitch') { els.slPitch.value = els.inpPitch.value = val; }
+    if(key === 'tune') { els.slTune.value = els.inpTune.value = val; }
+    updateUI();
+    applyAudio();
+    saveState();
+};
+
+els.slSpeed.oninput = (e) => handleInput('speed', e.target.value, true);
+els.inpSpeed.onchange = (e) => handleInput('speed', e.target.value, true);
+
+els.slPitch.oninput = (e) => handleInput('pitch', e.target.value, true);
+els.inpPitch.onchange = (e) => handleInput('pitch', e.target.value, true);
+
+els.slTune.oninput = (e) => handleInput('tune', e.target.value, true);
+els.inpTune.onchange = (e) => handleInput('tune', e.target.value, true);
+
+els.slReverb.oninput = (e) => { state.reverb = parseInt(e.target.value); updateUI(); applyAudio(); saveState(); };
+els.slEcho.oninput = (e) => { state.echo = parseInt(e.target.value); updateUI(); applyAudio(); saveState(); };
+els.slVol.oninput = (e) => { state.vol = parseFloat(e.target.value); updateUI(); applyAudio(); saveState(); };
+
+els.comp.onchange = (e) => { state.comp = e.target.checked; applyAudio(); saveState(); };
+
+document.body.addEventListener('input', (e) => {
+    if(e.target.classList.contains('eq-band')) {
+        const idx = e.target.dataset.idx;
+        state.eq[idx] = parseInt(e.target.value);
+        updateUI();
+        applyAudio();
+        saveState();
+    }
+});
+
+init();
+</script>
+</body>
+</html>
 <label class="bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-medium flex items-center gap-2 active:scale-95 transition-transform cursor-pointer shadow-md">
 <span class="material-symbols-rounded text-lg">upload_file</span>
 <span>Load</span>
