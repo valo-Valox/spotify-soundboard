@@ -3,405 +3,403 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Google Tune Pro</title>
+<title>Google Tune</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Rounded" rel="stylesheet">
 <style>
-:root { --primary: #0b57d0; --surface: #f0f2f5; --surface-variant: #e1e3e1; --on-surface: #1f1f1f; --outline: #747775; }
-body { font-family: 'Roboto', sans-serif; background-color: var(--surface); color: var(--on-surface); height: 100vh; width: 100vw; overflow: hidden; display: flex; flex-direction: column; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+:root {
+    --primary: #0b57d0;
+    --on-primary: #ffffff;
+    --surface: #f0f2f5;
+    --surface-container: #ffffff;
+    --outline: #747775;
+    --thumb-size: 20px;
+}
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: var(--surface);
+    color: #1f1f1f;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+}
 .font-brand { font-family: 'Google Sans', sans-serif; }
-.icon-btn { display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 50%; transition: background-color 0.2s; border: none; outline: none; background: transparent; color: var(--on-surface); cursor: pointer; }
-.icon-btn:active { background-color: rgba(0,0,0,0.1); }
-.tab-btn { flex: 1; padding: 12px 0; text-align: center; font-family: 'Google Sans', sans-serif; font-size: 14px; font-weight: 500; color: #444746; border-radius: 24px; transition: all 0.2s; position: relative; overflow: hidden; }
+.icon-btn {
+    width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    color: #444746; transition: background 0.2s; border: none; background: transparent; cursor: pointer;
+}
+.icon-btn:active { background: rgba(0,0,0,0.1); }
+.tab-btn {
+    flex: 1; padding: 10px; font-family: 'Google Sans', sans-serif; font-size: 14px; font-weight: 500;
+    color: #444746; border-radius: 20px; transition: all 0.2s; background: transparent; border: none;
+}
 .tab-btn.active { background-color: #c2e7ff; color: #001d35; font-weight: 700; }
-.card { background: white; border-radius: 24px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 16px; border: 1px solid rgba(0,0,0,0.05); }
-.control-row { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
-.control-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-.control-label { font-size: 14px; font-weight: 500; color: #444746; display: flex; align-items: center; gap: 8px; }
-.control-value { font-family: 'Roboto Mono', monospace; font-size: 12px; background: #e3e3e3; padding: 2px 6px; border-radius: 6px; color: #1f1f1f; }
-input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 36px; background: transparent; cursor: pointer; touch-action: none; }
-input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; background: #e0e2e0; border-radius: 3px; }
-input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; background: var(--primary); margin-top: -9px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); border: 2px solid white; transition: transform 0.1s; }
+.card {
+    background: var(--surface-container); border-radius: 24px; padding: 20px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.05); margin-bottom: 12px;
+}
+.control-row { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+.control-row:last-child { margin-bottom: 0; }
+.control-header { display: flex; justify-content: space-between; align-items: center; }
+.label-text { font-size: 14px; font-weight: 500; color: #444746; display: flex; align-items: center; gap: 8px; }
+.value-badge {
+    font-family: 'Roboto Mono', monospace; font-size: 12px; background: #e3e3e3;
+    padding: 2px 6px; border-radius: 6px; color: #1f1f1f;
+}
+input[type=range] {
+    -webkit-appearance: none; width: 100%; height: 32px; background: transparent; cursor: pointer;
+}
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%; height: 4px; background: #e0e2e0; border-radius: 2px;
+}
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; height: var(--thumb-size); width: var(--thumb-size);
+    border-radius: 50%; background: var(--primary); margin-top: -8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3); border: 2px solid white; transition: transform 0.1s;
+}
 input[type=range]:active::-webkit-slider-thumb { transform: scale(1.2); }
-input[type=range]:focus { outline: none; }
-.vert-slider-container { display: flex; flex-direction: column; align-items: center; flex: 1; height: 280px; min-width: 44px; position: relative; }
-.vert-slider-wrapper { position: relative; width: 44px; height: 220px; display: flex; justify-content: center; align-items: center; }
-input[type=range].vert-slider { width: 220px; height: 44px; transform: rotate(-90deg); position: absolute; margin: 0; }
-input[type=number] { width: 60px; padding: 4px 8px; border: 1px solid #c4c7c5; border-radius: 8px; font-size: 14px; font-family: 'Roboto Mono', monospace; text-align: center; background: white; color: #1f1f1f; }
-input[type=number]:focus { outline: 2px solid var(--primary); border-color: transparent; }
-.toggle-switch { position: relative; width: 52px; height: 32px; flex-shrink: 0; }
+.vert-slider-container {
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+    height: 300px; min-width: 48px; position: relative; padding-bottom: 24px;
+}
+.vert-slider-track {
+    width: 48px; height: 240px; display: flex; align-items: center; justify-content: center;
+}
+input[type=range].vert-slider {
+    width: 240px; height: 48px; transform: rotate(-90deg); margin: 0; position: absolute;
+}
+.toggle-switch {
+    position: relative; width: 44px; height: 24px;
+}
 .toggle-switch input { opacity: 0; width: 0; height: 0; }
-.slider-switch { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #e0e2e0; transition: .4s; border-radius: 32px; border: 2px solid transparent; }
-.slider-switch:before { position: absolute; content: ""; height: 24px; width: 24px; left: 2px; bottom: 2px; background-color: #747775; transition: .4s; border-radius: 50%; }
-input:checked + .slider-switch { background-color: var(--primary); }
-input:checked + .slider-switch:before { transform: translateX(20px); background-color: white; }
-.pro-control { display: none; }
-body.pro-mode .pro-control { display: flex; }
-body.pro-mode .simple-control { display: none; }
-.safe-padding { padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
-.viz-container { position: relative; width: 100%; height: 100%; background: #000; border-radius: 0 0 24px 24px; overflow: hidden; }
+.slider-round {
+    position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #e0e2e0; transition: .4s; border-radius: 24px;
+}
+.slider-round:before {
+    position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
+    background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+input:checked + .slider-round { background-color: var(--primary); }
+input:checked + .slider-round:before { transform: translateX(20px); }
+.fab {
+    position: fixed; bottom: 24px; right: 24px; width: 56px; height: 56px;
+    background: var(--primary); color: white; border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2); transition: transform 0.2s; z-index: 50; border: none;
+}
+.fab:active { transform: scale(0.95); }
+.viz-area {
+    position: relative; width: 100%; height: 28vh; background: #000; flex-shrink: 0;
+}
 canvas { width: 100%; height: 100%; display: block; }
-.scrub-container { position: absolute; bottom: 0; left: 0; right: 0; padding: 16px; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); display: flex; flex-direction: column; gap: 8px; }
-.time-display { display: flex; justify-content: space-between; color: rgba(255,255,255,0.9); font-size: 11px; font-weight: 700; font-family: 'Roboto Mono', monospace; }
-.progress-track { position: relative; height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; overflow: visible; }
-.progress-fill { position: absolute; left: 0; top: 0; bottom: 0; background: #a8c7fa; border-radius: 3px; width: 0%; pointer-events: none; }
-input[type=range].seek-slider { position: absolute; top: -15px; left: -2px; width: calc(100% + 4px); height: 36px; opacity: 0; margin: 0; }
-input[type=file] { display: none; }
-.loading-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; color: white; flex-direction: column; gap: 12px; z-index: 50; backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.3s; }
-.loading-overlay.active { opacity: 1; pointer-events: auto; }
+.player-overlay {
+    position: absolute; bottom: 0; left: 0; right: 0; padding: 16px 24px;
+    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%);
+}
+.seek-container { position: relative; height: 20px; display: flex; align-items: center; }
+.seek-track { width: 100%; height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; position: relative; }
+.seek-fill { position: absolute; height: 100%; background: #a8c7fa; border-radius: 2px; width: 0%; pointer-events: none; }
+.seek-input {
+    position: absolute; width: 100%; height: 100%; opacity: 0; cursor: pointer; margin: 0;
+}
+.loading-mask {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: white; opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 20;
+}
+.loading-mask.visible { opacity: 1; pointer-events: auto; }
+.hide-scroll::-webkit-scrollbar { display: none; }
+.hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+.pro-only { display: none; }
+body.pro-mode .pro-only { display: flex; }
+body.pro-mode .simple-only { display: none; }
+input[type=number] {
+    width: 60px; background: #f0f2f5; border: none; border-radius: 8px; padding: 4px;
+    text-align: center; font-family: 'Roboto Mono'; font-size: 12px; outline: none;
+}
+input[type=number]:focus { background: #e0e2e0; }
 </style>
 </head>
 <body>
 
-<header class="h-16 flex items-center justify-between bg-white shadow-sm z-40 shrink-0 safe-padding">
+<header class="h-16 flex items-center justify-between px-4 bg-white border-b border-gray-100 shrink-0 z-30">
     <div class="flex items-center gap-3">
-        <span class="material-symbols-rounded text-3xl text-blue-600">equalizer</span>
+        <div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
+            <span class="material-symbols-rounded text-blue-600">equalizer</span>
+        </div>
         <span class="font-brand text-xl text-gray-800 font-medium">Tune</span>
-        <span id="mode-badge" class="text-[10px] font-bold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full uppercase tracking-wider hidden">Pro</span>
     </div>
-    <div class="flex items-center gap-2">
-        <label class="flex items-center gap-2 text-sm font-medium text-gray-600 cursor-pointer mr-2">
-            <span>Pro Mode</span>
-            <div class="toggle-switch scale-75">
+    <div class="flex items-center gap-3">
+        <label class="flex items-center gap-2 cursor-pointer">
+            <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">Pro</span>
+            <div class="toggle-switch">
                 <input type="checkbox" id="pro-toggle">
-                <span class="slider-switch"></span>
+                <span class="slider-round"></span>
             </div>
         </label>
-        <button id="reset-btn" class="icon-btn" aria-label="Reset All"><span class="material-symbols-rounded">restart_alt</span></button>
-        <label class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 active:scale-95 transition-transform cursor-pointer shadow-sm">
+        <button id="reset-btn" class="icon-btn" aria-label="Reset"><span class="material-symbols-rounded">restart_alt</span></button>
+        <button id="load-btn-top" class="icon-btn sm:hidden" aria-label="Load"><span class="material-symbols-rounded">upload_file</span></button>
+        <label class="hidden sm:flex bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full text-sm font-medium items-center gap-2 cursor-pointer transition-colors">
             <span class="material-symbols-rounded text-lg">upload_file</span>
-            <span class="hidden sm:inline">Load</span>
-            <input type="file" id="file-input" accept="audio/*">
+            Load Audio
+            <input type="file" id="file-input-desktop" accept="audio/*">
         </label>
     </div>
 </header>
 
-<div class="flex-1 relative shrink-0 min-h-[25vh] max-h-[40vh] bg-black">
-    <div class="viz-container">
-        <canvas id="viz-canvas"></canvas>
-        <div class="loading-overlay" id="loader">
-            <span class="material-symbols-rounded animate-spin text-4xl">progress_activity</span>
-            <span class="text-sm font-medium">Processing Audio...</span>
+<div class="viz-area">
+    <canvas id="viz"></canvas>
+    <div id="loader" class="loading-mask">
+        <span class="material-symbols-rounded animate-spin text-4xl mb-2">progress_activity</span>
+        <span class="text-sm font-medium tracking-wide">PROCESSING</span>
+    </div>
+    <div id="empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-white/30 pointer-events-none">
+        <span class="material-symbols-rounded text-6xl mb-2">music_note</span>
+        <p class="text-sm font-medium">No Audio Loaded</p>
+    </div>
+    <div class="player-overlay">
+        <div class="flex items-center justify-between text-xs font-bold font-mono text-white/90 mb-2">
+            <span id="t-curr">0:00</span>
+            <span id="t-total">0:00</span>
         </div>
-        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none transition-opacity duration-300" id="empty-state">
-            <span class="material-symbols-rounded text-6xl text-white/20">music_note</span>
-            <p class="text-white/40 text-sm mt-2 font-medium">Load audio to begin</p>
-        </div>
-        <div class="scrub-container safe-padding">
-            <div class="flex items-center gap-4">
-                <button id="play-btn" class="w-12 h-12 rounded-full bg-white text-blue-600 flex items-center justify-center shadow-lg active:scale-90 transition-transform flex-shrink-0 disabled:opacity-50 disabled:scale-100" disabled aria-label="Play Pause">
-                    <span class="material-symbols-rounded text-3xl">play_arrow</span>
-                </button>
-                <div class="flex-1">
-                    <div class="time-display">
-                        <span id="time-curr">0:00</span>
-                        <span id="time-total">0:00</span>
-                    </div>
-                    <div class="progress-track mt-2">
-                        <div class="progress-fill" id="progress-bar"></div>
-                        <input type="range" class="seek-slider" id="seek-slider" min="0" max="100" step="0.01" value="0" aria-label="Seek">
-                    </div>
-                </div>
+        <div class="seek-container">
+            <div class="seek-track">
+                <div id="seek-fill" class="seek-fill"></div>
             </div>
+            <input type="range" id="seek" class="seek-input" min="0" max="100" step="0.1" value="0" aria-label="Seek">
+        </div>
+        <div class="flex justify-center mt-4">
+            <button id="play-btn" class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform disabled:opacity-50" disabled aria-label="Play">
+                <span class="material-symbols-rounded text-3xl text-blue-600">play_arrow</span>
+            </button>
         </div>
     </div>
 </div>
 
-<div class="bg-white border-b border-gray-200 z-30 shadow-sm shrink-0">
-    <div class="flex items-center justify-around px-2 py-2 safe-padding gap-2">
-        <button onclick="switchTab('eq')" class="tab-btn active" data-tab="eq">EQ</button>
-        <button onclick="switchTab('controls')" class="tab-btn" data-tab="controls">Controls</button>
-        <button onclick="switchTab('fx')" class="tab-btn" data-tab="fx">Effects</button>
-        <button onclick="switchTab('mix')" class="tab-btn" data-tab="mix">Mix</button>
+<div class="flex-1 flex flex-col min-h-0 bg-[#f0f2f5] relative">
+    <div class="bg-white border-b border-gray-100 px-2 py-2 flex gap-2 shrink-0 z-20 shadow-sm">
+        <button class="tab-btn active" data-tab="eq">Equalizer</button>
+        <button class="tab-btn" data-tab="fx">Effects</button>
+        <button class="tab-btn" data-tab="mix">Mix & Tune</button>
     </div>
-</div>
 
-<main class="flex-1 overflow-y-auto bg-[#f0f2f5] relative w-full">
-    <div id="tab-eq" class="absolute inset-0 p-6 overflow-x-auto overflow-y-hidden flex items-end pb-8 gap-1 safe-padding hide-scrollbar">
+    <div id="tab-eq" class="absolute inset-0 top-[58px] p-4 overflow-x-auto overflow-y-hidden flex items-end gap-1 hide-scrollbar">
         <!-- EQ Generated via JS -->
     </div>
 
-    <div id="tab-controls" class="absolute inset-0 p-6 overflow-y-auto hidden flex-col gap-4 safe-padding">
+    <div id="tab-fx" class="absolute inset-0 top-[58px] p-4 overflow-y-auto hidden flex-col gap-4 pb-24">
         <div class="card">
             <div class="control-row">
                 <div class="control-header">
-                    <span class="control-label"><span class="material-symbols-rounded text-blue-600">speed</span>Speed</span>
-                    <span id="disp-speed" class="control-value">1.00x</span>
+                    <span class="label-text"><span class="material-symbols-rounded text-purple-600">church</span>Reverb</span>
+                    <span id="disp-reverb" class="value-badge">0%</span>
                 </div>
-                <div class="flex items-center gap-4">
-                    <input type="range" id="sl-speed" min="0.25" max="3.00" step="0.01" value="1.00" aria-label="Speed">
-                    <input type="number" id="inp-speed" min="0.25" max="3.00" step="0.01" value="1.00" class="pro-control">
-                </div>
-            </div>
-            
-            <div class="control-row pro-control">
-                <div class="control-header">
-                    <span class="control-label"><span class="material-symbols-rounded text-indigo-600">music_note</span>Pitch (Semi)</span>
-                    <span id="disp-pitch" class="control-value">0.00</span>
-                </div>
-                <div class="flex items-center gap-4">
-                    <input type="range" id="sl-pitch" min="-12" max="12" step="0.01" value="0" aria-label="Pitch Semitones">
-                    <input type="number" id="inp-pitch" min="-12" max="12" step="0.01" value="0">
-                </div>
-            </div>
-
-            <div class="control-row pro-control">
-                <div class="control-header">
-                    <span class="control-label"><span class="material-symbols-rounded text-pink-600">tune</span>Tune (Cents)</span>
-                    <span id="disp-tune" class="control-value">0.0</span>
-                </div>
-                <div class="flex items-center gap-4">
-                    <input type="range" id="sl-tune" min="-100" max="100" step="0.1" value="0" aria-label="Fine Tune Cents">
-                    <input type="number" id="inp-tune" min="-100" max="100" step="0.1" value="0">
-                </div>
-            </div>
-            <p class="text-xs text-gray-500 mt-2 text-center simple-control">Switch to Pro Mode for Pitch & Fine Tune</p>
-        </div>
-    </div>
-
-    <div id="tab-fx" class="absolute inset-0 p-6 overflow-y-auto hidden flex-col gap-4 safe-padding">
-        <div class="card">
-            <div class="control-row">
-                <div class="control-header">
-                    <span class="control-label"><span class="material-symbols-rounded text-purple-600">church</span>Reverb</span>
-                    <span id="disp-reverb" class="control-value">0%</span>
-                </div>
-                <input type="range" id="sl-reverb" min="0" max="100" step="1" value="0" aria-label="Reverb Amount">
+                <input type="range" id="sl-reverb" min="0" max="100" step="1" value="0">
             </div>
         </div>
         <div class="card">
             <div class="control-row">
                 <div class="control-header">
-                    <span class="control-label"><span class="material-symbols-rounded text-orange-600">spatial_audio</span>Echo</span>
-                    <span id="disp-echo" class="control-value">0%</span>
+                    <span class="label-text"><span class="material-symbols-rounded text-orange-600">spatial_audio</span>Echo</span>
+                    <span id="disp-echo" class="value-badge">0%</span>
                 </div>
-                <input type="range" id="sl-echo" min="0" max="100" step="1" value="0" aria-label="Echo Amount">
+                <input type="range" id="sl-echo" min="0" max="100" step="1" value="0">
             </div>
         </div>
     </div>
 
-    <div id="tab-mix" class="absolute inset-0 p-6 overflow-y-auto hidden flex-col gap-4 safe-padding">
+    <div id="tab-mix" class="absolute inset-0 top-[58px] p-4 overflow-y-auto hidden flex-col gap-4 pb-24">
         <div class="card">
             <div class="control-row">
                 <div class="control-header">
-                    <span class="control-label"><span class="material-symbols-rounded text-gray-700">volume_up</span>Master Volume</span>
-                    <span id="disp-vol" class="control-value">40%</span>
+                    <span class="label-text"><span class="material-symbols-rounded text-gray-600">volume_up</span>Master Volume</span>
+                    <span id="disp-vol" class="value-badge">40%</span>
                 </div>
-                <input type="range" id="sl-vol" min="0" max="100" step="1" value="40" aria-label="Master Volume">
+                <input type="range" id="sl-vol" min="0" max="100" step="1" value="40">
             </div>
         </div>
-        <div class="card flex items-center justify-between py-4">
+
+        <div class="card">
+            <div class="control-row">
+                <div class="control-header">
+                    <span class="label-text"><span class="material-symbols-rounded text-blue-600">speed</span>Speed</span>
+                    <span id="disp-speed" class="value-badge">1.00x</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <input type="range" id="sl-speed" min="0.25" max="3.00" step="0.01" value="1.00">
+                    <input type="number" id="inp-speed" value="1.00" step="0.01" class="pro-only">
+                </div>
+            </div>
+
+            <div class="control-row pro-only">
+                <div class="control-header">
+                    <span class="label-text"><span class="material-symbols-rounded text-indigo-600">music_note</span>Pitch (Semi)</span>
+                    <span id="disp-pitch" class="value-badge">0.00</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <input type="range" id="sl-pitch" min="-12" max="12" step="0.01" value="0">
+                    <input type="number" id="inp-pitch" value="0.00" step="0.01">
+                </div>
+            </div>
+
+            <div class="control-row pro-only">
+                <div class="control-header">
+                    <span class="label-text"><span class="material-symbols-rounded text-pink-600">tune</span>Fine Tune</span>
+                    <span id="disp-tune" class="value-badge">0.0</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <input type="range" id="sl-tune" min="-100" max="100" step="0.1" value="0">
+                    <input type="number" id="inp-tune" value="0.0" step="0.1">
+                </div>
+            </div>
+        </div>
+
+        <div class="card flex items-center justify-between">
             <div class="flex flex-col">
-                <span class="font-medium text-gray-800 text-base">Compressor</span>
-                <span class="text-xs text-gray-500">Normalize loudness & prevent clipping</span>
+                <span class="font-medium text-sm text-gray-800">Compressor</span>
+                <span class="text-xs text-gray-500">Normalize output</span>
             </div>
             <label class="toggle-switch">
                 <input type="checkbox" id="comp-toggle">
-                <span class="slider-switch"></span>
+                <span class="slider-round"></span>
             </label>
         </div>
     </div>
-</main>
+</div>
+
+<button id="fab-load" class="fab sm:hidden" aria-label="Load Audio">
+    <span class="material-symbols-rounded text-2xl">upload_file</span>
+</button>
+<input type="file" id="file-input-mobile" accept="audio/*" style="display:none">
 
 <script>
-const DEFAULT_STATE = {
-    pro: false,
-    speed: 1.00,
-    pitch: 0.00,
-    tune: 0.0,
-    reverb: 0,
-    echo: 0,
-    vol: 40,
-    comp: true,
-    eq: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-};
-
-let state = JSON.parse(localStorage.getItem('gTunePro')) || JSON.parse(JSON.stringify(DEFAULT_STATE));
-let audioCtx, srcNode, gainNode, analyser, buffer, bands = [], reverbNode, revGain, delayNode, delayGain, compNode, masterGain;
-let isPlaying = false, startTime = 0, pauseTime = 0, animId, saveTimer;
+const DEF = { pro: false, vol: 40, speed: 1, pitch: 0, tune: 0, reverb: 0, echo: 0, comp: true, eq: [0,0,0,0,0,0,0,0,0,0] };
+let s = JSON.parse(localStorage.getItem('gt_state')) || JSON.parse(JSON.stringify(DEF));
+let actx, src, gain, comp, rev, revG, del, delG, mast, anal, buf;
+let bands = [], isPlay = false, tStart = 0, tPause = 0, rafId, saveT;
 const freqs = [32, 64, 125, 250, 500, '1k', '2k', '4k', '8k', '16k'];
 
-const els = {
-    file: document.getElementById('file-input'),
-    play: document.getElementById('play-btn'),
-    canvas: document.getElementById('viz-canvas'),
-    timeCurr: document.getElementById('time-curr'),
-    timeTotal: document.getElementById('time-total'),
-    progress: document.getElementById('progress-bar'),
-    seek: document.getElementById('seek-slider'),
-    eqContainer: document.getElementById('tab-eq'),
-    proToggle: document.getElementById('pro-toggle'),
-    modeBadge: document.getElementById('mode-badge'),
-    reset: document.getElementById('reset-btn'),
-    loader: document.getElementById('loader'),
-    empty: document.getElementById('empty-state'),
-    
-    slSpeed: document.getElementById('sl-speed'),
-    inpSpeed: document.getElementById('inp-speed'),
-    dispSpeed: document.getElementById('disp-speed'),
-    
-    slPitch: document.getElementById('sl-pitch'),
-    inpPitch: document.getElementById('inp-pitch'),
-    dispPitch: document.getElementById('disp-pitch'),
-    
-    slTune: document.getElementById('sl-tune'),
-    inpTune: document.getElementById('inp-tune'),
-    dispTune: document.getElementById('disp-tune'),
-    
-    slReverb: document.getElementById('sl-reverb'),
-    dispReverb: document.getElementById('disp-reverb'),
-    
-    slEcho: document.getElementById('sl-echo'),
-    dispEcho: document.getElementById('disp-echo'),
-    
-    slVol: document.getElementById('sl-vol'),
-    dispVol: document.getElementById('disp-vol'),
-    
-    comp: document.getElementById('comp-toggle')
-};
+const $ = id => document.getElementById(id);
+const qs = sel => document.querySelector(sel);
+const qsa = sel => document.querySelectorAll(sel);
 
-const ctx = els.canvas.getContext('2d');
-
-function init() {
-    els.eqContainer.innerHTML = '';
-    freqs.forEach((f, i) => {
-        const div = document.createElement('div');
-        div.className = 'vert-slider-container';
-        div.innerHTML = `
-            <div class="vert-slider-wrapper">
-                <input type="range" class="vert-slider eq-band" data-idx="${i}" min="-12" max="12" step="1" value="${state.eq[i]}" aria-label="EQ ${f}">
+function initUI() {
+    $('tab-eq').innerHTML = freqs.map((f, i) => `
+        <div class="vert-slider-container flex-1">
+            <div class="vert-slider-track">
+                <input type="range" class="vert-slider eq-sl" data-i="${i}" min="-12" max="12" step="1" value="${s.eq[i]}">
             </div>
             <span class="text-[10px] font-bold text-gray-400 mt-2">${f}</span>
-            <span class="text-[10px] font-mono text-gray-600 mt-1 eq-val">${state.eq[i]}dB</span>
-        `;
-        els.eqContainer.appendChild(div);
-    });
+            <span class="text-[10px] font-mono text-gray-600 mt-0.5 eq-val">${s.eq[i]}</span>
+        </div>
+    `).join('');
 
-    els.proToggle.checked = state.pro;
-    els.slSpeed.value = els.inpSpeed.value = state.speed;
-    els.slPitch.value = els.inpPitch.value = state.pitch;
-    els.slTune.value = els.inpTune.value = state.tune;
-    els.slReverb.value = state.reverb;
-    els.slEcho.value = state.echo;
-    els.slVol.value = state.vol;
-    els.comp.checked = state.comp;
-
-    updateUI();
-    toggleProMode();
+    $('pro-toggle').checked = s.pro;
+    $('comp-toggle').checked = s.comp;
+    setVal('speed', s.speed);
+    setVal('pitch', s.pitch);
+    setVal('tune', s.tune);
+    setVal('reverb', s.reverb);
+    setVal('echo', s.echo);
+    setVal('vol', s.vol);
+    updMode();
 }
 
-function updateUI() {
-    els.dispSpeed.textContent = parseFloat(state.speed).toFixed(2) + 'x';
-    els.dispPitch.textContent = parseFloat(state.pitch).toFixed(2);
-    els.dispTune.textContent = parseFloat(state.tune).toFixed(1);
-    els.dispReverb.textContent = state.reverb + '%';
-    els.dispEcho.textContent = state.echo + '%';
-    els.dispVol.textContent = state.pro ? state.vol.toFixed(2) + '%' : Math.round(state.vol) + '%';
+function setVal(k, v) {
+    if($(`sl-${k}`)) $(`sl-${k}`).value = v;
+    if($(`inp-${k}`)) $(`inp-${k}`).value = v;
+    updDisp(k, v);
+}
+
+function updDisp(k, v) {
+    const el = $(`disp-${k}`);
+    if(!el) return;
+    if(k === 'speed') el.textContent = parseFloat(v).toFixed(2) + 'x';
+    else if(k === 'pitch') el.textContent = parseFloat(v).toFixed(2);
+    else if(k === 'tune') el.textContent = parseFloat(v).toFixed(1);
+    else if(k === 'vol') el.textContent = (s.pro ? parseFloat(v).toFixed(1) : Math.round(v)) + '%';
+    else el.textContent = Math.round(v) + '%';
+}
+
+function updMode() {
+    document.body.classList.toggle('pro-mode', s.pro);
+    updDisp('vol', s.vol);
+}
+
+function save() {
+    clearTimeout(saveT);
+    saveT = setTimeout(() => localStorage.setItem('gt_state', JSON.stringify(s)), 500);
+}
+
+function rst() {
+    if(confirm('Reset all?')) {
+        s = JSON.parse(JSON.stringify(DEF));
+        initUI();
+        save();
+        appAud();
+    }
+}
+
+function appAud() {
+    if(!actx) return;
+    bands.forEach((b, i) => b.gain.setTargetAtTime(s.eq[i], actx.currentTime, 0.1));
+    if(src) {
+        src.playbackRate.value = s.speed;
+        const detune = (s.pitch * 100) + s.tune;
+        src.detune.value = detune;
+    }
+    revG.gain.setTargetAtTime(s.reverb / 100, actx.currentTime, 0.1);
+    delG.gain.setTargetAtTime(s.echo / 100, actx.currentTime, 0.1);
     
-    document.querySelectorAll('.eq-band').forEach((el, i) => {
-        el.value = state.eq[i];
-        el.parentElement.parentElement.querySelector('.eq-val').textContent = state.eq[i] > 0 ? `+${state.eq[i]}dB` : `${state.eq[i]}dB`;
-    });
+    // Logarithmic volume
+    const norm = s.vol / 100;
+    const logVol = norm * Math.pow(10, (norm - 1) * 2); // Approximation
+    mast.gain.setTargetAtTime(logVol, actx.currentTime, 0.1);
+
+    comp.threshold.value = s.comp ? -24 : 0;
+    comp.ratio.value = s.comp ? 12 : 1;
 }
 
-function toggleProMode() {
-    state.pro = els.proToggle.checked;
-    if(state.pro) {
-        document.body.classList.add('pro-mode');
-        els.modeBadge.classList.remove('hidden');
-    } else {
-        document.body.classList.remove('pro-mode');
-        els.modeBadge.classList.add('hidden');
-    }
-    updateUI();
-    saveState();
-}
-
-function saveState() {
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => localStorage.setItem('gTunePro', JSON.stringify(state)), 500);
-}
-
-function reset() {
-    if(confirm('Reset all settings to default?')) {
-        state = JSON.parse(JSON.stringify(DEFAULT_STATE));
-        init();
-        saveState();
-        if(audioCtx) applyAudio();
-    }
-}
-
-els.reset.onclick = reset;
-els.proToggle.onchange = toggleProMode;
-
-function applyAudio() {
-    if(!audioCtx) return;
-
-    bands.forEach((b, i) => {
-        b.gain.setTargetAtTime(state.eq[i], audioCtx.currentTime, 0.1);
-    });
-
-    if(srcNode) {
-        srcNode.playbackRate.value = state.speed;
-        const totalDetune = (state.pitch * 100) + state.tune;
-        srcNode.detune.value = totalDetune;
-    }
-
-    revGain.gain.setTargetAtTime(state.reverb / 200, audioCtx.currentTime, 0.1); 
-    delayGain.gain.setTargetAtTime(state.echo / 200, audioCtx.currentTime, 0.1);
-
-    const normVol = Math.pow(state.vol / 100, 2); 
-    masterGain.gain.setTargetAtTime(normVol, audioCtx.currentTime, 0.1);
-
-    if(state.comp) {
-        compNode.threshold.value = -24;
-        compNode.ratio.value = 12;
-    } else {
-        compNode.threshold.value = 0;
-        compNode.ratio.value = 1;
-    }
-}
-
-function initAudio() {
-    if(audioCtx) return;
+function initAud() {
+    if(actx) return;
     const AC = window.AudioContext || window.webkitAudioContext;
-    audioCtx = new AC();
+    actx = new AC();
+    mast = actx.createGain();
+    anal = actx.createAnalyser();
+    anal.fftSize = 512;
+    comp = actx.createDynamicsCompressor();
+    rev = actx.createConvolver();
+    revG = actx.createGain();
+    del = actx.createDelay();
+    delG = actx.createGain();
 
-    masterGain = audioCtx.createGain();
-    analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 256;
-    analyser.smoothingTimeConstant = 0.8;
-
-    compNode = audioCtx.createDynamicsCompressor();
-    compNode.attack.value = 0.003;
-    compNode.release.value = 0.25;
-
-    reverbNode = audioCtx.createConvolver();
-    const rate = audioCtx.sampleRate;
-    const len = rate * 3;
-    const imp = audioCtx.createBuffer(2, len, rate);
+    // Reverb Impulse
+    const rate = actx.sampleRate, len = rate * 2, imp = actx.createBuffer(2, len, rate);
     for(let i=0; i<len; i++) {
-        const decay = Math.pow(1 - i/len, 4);
-        imp.getChannelData(0)[i] = (Math.random()*2-1) * decay;
-        imp.getChannelData(1)[i] = (Math.random()*2-1) * decay;
+        const d = (1 - i/len);
+        imp.getChannelData(0)[i] = (Math.random()*2-1)*d;
+        imp.getChannelData(1)[i] = (Math.random()*2-1)*d;
     }
-    reverbNode.buffer = imp;
-    revGain = audioCtx.createGain();
+    rev.buffer = imp;
 
-    delayNode = audioCtx.createDelay();
-    delayNode.delayTime.value = 0.3;
-    delayGain = audioCtx.createGain();
-    const fb = audioCtx.createGain();
+    // Delay
+    del.delayTime.value = 0.4;
+    const fb = actx.createGain();
     fb.gain.value = 0.4;
-    delayNode.connect(fb);
-    fb.connect(delayNode);
+    del.connect(fb);
+    fb.connect(del);
 
-    let chain = audioCtx.createGain();
-    let curr = chain;
-    
+    // EQ Chain
+    let ch = actx.createGain(), curr = ch;
     freqs.forEach(() => {
-        const f = audioCtx.createBiquadFilter();
+        const f = actx.createBiquadFilter();
         f.type = 'peaking';
         f.Q.value = 1.0;
         curr.connect(f);
@@ -409,546 +407,172 @@ function initAudio() {
         bands.push(f);
     });
 
-    curr.connect(compNode);
-    compNode.connect(masterGain);
-
-    compNode.connect(reverbNode);
-    reverbNode.connect(revGain);
-    revGain.connect(masterGain);
-
-    compNode.connect(delayNode);
-    delayNode.connect(delayGain);
-    delayGain.connect(masterGain);
-
-    masterGain.connect(analyser);
-    analyser.connect(audioCtx.destination);
-    gainNode = chain;
-    
-    applyAudio();
+    curr.connect(comp);
+    comp.connect(mast);
+    comp.connect(rev); rev.connect(revG); revG.connect(mast);
+    comp.connect(del); del.connect(delG); delG.connect(mast);
+    mast.connect(anal);
+    anal.connect(actx.destination);
+    gain = ch;
+    appAud();
 }
 
-els.file.onchange = async (e) => {
-    const f = e.target.files[0];
+async function loadFile(f) {
     if(!f) return;
-    
-    els.loader.classList.add('active');
-    els.play.disabled = true;
-
+    $('loader').classList.add('visible');
+    $('play-btn').disabled = true;
     try {
-        initAudio();
-        if(audioCtx.state === 'suspended') await audioCtx.resume();
+        initAud();
+        if(actx.state === 'suspended') await actx.resume();
         const ab = await f.arrayBuffer();
-        buffer = await audioCtx.decodeAudioData(ab);
-        
-        els.timeTotal.textContent = fmtTime(buffer.duration);
-        els.empty.style.opacity = 0;
-        els.play.disabled = false;
-        
+        buf = await actx.decodeAudioData(ab);
+        $('t-total').textContent = fmtT(buf.duration);
+        $('empty-state').style.opacity = 0;
+        $('play-btn').disabled = false;
         stop();
         play();
-        els.loader.classList.remove('active');
-    } catch(err) {
-        console.error(err);
-        alert('Error loading audio');
-        els.loader.classList.remove('active');
+        $('loader').classList.remove('visible');
+    } catch(e) {
+        alert('Load failed');
+        $('loader').classList.remove('visible');
     }
-};
+}
 
 function play() {
-    if(!buffer) return;
-    if(audioCtx.state === 'suspended') audioCtx.resume();
+    if(!buf) return;
+    if(actx.state === 'suspended') actx.resume();
+    src = actx.createBufferSource();
+    src.buffer = buf;
     
-    srcNode = audioCtx.createBufferSource();
-    srcNode.buffer = buffer;
+    // Pitch & Speed logic
+    src.playbackRate.value = s.speed;
+    src.detune.value = (s.pitch * 100) + s.tune;
     
-    const playbackRate = state.speed;
-    const totalDetune = (state.pitch * 100) + state.tune;
+    src.connect(gain);
     
-    srcNode.playbackRate.value = playbackRate;
-    srcNode.detune.value = totalDetune;
+    // Calc start
+    const detuneMult = Math.pow(2, ((s.pitch * 100) + s.tune) / 1200);
+    const effSpeed = s.speed * detuneMult;
     
-    srcNode.connect(gainNode);
-    srcNode.start(0, pauseTime);
-    
-    // Calculate start time based on effective speed including detune
-    // Detune adds 2^(cents/1200) multiplier
-    const detuneMult = Math.pow(2, totalDetune / 1200);
-    const effectiveSpeed = playbackRate * detuneMult;
-    
-    startTime = audioCtx.currentTime - (pauseTime / effectiveSpeed);
-    isPlaying = true;
-    els.play.innerHTML = '<span class="material-symbols-rounded text-3xl">pause</span>';
-    draw();
+    src.start(0, tPause);
+    tStart = actx.currentTime - (tPause / effSpeed);
+    isPlay = true;
+    $('play-btn').innerHTML = '<span class="material-symbols-rounded text-3xl text-blue-600">pause</span>';
+    loop();
 }
 
 function pause() {
-    if(srcNode) {
-        try { srcNode.stop(); } catch(e){}
-        srcNode.disconnect();
+    if(src) { try{src.stop()}catch(e){}; src.disconnect(); }
+    if(actx) {
+        const detuneMult = Math.pow(2, ((s.pitch * 100) + s.tune) / 1200);
+        const effSpeed = s.speed * detuneMult;
+        tPause = (actx.currentTime - tStart) * effSpeed;
     }
-    
-    if(audioCtx) {
-        const playbackRate = state.speed;
-        const totalDetune = (state.pitch * 100) + state.tune;
-        const detuneMult = Math.pow(2, totalDetune / 1200);
-        const effectiveSpeed = playbackRate * detuneMult;
-        pauseTime = (audioCtx.currentTime - startTime) * effectiveSpeed;
-    }
-    
-    isPlaying = false;
-    els.play.innerHTML = '<span class="material-symbols-rounded text-3xl">play_arrow</span>';
-    cancelAnimationFrame(animId);
+    isPlay = false;
+    $('play-btn').innerHTML = '<span class="material-symbols-rounded text-3xl text-blue-600">play_arrow</span>';
+    cancelAnimationFrame(rafId);
 }
 
 function stop() {
     pause();
-    pauseTime = 0;
-    els.progress.style.width = '0%';
-    els.seek.value = 0;
-    els.timeCurr.textContent = "0:00";
+    tPause = 0;
+    $('seek-fill').style.width = '0%';
+    $('seek').value = 0;
+    $('t-curr').textContent = '0:00';
 }
 
-els.play.onclick = () => isPlaying ? pause() : play();
+function loop() {
+    if(!isPlay) return;
+    rafId = requestAnimationFrame(loop);
+    
+    const w = $('viz').width = $('viz').offsetWidth;
+    const h = $('viz').height = $('viz').offsetHeight;
+    const dat = new Uint8Array(anal.frequencyBinCount);
+    anal.getByteFrequencyData(dat);
 
-els.seek.oninput = (e) => {
-    if(!buffer) return;
-    const pct = parseFloat(e.target.value);
-    pauseTime = (pct / 100) * buffer.duration;
-    els.progress.style.width = pct + '%';
-    els.timeCurr.textContent = fmtTime(pauseTime);
-    if(isPlaying) {
-        if(srcNode) { try { srcNode.stop(); } catch(e){} }
-        play();
-    }
-};
+    const detuneMult = Math.pow(2, ((s.pitch * 100) + s.tune) / 1200);
+    const effSpeed = s.speed * detuneMult;
+    const curr = (actx.currentTime - tStart) * effSpeed;
 
-function draw() {
-    if(!isPlaying) return;
-    animId = requestAnimationFrame(draw);
-    
-    const w = els.canvas.width = els.canvas.offsetWidth;
-    const h = els.canvas.height = els.canvas.offsetHeight;
-    const data = new Uint8Array(analyser.frequencyBinCount);
-    analyser.getByteFrequencyData(data);
-    
-    const playbackRate = state.speed;
-    const totalDetune = (state.pitch * 100) + state.tune;
-    const detuneMult = Math.pow(2, totalDetune / 1200);
-    const effectiveSpeed = playbackRate * detuneMult;
-    
-    const curr = (audioCtx.currentTime - startTime) * effectiveSpeed;
-    
-    if(curr >= buffer.duration) { stop(); return; }
-    
-    els.timeCurr.textContent = fmtTime(curr);
-    const pct = (curr / buffer.duration) * 100;
-    els.progress.style.width = pct + '%';
-    els.seek.value = pct;
-    
+    if(curr >= buf.duration) { stop(); return; }
+
+    $('t-curr').textContent = fmtT(curr);
+    const pct = (curr/buf.duration)*100;
+    $('seek-fill').style.width = pct+'%';
+    $('seek').value = pct;
+
     ctx.clearRect(0,0,w,h);
-    const barW = (w / data.length) * 2.5;
+    const bw = (w/dat.length)*2.5;
     let x = 0;
-    
-    for(let i=0; i<data.length; i++) {
-        const barH = (data[i]/255) * h;
-        ctx.fillStyle = i < data.length/3 ? '#0b57d0' : i < data.length*2/3 ? '#7c3aed' : '#db2777';
-        ctx.fillRect(x, h - barH, barW, barH);
-        x += barW + 1;
-    }
-}
-
-function fmtTime(s) {
-    const m = Math.floor(s/60);
-    const sc = Math.floor(s%60);
-    return `${m}:${sc.toString().padStart(2,'0')}`;
-}
-
-window.switchTab = (id) => {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('[id^="tab-"]').forEach(t => { 
-        t.classList.add('hidden'); 
-        t.classList.remove('flex'); 
-    });
-    
-    const btn = document.querySelector(`button[data-tab="${id}"]`);
-    if(btn) btn.classList.add('active');
-    
-    const tab = document.getElementById(`tab-${id}`);
-    if(tab) {
-        tab.classList.remove('hidden');
-        tab.classList.add('flex');
-    }
-};
-
-const handleInput = (key, val, isNum = false) => {
-    state[key] = isNum ? parseFloat(val) : val;
-    if(key === 'speed') { els.slSpeed.value = els.inpSpeed.value = val; }
-    if(key === 'pitch') { els.slPitch.value = els.inpPitch.value = val; }
-    if(key === 'tune') { els.slTune.value = els.inpTune.value = val; }
-    updateUI();
-    applyAudio();
-    saveState();
-};
-
-els.slSpeed.oninput = (e) => handleInput('speed', e.target.value, true);
-els.inpSpeed.onchange = (e) => handleInput('speed', e.target.value, true);
-
-els.slPitch.oninput = (e) => handleInput('pitch', e.target.value, true);
-els.inpPitch.onchange = (e) => handleInput('pitch', e.target.value, true);
-
-els.slTune.oninput = (e) => handleInput('tune', e.target.value, true);
-els.inpTune.onchange = (e) => handleInput('tune', e.target.value, true);
-
-els.slReverb.oninput = (e) => { state.reverb = parseInt(e.target.value); updateUI(); applyAudio(); saveState(); };
-els.slEcho.oninput = (e) => { state.echo = parseInt(e.target.value); updateUI(); applyAudio(); saveState(); };
-els.slVol.oninput = (e) => { state.vol = parseFloat(e.target.value); updateUI(); applyAudio(); saveState(); };
-
-els.comp.onchange = (e) => { state.comp = e.target.checked; applyAudio(); saveState(); };
-
-document.body.addEventListener('input', (e) => {
-    if(e.target.classList.contains('eq-band')) {
-        const idx = e.target.dataset.idx;
-        state.eq[idx] = parseInt(e.target.value);
-        updateUI();
-        applyAudio();
-        saveState();
-    }
-});
-
-init();
-</script>
-</body>
-</html>
-<label class="bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-medium flex items-center gap-2 active:scale-95 transition-transform cursor-pointer shadow-md">
-<span class="material-symbols-rounded text-lg">upload_file</span>
-<span>Load</span>
-<input type="file" id="file-input" accept="audio/*">
-</label>
-</div>
-</header>
-
-<div class="flex-1 relative bg-black overflow-hidden shrink-0 h-[30vh]">
-<canvas id="viz-canvas" class="w-full h-full absolute inset-0 block"></canvas>
-<div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none transition-opacity duration-300" id="empty-state">
-<span class="material-symbols-rounded text-6xl text-white/20">music_note</span>
-<p id="status-text" class="text-white/40 text-sm mt-2 font-medium">Tap Load to Start</p>
-</div>
-<div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 to-transparent z-10 flex flex-col gap-3">
-<div class="flex items-center gap-4">
-<button id="play-btn" class="w-14 h-14 rounded-full bg-white text-blue-600 flex items-center justify-center shadow-lg active:scale-90 transition-transform disabled:opacity-50 disabled:scale-100" disabled>
-<span class="material-symbols-rounded text-4xl">play_arrow</span>
-</button>
-<div class="flex-1">
-<div class="flex justify-between text-[11px] text-white/90 font-bold mb-2 px-1 font-mono">
-<span id="time-curr">0:00</span>
-<span id="time-total">0:00</span>
-</div>
-<div class="h-6 relative flex items-center">
-<div class="absolute left-0 right-0 h-2 bg-white/20 rounded-full overflow-hidden pointer-events-none">
-<div id="progress-bar" class="absolute top-0 left-0 h-full bg-blue-500 w-0 transition-all duration-75 ease-linear"></div>
-</div>
-<input type="range" id="seek-slider" class="horz-slider absolute inset-0 opacity-0" min="0" max="100" step="0.1" value="0">
-</div>
-</div>
-</div>
-</div>
-</div>
-
-<div class="h-14 bg-white border-b border-gray-100 flex items-center justify-around px-2 shrink-0 z-20 shadow-sm">
-<button onclick="switchTab('eq')" class="tab-btn active flex-1 py-2 mx-1 rounded-full text-sm text-gray-600 transition-colors">EQ</button>
-<button onclick="switchTab('fx')" class="tab-btn flex-1 py-2 mx-1 rounded-full text-sm text-gray-600 transition-colors">Effects</button>
-<button onclick="switchTab('mix')" class="tab-btn flex-1 py-2 mx-1 rounded-full text-sm text-gray-600 transition-colors">Mix</button>
-</div>
-
-<main class="flex-1 overflow-hidden relative bg-[#f0f2f5] safe-pb">
-<div id="tab-eq" class="absolute inset-0 p-4 overflow-x-auto overflow-y-hidden flex items-end pb-8 gap-2 scrollbar-hide"></div>
-<div id="tab-fx" class="absolute inset-0 p-6 hidden flex-col gap-6 overflow-y-auto">
-<div class="glass-panel p-5 flex flex-col gap-2">
-<div class="flex justify-between items-center">
-<span class="font-bold text-gray-700 flex items-center gap-2"><span class="material-symbols-rounded text-blue-600">speed</span> Speed</span>
-<span id="val-speed" class="text-xs font-mono bg-blue-100 text-blue-800 px-2 py-1 rounded font-bold">1.0x</span>
-</div>
-<input type="range" id="fx-speed" min="50" max="150" step="1" value="100" class="horz-slider">
-</div>
-<div class="glass-panel p-5 flex flex-col gap-2">
-<div class="flex justify-between items-center">
-<span class="font-bold text-gray-700 flex items-center gap-2"><span class="material-symbols-rounded text-purple-600">church</span> Reverb</span>
-<span id="val-reverb" class="text-xs font-mono bg-purple-100 text-purple-800 px-2 py-1 rounded font-bold">0%</span>
-</div>
-<input type="range" id="fx-reverb" min="0" max="100" step="1" value="0" class="horz-slider">
-</div>
-<div class="glass-panel p-5 flex flex-col gap-2">
-<div class="flex justify-between items-center">
-<span class="font-bold text-gray-700 flex items-center gap-2"><span class="material-symbols-rounded text-orange-600">spatial_audio</span> Echo</span>
-<span id="val-echo" class="text-xs font-mono bg-orange-100 text-orange-800 px-2 py-1 rounded font-bold">0%</span>
-</div>
-<input type="range" id="fx-echo" min="0" max="100" step="1" value="0" class="horz-slider">
-</div>
-</div>
-<div id="tab-mix" class="absolute inset-0 p-6 hidden flex-col gap-8 pt-8">
-<div class="glass-panel p-6 flex flex-col gap-4">
-<div class="flex justify-between items-center">
-<span class="text-sm font-bold text-gray-500 uppercase tracking-widest">Master Volume</span>
-<span id="val-vol" class="text-xl font-bold text-gray-800">50%</span>
-</div>
-<input type="range" id="master-vol" min="0" max="100" step="1" value="50" class="horz-slider">
-</div>
-<div class="glass-panel p-5 flex items-center justify-between">
-<div class="flex flex-col">
-<span class="font-bold text-gray-800 text-lg">Compressor</span>
-<span class="text-xs text-gray-500">Normalize loudness</span>
-</div>
-<label class="relative inline-flex items-center cursor-pointer">
-<input type="checkbox" id="comp-toggle" class="sr-only peer">
-<div class="w-14 h-8 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-green-500"></div>
-</label>
-</div>
-</div>
-</main>
-
-<script>
-const DEFAULT_STATE = { eq: [0,0,0,0,0,0,0,0,0,0], speed: 100, reverb: 0, echo: 0, vol: 50, comp: false };
-let state = JSON.parse(localStorage.getItem('googleTuneState')) || JSON.parse(JSON.stringify(DEFAULT_STATE));
-let audioCtx, srcNode, gainNode, analyser, buffer, bands=[], reverbNode, revGain, delayNode, delayGain, compNode, masterGain;
-let isPlaying = false, startTime = 0, pauseTime = 0, animId, saveTimeout;
-const freqs = [32, 64, 125, 250, 500, '1k', '2k', '4k', '8k', '16k'];
-const ui = {
-    file: document.getElementById('file-input'),
-    play: document.getElementById('play-btn'),
-    canvas: document.getElementById('viz-canvas'),
-    status: document.getElementById('status-text'),
-    timeCurr: document.getElementById('time-curr'),
-    timeTotal: document.getElementById('time-total'),
-    progress: document.getElementById('progress-bar'),
-    seek: document.getElementById('seek-slider'),
-    eqContainer: document.getElementById('tab-eq'),
-    speed: document.getElementById('fx-speed'),
-    reverb: document.getElementById('fx-reverb'),
-    echo: document.getElementById('fx-echo'),
-    vol: document.getElementById('master-vol'),
-    comp: document.getElementById('comp-toggle'),
-    valSpeed: document.getElementById('val-speed'),
-    valReverb: document.getElementById('val-reverb'),
-    valEcho: document.getElementById('val-echo'),
-    valVol: document.getElementById('val-vol'),
-    empty: document.getElementById('empty-state')
-};
-const ctx = ui.canvas.getContext('2d');
-
-function initUI() {
-    ui.eqContainer.innerHTML = '';
-    freqs.forEach((f, i) => {
-        const div = document.createElement('div');
-        div.className = 'flex flex-col items-center min-w-[44px] flex-1';
-        div.innerHTML = `<div class="vert-slider-wrapper"><input type="range" class="vert-slider eq-band" data-index="${i}" min="-12" max="12" step="1" value="${state.eq[i]}"></div><span class="text-[10px] font-bold text-gray-400 mt-2">${f}</span>`;
-        ui.eqContainer.appendChild(div);
-    });
-    ui.speed.value = state.speed;
-    ui.reverb.value = state.reverb;
-    ui.echo.value = state.echo;
-    ui.vol.value = state.vol;
-    ui.comp.checked = state.comp;
-    updateLabels();
-}
-
-function updateLabels() {
-    ui.valSpeed.textContent = (state.speed / 100).toFixed(1) + 'x';
-    ui.valReverb.textContent = state.reverb + '%';
-    ui.valEcho.textContent = state.echo + '%';
-    ui.valVol.textContent = state.vol + '%';
-}
-
-function saveState() {
-    clearTimeout(saveTimeout);
-    saveTimeout = setTimeout(() => localStorage.setItem('googleTuneState', JSON.stringify(state)), 500);
-}
-
-function resetApp() {
-    if(confirm('Reset all settings to default?')) {
-        state = JSON.parse(JSON.stringify(DEFAULT_STATE));
-        initUI();
-        saveState();
-        if(audioCtx) applyAudioState();
-    }
-}
-
-function applyAudioState() {
-    if(!audioCtx) return;
-    bands.forEach((b, i) => b.gain.setTargetAtTime(state.eq[i], audioCtx.currentTime, 0.1));
-    if(srcNode) srcNode.playbackRate.value = state.speed / 100;
-    revGain.gain.setTargetAtTime(state.reverb / 100, audioCtx.currentTime, 0.1);
-    delayGain.gain.setTargetAtTime(state.echo / 100, audioCtx.currentTime, 0.1);
-    masterGain.gain.setTargetAtTime(state.vol / 100, audioCtx.currentTime, 0.1);
-    compNode.threshold.value = state.comp ? -50 : 0;
-    compNode.ratio.value = state.comp ? 12 : 1;
-}
-
-function initAudio() {
-    if(audioCtx) return;
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    masterGain = audioCtx.createGain();
-    analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 256;
-    compNode = audioCtx.createDynamicsCompressor();
-    reverbNode = audioCtx.createConvolver();
-    const rate = audioCtx.sampleRate, len = rate * 2, imp = audioCtx.createBuffer(2, len, rate);
-    for(let i=0; i<len; i++) {
-        imp.getChannelData(0)[i] = (Math.random()*2-1)*Math.pow(1-i/len,2);
-        imp.getChannelData(1)[i] = (Math.random()*2-1)*Math.pow(1-i/len,2);
-    }
-    reverbNode.buffer = imp;
-    revGain = audioCtx.createGain();
-    delayNode = audioCtx.createDelay();
-    delayNode.delayTime.value = 0.4;
-    delayGain = audioCtx.createGain();
-    const feedback = audioCtx.createGain();
-    feedback.gain.value = 0.4;
-    delayNode.connect(feedback);
-    feedback.connect(delayNode);
-    let chain = audioCtx.createGain();
-    let curr = chain;
-    freqs.forEach(() => {
-        const eq = audioCtx.createBiquadFilter();
-        eq.type = 'peaking';
-        eq.Q.value = 1.0;
-        curr.connect(eq);
-        curr = eq;
-        bands.push(eq);
-    });
-    curr.connect(compNode);
-    compNode.connect(masterGain);
-    compNode.connect(reverbNode);
-    reverbNode.connect(revGain);
-    revGain.connect(masterGain);
-    compNode.connect(delayNode);
-    delayNode.connect(delayGain);
-    delayGain.connect(masterGain);
-    masterGain.connect(analyser);
-    analyser.connect(audioCtx.destination);
-    gainNode = chain;
-    applyAudioState();
-}
-
-ui.file.onchange = async (e) => {
-    const f = e.target.files[0];
-    if(!f) return;
-    ui.status.textContent = "Loading...";
-    ui.empty.style.opacity = 1;
-    ui.play.disabled = true;
-    try {
-        initAudio();
-        if(audioCtx.state === 'suspended') await audioCtx.resume();
-        const ab = await f.arrayBuffer();
-        buffer = await audioCtx.decodeAudioData(ab);
-        ui.timeTotal.textContent = fmtTime(buffer.duration);
-        ui.empty.style.opacity = 0;
-        ui.play.disabled = false;
-        stop();
-        play();
-    } catch(err) {
-        ui.status.textContent = "Error";
-        alert("Load failed");
-    }
-};
-
-function play() {
-    if(!buffer) return;
-    if(audioCtx.state === 'suspended') audioCtx.resume();
-    srcNode = audioCtx.createBufferSource();
-    srcNode.buffer = buffer;
-    srcNode.playbackRate.value = state.speed / 100;
-    srcNode.connect(gainNode);
-    srcNode.start(0, pauseTime);
-    startTime = audioCtx.currentTime - (pauseTime / srcNode.playbackRate.value);
-    isPlaying = true;
-    ui.play.innerHTML = '<span class="material-symbols-rounded text-4xl">pause</span>';
-    draw();
-}
-
-function pause() {
-    if(srcNode) { try{srcNode.stop();}catch(e){} srcNode.disconnect(); }
-    if(audioCtx) pauseTime = (audioCtx.currentTime - startTime) * (state.speed / 100);
-    isPlaying = false;
-    ui.play.innerHTML = '<span class="material-symbols-rounded text-4xl">play_arrow</span>';
-    cancelAnimationFrame(animId);
-}
-
-function stop() {
-    pause();
-    pauseTime = 0;
-    ui.progress.style.width = '0%';
-    ui.seek.value = 0;
-    ui.timeCurr.textContent = "0:00";
-}
-
-ui.play.onclick = () => isPlaying ? pause() : play();
-ui.seek.oninput = (e) => {
-    if(!buffer) return;
-    const v = e.target.value;
-    pauseTime = (v/100)*buffer.duration;
-    ui.progress.style.width = v+'%';
-    ui.timeCurr.textContent = fmtTime(pauseTime);
-    if(isPlaying) {
-        if(srcNode) { try{srcNode.stop();}catch(e){} }
-        play();
-    }
-};
-
-function draw() {
-    if(!isPlaying) return;
-    animId = requestAnimationFrame(draw);
-    const w = ui.canvas.width = ui.canvas.offsetWidth;
-    const h = ui.canvas.height = ui.canvas.offsetHeight;
-    const data = new Uint8Array(analyser.frequencyBinCount);
-    analyser.getByteFrequencyData(data);
-    const curr = (audioCtx.currentTime - startTime) * (state.speed/100);
-    if(curr >= buffer.duration) { stop(); return; }
-    ui.timeCurr.textContent = fmtTime(curr);
-    const pct = (curr/buffer.duration)*100;
-    ui.progress.style.width = pct+'%';
-    ui.seek.value = pct;
-    ctx.clearRect(0,0,w,h);
-    const bw = (w/data.length)*2.5;
-    let x=0;
-    for(let i=0; i<data.length; i++) {
-        const bh = (data[i]/255)*h;
-        ctx.fillStyle = `hsl(${i+200},80%,50%)`;
+    for(let i=0; i<dat.length; i++) {
+        const bh = (dat[i]/255)*h;
+        ctx.fillStyle = i<dat.length/3 ? '#0b57d0' : i<dat.length*2/3 ? '#7c3aed' : '#db2777';
         ctx.fillRect(x, h-bh, bw, bh);
         x+=bw+1;
     }
 }
 
-function fmtTime(s) {
+function fmtT(s) {
     const m = Math.floor(s/60), sc = Math.floor(s%60);
     return `${m}:${sc.toString().padStart(2,'0')}`;
 }
 
-window.switchTab = (id) => {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('[id^="tab-"]').forEach(t => { t.classList.add('hidden'); t.classList.remove('flex'); });
-    event.target.classList.add('active');
-    const tab = document.getElementById(`tab-${id}`);
-    tab.classList.remove('hidden');
-    tab.classList.add('flex');
+// Events
+$('file-input-desktop').onchange = e => loadFile(e.target.files[0]);
+$('file-input-mobile').onchange = e => loadFile(e.target.files[0]);
+$('load-btn-top').onclick = () => $('file-input-mobile').click();
+$('fab-load').onclick = () => $('file-input-mobile').click();
+$('play-btn').onclick = () => isPlay ? pause() : play();
+$('reset-btn').onclick = rst;
+
+$('seek').oninput = e => {
+    if(!buf) return;
+    const p = parseFloat(e.target.value);
+    tPause = (p/100)*buf.duration;
+    $('seek-fill').style.width = p+'%';
+    $('t-curr').textContent = fmtT(tPause);
+    if(isPlay) { try{src.stop()}catch(e){}; play(); }
 };
 
-document.body.addEventListener('input', (e) => {
-    if(e.target.classList.contains('eq-band')) {
-        state.eq[e.target.dataset.index] = parseInt(e.target.value);
-    } else if(e.target.id === 'fx-speed') {
-        state.speed = parseInt(e.target.value);
-    } else if(e.target.id === 'fx-reverb') {
-        state.reverb = parseInt(e.target.value);
-    } else if(e.target.id === 'fx-echo') {
-        state.echo = parseInt(e.target.value);
-    } else if(e.target.id === 'master-vol') {
-        state.vol = parseInt(e.target.value);
-    } else if(e.target.id === 'comp-toggle') {
-        state.comp = e.target.checked;
+$('pro-toggle').onchange = e => { s.pro = e.target.checked; updMode(); save(); };
+$('comp-toggle').onchange = e => { s.comp = e.target.checked; appAud(); save(); };
+
+qsa('.tab-btn').forEach(b => b.onclick = e => {
+    qsa('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    e.target.classList.add('active');
+    ['eq','fx','mix'].forEach(t => $(`tab-${t}`).classList.add('hidden'));
+    $(`tab-${e.target.dataset.tab}`).classList.remove('hidden');
+    $(`tab-${e.target.dataset.tab}`).classList.add('flex');
+});
+
+const bind = (id, k, num=false) => {
+    const el = $(id);
+    if(!el) return;
+    const h = e => {
+        s[k] = num ? parseFloat(e.target.value) : parseInt(e.target.value);
+        setVal(k, s[k]);
+        appAud();
+        save();
+    };
+    el.oninput = h;
+    el.onchange = h;
+};
+
+bind('sl-speed', 'speed', true); bind('inp-speed', 'speed', true);
+bind('sl-pitch', 'pitch', true); bind('inp-pitch', 'pitch', true);
+bind('sl-tune', 'tune', true); bind('inp-tune', 'tune', true);
+bind('sl-reverb', 'reverb');
+bind('sl-echo', 'echo');
+bind('sl-vol', 'vol', true);
+
+document.addEventListener('input', e => {
+    if(e.target.classList.contains('eq-sl')) {
+        const i = e.target.dataset.i;
+        s.eq[i] = parseInt(e.target.value);
+        e.target.parentElement.nextElementSibling.nextElementSibling.textContent = s.eq[i];
+        appAud();
+        save();
     }
-    updateLabels();
-    applyAudioState();
-    saveState();
 });
 
 initUI();
