@@ -41,7 +41,7 @@
   /* MAP */
   #map { flex: 1; width: 100%; z-index: 1; background: #f8fafc; }
 
-  /* MARKER STYLES - Optimized */
+  /* MARKER STYLES */
   .leaflet-marker-icon {
     will-change: transform; 
     transition: transform 0.1s linear;
@@ -64,13 +64,10 @@
   }
   .marker-correct { background: #22c55e !important; border-color: #bbf7d0 !important; transform: scale(1.15); z-index: 1000; }
   .marker-wrong { background: #ef4444 !important; border-color: #fecaca !important; }
-  
-  /* Region Layer Styles */
-  .leaflet-interactive {
-    stroke-width: 2;
-    stroke: #64748b;
-    vector-effect: non-scaling-stroke; /* Keeps borders thin when zooming */
-  }
+
+  /* HIDE Countries outside Finland (Visual Trick using bounds/whiteout if needed, but here using focus) */
+  .leaflet-container { background: #f1f5f9; }
+
 </style>
 </head>
 <body>
@@ -82,9 +79,9 @@
   </div>
   <div class="controls">
     <select id="modeSelect">
-      <option value="1-30">Kohteet 1–30</option>
-      <option value="regions">Maakunnat 1–19</option>
+      <option value="1-30">Kohteet (Muut)</option>
       <option value="centers">Maakuntakeskukset</option>
+      <option value="regions">Maakunnat 1–19</option>
     </select>
     <button id="nextBtn">Seuraava Kysymys</button>
   </div>
@@ -101,38 +98,28 @@
 <script>
 // --- DATASETS ---
 
-// 1. KOHTEET 1-30 (Exam List)
-const data_1_30 = [
-  {id:1,  name:"Enontekiö",      lat:68.385, lon:23.635},
-  {id:2,  name:"Helsinki",       lat:60.169, lon:24.938},
-  {id:3,  name:"Inari",          lat:68.906, lon:27.027},
-  {id:4,  name:"Jyväskylä",      lat:62.242, lon:25.747},
-  {id:5,  name:"Kajaani",        lat:64.225, lon:27.733},
-  {id:6,  name:"Kittilä",        lat:67.651, lon:24.908},
-  {id:7,  name:"Kotka",          lat:60.466, lon:26.941},
-  {id:8,  name:"Kuopio",         lat:62.892, lon:27.677},
-  {id:9,  name:"Kuusamo",        lat:65.964, lon:29.188},
-  {id:10, name:"Lappeenranta",   lat:61.054, lon:28.188},
-  {id:11, name:"Maarianhamina",  lat:60.097, lon:19.934},
-  {id:12, name:"Oulu",           lat:65.012, lon:25.468},
-  {id:13, name:"Pori",           lat:61.485, lon:21.797},
-  {id:14, name:"Porvoo",         lat:60.393, lon:25.665},
-  {id:15, name:"Rauma",          lat:61.127, lon:21.511},
-  {id:16, name:"Rovaniemi",      lat:66.501, lon:25.728},
-  {id:17, name:"Salo",           lat:60.383, lon:23.129},
-  {id:18, name:"Savonlinna",     lat:61.868, lon:28.886},
-  {id:19, name:"Seinäjoki",      lat:62.787, lon:22.840},
-  {id:20, name:"Tampere",        lat:61.497, lon:23.760},
-  {id:21, name:"Utsjoki",        lat:69.908, lon:27.027},
-  {id:22, name:"Vaasa",          lat:63.095, lon:21.616},
-  {id:23, name:"Turku",          lat:60.451, lon:22.266},
-  {id:24, name:"Joensuu",        lat:62.601, lon:29.763},
-  {id:25, name:"Lahti",          lat:60.982, lon:25.661},
-  {id:26, name:"Hailuoto",       lat:65.009, lon:24.715},
-  {id:27, name:"Perämeri",       lat:65.200, lon:24.000, type:'sea'},
-  {id:28, name:"Saaristomeri",   lat:60.200, lon:21.500, type:'sea'},
-  {id:29, name:"Selkämeri",      lat:61.700, lon:20.500, type:'sea'},
-  {id:30, name:"Suomenlahti",    lat:59.900, lon:25.500, type:'sea'}
+// 1. MAAKUNTAKESKUKSET (Provincial Centers 1-19)
+// These cover many major cities.
+const data_centers = [
+  {id:1, name:"Maarianhamina", lat:60.097, lon:19.934},
+  {id:2, name:"Lappeenranta", lat:61.054, lon:28.188},
+  {id:3, name:"Seinäjoki", lat:62.787, lon:22.840},
+  {id:4, name:"Mikkeli", lat:61.688, lon:27.272},
+  {id:5, name:"Kajaani", lat:64.225, lon:27.733},
+  {id:6, name:"Hämeenlinna", lat:60.996, lon:24.464},
+  {id:7, name:"Kokkola", lat:63.838, lon:23.132},
+  {id:8, name:"Jyväskylä", lat:62.242, lon:25.747},
+  {id:9, name:"Kouvola", lat:60.870, lon:26.700},
+  {id:10, name:"Rovaniemi", lat:66.501, lon:25.728},
+  {id:11, name:"Tampere", lat:61.497, lon:23.760},
+  {id:12, name:"Vaasa", lat:63.095, lon:21.616},
+  {id:13, name:"Joensuu", lat:62.601, lon:29.763},
+  {id:14, name:"Oulu", lat:65.012, lon:25.468},
+  {id:15, name:"Kuopio", lat:62.892, lon:27.677},
+  {id:16, name:"Lahti", lat:60.982, lon:25.661},
+  {id:17, name:"Pori", lat:61.485, lon:21.797},
+  {id:18, name:"Helsinki", lat:60.169, lon:24.938},
+  {id:19, name:"Turku", lat:60.451, lon:22.266}
 ];
 
 // 2. MAAKUNNAT (Provinces 1-19)
@@ -158,32 +145,48 @@ const data_regions = [
   {id:19, name:"Varsinais-Suomi", lat:60.5, lon:22.5}
 ];
 
-// 3. MAAKUNTAKESKUKSET (Provincial Centers 1-19)
-const data_centers = [
-  {id:1, name:"Maarianhamina", lat:60.097, lon:19.934},
-  {id:2, name:"Lappeenranta", lat:61.054, lon:28.188},
-  {id:3, name:"Seinäjoki", lat:62.787, lon:22.840},
-  {id:4, name:"Mikkeli", lat:61.688, lon:27.272},
-  {id:5, name:"Kajaani", lat:64.225, lon:27.733},
-  {id:6, name:"Hämeenlinna", lat:60.996, lon:24.464},
-  {id:7, name:"Kokkola", lat:63.838, lon:23.132},
-  {id:8, name:"Jyväskylä", lat:62.242, lon:25.747},
-  {id:9, name:"Kouvola", lat:60.870, lon:26.700},
-  {id:10, name:"Rovaniemi", lat:66.501, lon:25.728},
-  {id:11, name:"Tampere", lat:61.497, lon:23.760},
-  {id:12, name:"Vaasa", lat:63.095, lon:21.616},
-  {id:13, name:"Joensuu", lat:62.601, lon:29.763},
-  {id:14, name:"Oulu", lat:65.012, lon:25.468},
-  {id:15, name:"Kuopio", lat:62.892, lon:27.677},
-  {id:16, name:"Lahti", lat:60.982, lon:25.661},
-  {id:17, name:"Pori", lat:61.485, lon:21.797},
-  {id:18, name:"Helsinki", lat:60.169, lon:24.938},
-  {id:19, name:"Turku", lat:60.451, lon:22.266}
+// 3. KOHTEET 1-30 (Filtered)
+// Only items from the 1-30 list that are NOT in data_centers
+const full_1_30 = [
+  {id:1,  name:"Enontekiö",      lat:68.385, lon:23.635},
+  {id:2,  name:"Helsinki",       lat:60.169, lon:24.938}, // In centers
+  {id:3,  name:"Inari",          lat:68.906, lon:27.027},
+  {id:4,  name:"Jyväskylä",      lat:62.242, lon:25.747}, // In centers
+  {id:5,  name:"Kajaani",        lat:64.225, lon:27.733}, // In centers
+  {id:6,  name:"Kittilä",        lat:67.651, lon:24.908},
+  {id:7,  name:"Kotka",          lat:60.466, lon:26.941},
+  {id:8,  name:"Kuopio",         lat:62.892, lon:27.677}, // In centers
+  {id:9,  name:"Kuusamo",        lat:65.964, lon:29.188},
+  {id:10, name:"Lappeenranta",   lat:61.054, lon:28.188}, // In centers
+  {id:11, name:"Maarianhamina",  lat:60.097, lon:19.934}, // In centers
+  {id:12, name:"Oulu",           lat:65.012, lon:25.468}, // In centers
+  {id:13, name:"Pori",           lat:61.485, lon:21.797}, // In centers
+  {id:14, name:"Porvoo",         lat:60.393, lon:25.665},
+  {id:15, name:"Rauma",          lat:61.127, lon:21.511},
+  {id:16, name:"Rovaniemi",      lat:66.501, lon:25.728}, // In centers
+  {id:17, name:"Salo",           lat:60.383, lon:23.129},
+  {id:18, name:"Savonlinna",     lat:61.868, lon:28.886},
+  {id:19, name:"Seinäjoki",      lat:62.787, lon:22.840}, // In centers
+  {id:20, name:"Tampere",        lat:61.497, lon:23.760}, // In centers
+  {id:21, name:"Utsjoki",        lat:69.908, lon:27.027},
+  {id:22, name:"Vaasa",          lat:63.095, lon:21.616}, // In centers
+  {id:23, name:"Turku",          lat:60.451, lon:22.266}, // In centers
+  {id:24, name:"Joensuu",        lat:62.601, lon:29.763}, // In centers
+  {id:25, name:"Lahti",          lat:60.982, lon:25.661}, // In centers
+  {id:26, name:"Hailuoto",       lat:65.009, lon:24.715},
+  {id:27, name:"Perämeri",       lat:65.200, lon:24.000, type:'sea'},
+  {id:28, name:"Saaristomeri",   lat:60.200, lon:21.500, type:'sea'},
+  {id:29, name:"Selkämeri",      lat:61.700, lon:20.500, type:'sea'},
+  {id:30, name:"Suomenlahti",    lat:59.900, lon:25.500, type:'sea'}
 ];
+
+// Filtering Logic
+const centerNames = new Set(data_centers.map(c => c.name));
+const data_1_30_filtered = full_1_30.filter(item => !centerNames.has(item.name));
 
 // --- APP STATE ---
 let currentMode = '1-30';
-let currentData = data_1_30;
+let currentData = data_1_30_filtered;
 let currentTarget = null;
 let score = 0;
 let attempts = 0;
@@ -192,7 +195,6 @@ let markers = {};
 let regionLayer = null;
 
 // --- INITIALIZE MAP ---
-// "preferCanvas: true" significantly improves FPS during zoom
 const map = L.map('map', {
   center: [65.0, 26.0],
   zoom: 5,
@@ -202,48 +204,41 @@ const map = L.map('map', {
   fadeAnimation: true,
   markerZoomAnimation: true,
   preferCanvas: true,
-  // Strict bounds to focus on Finland and cut off surrounding world
   maxBounds: [
-    [58.0, 18.0], // South-West
-    [71.0, 33.0]  // North-East
+    [58.0, 18.0],
+    [71.0, 33.0]
   ],
   maxBoundsViscosity: 1.0
 });
 
-// Use "Positron No Labels" for a very clean, whitish map that fades out other countries
-// This makes the borders and dots pop much more
 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap & CARTO',
+  attribution: '&copy; CARTO',
 }).addTo(map);
 
 L.control.zoom({ position: 'topright' }).addTo(map);
 
-// --- FETCH & RENDER REGION BORDERS ---
+// --- LOAD REGION BORDERS ---
 async function loadRegionBorders() {
     try {
         const response = await fetch('https://raw.githubusercontent.com/geohako/suomi-geojson/master/maakunnat/maakunnat_2024_miljoona.geojson');
-        if (!response.ok) throw new Error('Network response was not ok');
+        if (!response.ok) throw new Error('Network error');
         const geojson = await response.json();
 
-        // Style the regions
+        // Style the regions: Slate border, subtle fill
         const style = {
-            color: "#64748b", // Slate-500 border
-            weight: 2,
+            color: "#64748b",
+            weight: 1.5,
             opacity: 1,
-            fillColor: "#f1f5f9", // Very light fill to make Finland stand out from white background
-            fillOpacity: 0.3
+            fillColor: "#e2e8f0",
+            fillOpacity: 0.1
         };
 
         regionLayer = L.geoJSON(geojson, {
             style: style,
-            interactive: false // Borders are purely visual, markers handle clicks
+            interactive: false
         }).addTo(map);
-
-    } catch (error) {
-        console.warn("Could not load region borders. Falling back to simple map.", error);
-    }
+    } catch (e) { console.log("Border load failed", e); }
 }
-// Trigger the load
 loadRegionBorders();
 
 // --- UI ELEMENTS ---
@@ -256,23 +251,19 @@ const ui = {
 };
 
 // --- LOGIC ---
-
 function loadMode(mode) {
   currentMode = mode;
-  // Clear map markers
+  // Clear markers
   Object.values(markers).forEach(m => map.removeLayer(m));
   markers = {};
   
-  // Select Data
-  if (mode === '1-30') currentData = data_1_30;
+  if (mode === '1-30') currentData = data_1_30_filtered;
   else if (mode === 'regions') currentData = data_regions;
   else if (mode === 'centers') currentData = data_centers;
 
-  // Render Markers
   currentData.forEach(item => {
     let icon;
     if (mode === 'regions') {
-      // Province Label Style
       icon = L.divIcon({
         className: 'custom-icon',
         html: `<div class="marker-province">${item.id}</div>`,
@@ -280,7 +271,6 @@ function loadMode(mode) {
         iconAnchor: [15, 10]
       });
     } else {
-      // Standard Dot Style
       icon = L.divIcon({
         className: 'custom-icon',
         html: `<div class="marker-std">${item.id}</div>`,
@@ -291,9 +281,8 @@ function loadMode(mode) {
 
     const m = L.marker([item.lat, item.lon], { icon: icon }).addTo(map);
     m.itemData = item;
-    // Optimize click handler
     m.on('click', (e) => {
-        L.DomEvent.stopPropagation(e); // Prevent map click bleed
+        L.DomEvent.stopPropagation(e);
         handleGuess(item);
     });
     markers[item.id] = m;
@@ -305,7 +294,6 @@ function loadMode(mode) {
 
 function startQuestion() {
   isWaiting = false;
-  // Reset marker visuals
   Object.values(markers).forEach(m => {
     const el = m.getElement().querySelector('div');
     if (el) {
@@ -314,9 +302,7 @@ function startQuestion() {
     }
   });
 
-  // Pick random
   currentTarget = currentData[Math.floor(Math.random() * currentData.length)];
-  
   ui.question.style.color = "#0f172a";
   ui.question.textContent = `Etsi: ${currentTarget.name}`;
 }
@@ -328,56 +314,38 @@ function handleGuess(clickedItem) {
 
   const correctM = markers[currentTarget.id];
   const clickedM = markers[clickedItem.id];
-  
   const correctEl = correctM.getElement().querySelector('div');
   const clickedEl = clickedM.getElement().querySelector('div');
 
   if (clickedItem.id === currentTarget.id) {
-    // CORRECT
     score++;
     ui.question.style.color = "#16a34a";
     ui.question.textContent = `Oikein! ${currentTarget.name}`;
     correctEl.classList.add('marker-correct');
-    
-    // If region, show name
     if (currentMode === 'regions') correctEl.textContent = currentTarget.name;
-    
     setTimeout(startQuestion, 1200);
   } else {
-    // WRONG
     ui.question.style.color = "#dc2626";
     ui.question.textContent = `Väärin. Se oli ${clickedItem.name}.`;
     clickedEl.classList.add('marker-wrong');
-    
-    // Highlight correct one too so they learn
     correctEl.classList.add('marker-correct');
     if (currentMode === 'regions') correctEl.textContent = currentTarget.name;
-
-    // Wait longer on wrong answer to study
     setTimeout(startQuestion, 2000);
   }
-  updateScoreUI();
-}
-
-function resetScore() {
-  score = 0;
-  attempts = 0;
-  updateScoreUI();
-}
-
-function updateScoreUI() {
   ui.score.textContent = `${score} / ${attempts}`;
 }
 
-// --- EVENTS ---
+function resetScore() {
+  score = 0; attempts = 0; ui.score.textContent = "0 / 0";
+}
+
 ui.mode.addEventListener('change', (e) => loadMode(e.target.value));
 ui.nextBtn.addEventListener('click', startQuestion);
 ui.resetBtn.addEventListener('click', () => { resetScore(); startQuestion(); });
 
-// --- BOOTSTRAP ---
-loadMode('1-30'); // Default
+// Start
+loadMode('1-30');
 
 </script>
 </body>
 </html>
-
