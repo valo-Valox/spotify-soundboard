@@ -11,7 +11,7 @@
   
   /* HEADER */
   header {
-    background: #0f172a; color: white; padding: 10px 15px; 
+    background: #1e293b; color: white; padding: 10px 15px; 
     display: flex; flex-direction: column; gap: 10px;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); z-index: 1000;
   }
@@ -24,7 +24,7 @@
     padding: 8px 12px; border-radius: 6px; border: 1px solid #475569;
     font-size: 14px; font-weight: 600; cursor: pointer;
   }
-  select { background: #1e293b; color: white; flex: 1; min-width: 150px; }
+  select { background: #334155; color: white; flex: 1; min-width: 150px; }
   button { background: #3b82f6; color: white; border: none; flex: 1; }
   button:hover { background: #2563eb; }
   button#resetBtn { background: #ef4444; flex: 0 0 auto; }
@@ -39,10 +39,9 @@
   #score { font-weight: 700; color: #2563eb; background: #eff6ff; padding: 4px 10px; border-radius: 12px; }
 
   /* MAP */
-  #map { flex: 1; width: 100%; z-index: 1; background: #dbeafe; }
+  #map { flex: 1; width: 100%; z-index: 1; background: #f8fafc; }
 
   /* MARKER STYLES - Optimized */
-  /* Using 3D transform to force hardware acceleration */
   .leaflet-marker-icon {
     will-change: transform; 
     transition: transform 0.1s linear;
@@ -53,7 +52,6 @@
     width: 28px; height: 28px; border-radius: 50%;
     background: #0ea5e9; border: 2px solid #ffffff;
     color: white; font-weight: 700; font-size: 13px;
-    /* Simplified shadow for performance */
     box-shadow: 0 1px 3px rgba(0,0,0,0.2); 
   }
   .marker-province {
@@ -67,6 +65,12 @@
   .marker-correct { background: #22c55e !important; border-color: #bbf7d0 !important; transform: scale(1.15); z-index: 1000; }
   .marker-wrong { background: #ef4444 !important; border-color: #fecaca !important; }
   
+  /* Region Layer Styles */
+  .leaflet-interactive {
+    stroke-width: 2;
+    stroke: #64748b;
+    vector-effect: non-scaling-stroke; /* Keeps borders thin when zooming */
+  }
 </style>
 </head>
 <body>
@@ -185,25 +189,62 @@ let score = 0;
 let attempts = 0;
 let isWaiting = false;
 let markers = {};
+let regionLayer = null;
 
 // --- INITIALIZE MAP ---
-// Optimized settings for smoother performance
+// "preferCanvas: true" significantly improves FPS during zoom
 const map = L.map('map', {
   center: [65.0, 26.0],
   zoom: 5,
+  minZoom: 4,
+  maxZoom: 10,
   zoomControl: false,
   fadeAnimation: true,
   markerZoomAnimation: true,
-  preferCanvas: true // Helps with performance on some devices
+  preferCanvas: true,
+  // Strict bounds to focus on Finland and cut off surrounding world
+  maxBounds: [
+    [58.0, 18.0], // South-West
+    [71.0, 33.0]  // North-East
+  ],
+  maxBoundsViscosity: 1.0
 });
 
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}.png', {
+// Use "Positron No Labels" for a very clean, whitish map that fades out other countries
+// This makes the borders and dots pop much more
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png', {
   attribution: '&copy; OpenStreetMap & CARTO',
-  maxZoom: 10,
-  minZoom: 4
 }).addTo(map);
 
 L.control.zoom({ position: 'topright' }).addTo(map);
+
+// --- FETCH & RENDER REGION BORDERS ---
+async function loadRegionBorders() {
+    try {
+        const response = await fetch('https://raw.githubusercontent.com/geohako/suomi-geojson/master/maakunnat/maakunnat_2024_miljoona.geojson');
+        if (!response.ok) throw new Error('Network response was not ok');
+        const geojson = await response.json();
+
+        // Style the regions
+        const style = {
+            color: "#64748b", // Slate-500 border
+            weight: 2,
+            opacity: 1,
+            fillColor: "#f1f5f9", // Very light fill to make Finland stand out from white background
+            fillOpacity: 0.3
+        };
+
+        regionLayer = L.geoJSON(geojson, {
+            style: style,
+            interactive: false // Borders are purely visual, markers handle clicks
+        }).addTo(map);
+
+    } catch (error) {
+        console.warn("Could not load region borders. Falling back to simple map.", error);
+    }
+}
+// Trigger the load
+loadRegionBorders();
 
 // --- UI ELEMENTS ---
 const ui = {
@@ -218,7 +259,7 @@ const ui = {
 
 function loadMode(mode) {
   currentMode = mode;
-  // Clear map
+  // Clear map markers
   Object.values(markers).forEach(m => map.removeLayer(m));
   markers = {};
   
@@ -339,3 +380,4 @@ loadMode('1-30'); // Default
 </script>
 </body>
 </html>
+
