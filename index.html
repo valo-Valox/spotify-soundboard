@@ -1,505 +1,341 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="fi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Google Tune Pro</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Rounded" rel="stylesheet">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Karttakoe — Maakunnat ja Kohteet</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
-:root { --primary: #0b57d0; --on-primary: #ffffff; --surface: #f0f2f5; --surface-bright: #ffffff; --outline: #747775; }
-body { font-family: 'Roboto', sans-serif; background-color: var(--surface); color: #1f1f1f; height: 100vh; width: 100vw; overflow: hidden; display: flex; flex-direction: column; user-select: none; -webkit-user-select: none; touch-action: none; }
-.font-brand { font-family: 'Google Sans', sans-serif; }
-.icon-btn { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #444746; border: none; background: transparent; cursor: pointer; transition: background 0.2s; -webkit-tap-highlight-color: transparent; }
-.icon-btn:active { background: rgba(0,0,0,0.08); }
-.tab-btn { flex: 1; padding: 12px 4px; font-family: 'Google Sans', sans-serif; font-size: 14px; font-weight: 500; color: #444746; border-radius: 24px; background: transparent; border: none; cursor: pointer; transition: all 0.2s; -webkit-tap-highlight-color: transparent; }
-.tab-btn.active { background-color: #c2e7ff; color: #001d35; font-weight: 700; }
-.card { background: var(--surface-bright); border-radius: 20px; padding: 16px 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); margin-bottom: 12px; }
-.control-row { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
-.control-header { display: flex; justify-content: space-between; align-items: center; }
-.label-text { font-size: 14px; font-weight: 500; color: #444746; display: flex; align-items: center; gap: 8px; }
-.value-badge { font-family: 'Roboto Mono', monospace; font-size: 11px; background: #e3e3e3; padding: 2px 6px; border-radius: 6px; color: #1f1f1f; min-width: 40px; text-align: center; }
-input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 40px; background: transparent; cursor: pointer; touch-action: none; }
-input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: #e0e2e0; border-radius: 2px; pointer-events: none; }
-input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; background: var(--primary); margin-top: -10px; box-shadow: 0 1px 3px rgba(0,0,0,0.3); border: 2px solid white; pointer-events: auto; transition: transform 0.1s; }
-input[type=range]:active::-webkit-slider-thumb { transform: scale(1.2); }
-.vert-slider-container { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 280px; min-width: 44px; flex: 1; padding: 8px; box-sizing: border-box; }
-.vert-slider-track { width: 44px; height: 220px; display: flex; align-items: center; justify-content: center; position: relative; }
-input[type=range].vert-slider { width: 220px; height: 44px; transform: rotate(-90deg); position: absolute; margin: 0; touch-action: pan-y; }
-.toggle-switch { position: relative; width: 48px; height: 28px; flex-shrink: 0; }
-.toggle-switch input { opacity: 0; width: 0; height: 0; }
-.slider-round { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #e0e2e0; transition: .3s; border-radius: 34px; }
-.slider-round:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
-input:checked + .slider-round { background-color: var(--primary); }
-input:checked + .slider-round:before { transform: translateX(20px); }
-.viz-area { position: relative; width: 100%; height: 32vh; min-height: 220px; background: #000; flex-shrink: 0; border-radius: 0 0 24px 24px; overflow: hidden; }
-canvas { width: 100%; height: 100%; display: block; }
-.player-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 16px 24px 24px; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, transparent 100%); z-index: 10; }
-.seek-container { position: relative; height: 30px; display: flex; align-items: center; }
-.seek-track-bg { width: 100%; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; position: absolute; }
-.seek-fill { position: absolute; height: 4px; background: #a8c7fa; border-radius: 2px; width: 0%; left: 0; pointer-events: none; }
-.seek-input { position: absolute; width: 100%; height: 100%; opacity: 0; cursor: pointer; margin: 0; z-index: 20; }
-.loading-mask { position: absolute; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 50; }
-.loading-mask.visible { opacity: 1; pointer-events: auto; }
-.pro-control { display: none; }
-body.pro-mode .pro-control { display: flex; }
-input[type=number] { width: 64px; background: #f0f2f5; border: 1px solid transparent; border-radius: 8px; padding: 6px; text-align: center; font-family: 'Roboto Mono', monospace; font-size: 13px; outline: none; transition: border-color 0.2s; }
-input[type=number]:focus { border-color: var(--primary); background: white; }
-.safe-padding { padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); padding-bottom: max(16px, env(safe-area-inset-bottom)); box-sizing: border-box; }
-.eq-val { font-size: 11px; color: #2b2b2b; }
-@media (max-width:640px) {
-    .safe-padding { padding-left: 12px; padding-right: 12px; }
-    .tab-btn { padding: 8px 6px; }
-}
+  :root { color-scheme: light dark; }
+  body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #e2e8f0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+  
+  /* HEADER */
+  header {
+    background: #0f172a; color: white; padding: 10px 15px; 
+    display: flex; flex-direction: column; gap: 10px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); z-index: 1000;
+  }
+  .header-top { display: flex; justify-content: space-between; align-items: center; }
+  h1 { margin: 0; font-size: 1.2rem; font-weight: 700; }
+  
+  /* CONTROLS */
+  .controls { display: flex; gap: 10px; flex-wrap: wrap; }
+  select, button {
+    padding: 8px 12px; border-radius: 6px; border: 1px solid #475569;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+  select { background: #1e293b; color: white; flex: 1; min-width: 150px; }
+  button { background: #3b82f6; color: white; border: none; flex: 1; }
+  button:hover { background: #2563eb; }
+  button#resetBtn { background: #ef4444; flex: 0 0 auto; }
+
+  /* GAME INFO */
+  .info-bar {
+    background: #ffffff; color: #334155; padding: 12px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid #cbd5e1;
+  }
+  #question { font-size: 1.1rem; font-weight: 800; color: #0f172a; }
+  #score { font-weight: 700; color: #2563eb; background: #eff6ff; padding: 4px 10px; border-radius: 12px; }
+
+  /* MAP */
+  #map { flex: 1; width: 100%; z-index: 1; background: #dbeafe; }
+
+  /* MARKER STYLES - Optimized */
+  /* Using 3D transform to force hardware acceleration */
+  .leaflet-marker-icon {
+    will-change: transform; 
+    transition: transform 0.1s linear;
+  }
+
+  .marker-std {
+    display: flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: #0ea5e9; border: 2px solid #ffffff;
+    color: white; font-weight: 700; font-size: 13px;
+    /* Simplified shadow for performance */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2); 
+  }
+  .marker-province {
+    display: flex; align-items: center; justify-content: center;
+    width: auto; padding: 4px 8px; border-radius: 12px;
+    background: rgba(255, 255, 255, 0.95); border: 2px solid #64748b;
+    color: #0f172a; font-weight: 700; font-size: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+    white-space: nowrap;
+  }
+  .marker-correct { background: #22c55e !important; border-color: #bbf7d0 !important; transform: scale(1.15); z-index: 1000; }
+  .marker-wrong { background: #ef4444 !important; border-color: #fecaca !important; }
+  
 </style>
 </head>
-<body><header class="h-16 flex items-center justify-between px-4 bg-white border-b border-gray-100 shrink-0 z-40 safe-padding relative">
-    <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
-            <span class="material-symbols-rounded text-xl">equalizer</span>
-        </div>
-        <span class="font-brand text-xl text-gray-800 font-medium">Tune</span>
-        <span id="mode-badge" class="hidden text-[10px] font-bold bg-gray-900 text-white px-2 py-0.5 rounded-full uppercase tracking-wider ml-1">Pro</span>
-    </div>
-    <div class="flex items-center gap-1">
-        <div class="flex items-center gap-2 mr-2">
-            <span class="text-xs font-medium text-gray-500">PRO</span>
-            <label class="toggle-switch scale-75">
-                <input type="checkbox" id="pro-toggle">
-                <span class="slider-round"></span>
-            </label>
-        </div>
-        <button id="reset-btn" class="icon-btn" aria-label="Reset"><span class="material-symbols-rounded">restart_alt</span></button>
-        <button id="load-btn-mob" class="icon-btn sm:hidden" aria-label="Load"><span class="material-symbols-rounded">upload_file</span></button>
-        <label class="hidden sm:flex bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full text-sm font-medium items-center gap-2 cursor-pointer transition-colors shadow-sm active:scale-95">
-            <span class="material-symbols-rounded text-lg">upload_file</span>
-            Load
-            <input type="file" id="file-input-desk" accept="audio/*" style="display:none">
-        </label>
-    </div>
-</header><div class="viz-area">
-    <canvas id="viz"></canvas>
-    <div id="loader" class="loading-mask">
-        <span class="material-symbols-rounded animate-spin text-4xl mb-3">progress_activity</span>
-        <span class="text-sm font-medium tracking-wide">LOADING</span>
-    </div>
-    <div id="empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-white/30 pointer-events-none">
-        <span class="material-symbols-rounded text-6xl mb-3">music_note</span>
-        <p class="text-sm font-medium">Load audio to begin</p>
-    </div>
-    <div class="player-overlay">
-        <div class="flex items-center justify-between text-xs font-bold font-mono text-white/80 mb-1">
-            <span id="t-curr">0:00</span>
-            <span id="t-total">0:00</span>
-        </div>
-        <div class="seek-container">
-            <div class="seek-track-bg"></div>
-            <div id="seek-fill" class="seek-fill"></div>
-            <input type="range" id="seek" class="seek-input" min="0" max="100" step="0.01" value="0" aria-label="Seek">
-        </div>
-        <div class="flex justify-center mt-3 relative">
-            <button id="play-btn" class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform disabled:opacity-50 disabled:scale-100 text-blue-600" disabled aria-label="Play">
-                <span class="material-symbols-rounded text-4xl ml-1">play_arrow</span>
-            </button>
-        </div>
-    </div>
-</div><div class="bg-white border-b border-gray-100 z-30 shadow-sm shrink-0">
-    <div class="flex items-center justify-around px-2 py-2 safe-padding gap-2">
-        <button class="tab-btn active" data-target="eq">Equalizer</button>
-        <button class="tab-btn" data-target="fx">Effects</button>
-        <button class="tab-btn" data-target="mix">Mix &amp; Tune</button>
-    </div>
-</div><main class="flex-1 overflow-y-auto bg-[#f0f2f5] relative w-full safe-padding" style="padding-bottom: max(16px, env(safe-area-inset-bottom));">
-    <div id="tab-eq" class="absolute inset-0 p-4 overflow-x-auto overflow-y-hidden flex items-end gap-1 safe-padding" style="display:flex;">
-    </div><div id="tab-fx" class="absolute inset-0 p-4 overflow-y-auto hidden flex-col gap-2 safe-padding" style="display:none;">
-    <div class="card">
-        <div class="control-row">
-            <div class="control-header">
-                <span class="label-text"><span class="material-symbols-rounded text-purple-600">church</span>Reverb</span>
-                <span id="disp-reverb" class="value-badge">0%</span>
-            </div>
-            <input type="range" id="sl-reverb" min="0" max="100" step="1" value="0">
-        </div>
-    </div>
-    <div class="card">
-        <div class="control-row">
-            <div class="control-header">
-                <span class="label-text"><span class="material-symbols-rounded text-orange-600">spatial_audio</span>Echo</span>
-                <span id="disp-echo" class="value-badge">0%</span>
-            </div>
-            <input type="range" id="sl-echo" min="0" max="100" step="1" value="0">
-        </div>
-    </div>
+<body>
+
+<header>
+  <div class="header-top">
+    <h1>Karttakoe</h1>
+    <button id="resetBtn" title="Nollaa pisteet">↻</button>
+  </div>
+  <div class="controls">
+    <select id="modeSelect">
+      <option value="1-30">Kohteet 1–30</option>
+      <option value="regions">Maakunnat 1–19</option>
+      <option value="centers">Maakuntakeskukset</option>
+    </select>
+    <button id="nextBtn">Seuraava Kysymys</button>
+  </div>
+</header>
+
+<div class="info-bar">
+  <div id="question">Valitse tila aloittaaksesi</div>
+  <div id="score">0 / 0</div>
 </div>
 
-<div id="tab-mix" class="absolute inset-0 p-4 overflow-y-auto hidden flex-col gap-2 safe-padding" style="display:none;">
-    <div class="card">
-        <div class="control-row">
-            <div class="control-header">
-                <span class="label-text"><span class="material-symbols-rounded text-gray-600">volume_up</span>Master Volume</span>
-                <span id="disp-vol" class="value-badge">40%</span>
-            </div>
-            <input type="range" id="sl-vol" min="0" max="100" step="1" value="40">
-        </div>
-    </div>
+<div id="map"></div>
 
-    <div class="card">
-        <div class="control-row">
-            <div class="control-header">
-                <span class="label-text"><span class="material-symbols-rounded text-blue-600">speed</span>Speed</span>
-                <span id="disp-speed" class="value-badge">1.00x</span>
-            </div>
-            <div class="flex items-center gap-3">
-                <input type="range" id="sl-speed" min="0.25" max="3.00" step="0.01" value="1.00">
-                <input type="number" id="inp-speed" value="1.00" step="0.01" class="pro-control">
-            </div>
-        </div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// --- DATASETS ---
 
-        <div class="control-row pro-control">
-            <div class="control-header">
-                <span class="label-text"><span class="material-symbols-rounded text-indigo-600">music_note</span>Pitch (Semi)</span>
-                <span id="disp-pitch" class="value-badge">0.00</span>
-            </div>
-            <div class="flex items-center gap-3">
-                <input type="range" id="sl-pitch" min="-12" max="12" step="0.01" value="0">
-                <input type="number" id="inp-pitch" value="0.00" step="0.01">
-            </div>
-        </div>
+// 1. KOHTEET 1-30 (Exam List)
+const data_1_30 = [
+  {id:1,  name:"Enontekiö",      lat:68.385, lon:23.635},
+  {id:2,  name:"Helsinki",       lat:60.169, lon:24.938},
+  {id:3,  name:"Inari",          lat:68.906, lon:27.027},
+  {id:4,  name:"Jyväskylä",      lat:62.242, lon:25.747},
+  {id:5,  name:"Kajaani",        lat:64.225, lon:27.733},
+  {id:6,  name:"Kittilä",        lat:67.651, lon:24.908},
+  {id:7,  name:"Kotka",          lat:60.466, lon:26.941},
+  {id:8,  name:"Kuopio",         lat:62.892, lon:27.677},
+  {id:9,  name:"Kuusamo",        lat:65.964, lon:29.188},
+  {id:10, name:"Lappeenranta",   lat:61.054, lon:28.188},
+  {id:11, name:"Maarianhamina",  lat:60.097, lon:19.934},
+  {id:12, name:"Oulu",           lat:65.012, lon:25.468},
+  {id:13, name:"Pori",           lat:61.485, lon:21.797},
+  {id:14, name:"Porvoo",         lat:60.393, lon:25.665},
+  {id:15, name:"Rauma",          lat:61.127, lon:21.511},
+  {id:16, name:"Rovaniemi",      lat:66.501, lon:25.728},
+  {id:17, name:"Salo",           lat:60.383, lon:23.129},
+  {id:18, name:"Savonlinna",     lat:61.868, lon:28.886},
+  {id:19, name:"Seinäjoki",      lat:62.787, lon:22.840},
+  {id:20, name:"Tampere",        lat:61.497, lon:23.760},
+  {id:21, name:"Utsjoki",        lat:69.908, lon:27.027},
+  {id:22, name:"Vaasa",          lat:63.095, lon:21.616},
+  {id:23, name:"Turku",          lat:60.451, lon:22.266},
+  {id:24, name:"Joensuu",        lat:62.601, lon:29.763},
+  {id:25, name:"Lahti",          lat:60.982, lon:25.661},
+  {id:26, name:"Hailuoto",       lat:65.009, lon:24.715},
+  {id:27, name:"Perämeri",       lat:65.200, lon:24.000, type:'sea'},
+  {id:28, name:"Saaristomeri",   lat:60.200, lon:21.500, type:'sea'},
+  {id:29, name:"Selkämeri",      lat:61.700, lon:20.500, type:'sea'},
+  {id:30, name:"Suomenlahti",    lat:59.900, lon:25.500, type:'sea'}
+];
 
-        <div class="control-row pro-control">
-            <div class="control-header">
-                <span class="label-text"><span class="material-symbols-rounded text-pink-600">tune</span>Tune (Cents)</span>
-                <span id="disp-tune" class="value-badge">0.0</span>
-            </div>
-            <div class="flex items-center gap-3">
-                <input type="range" id="sl-tune" min="-100" max="100" step="0.1" value="0">
-                <input type="number" id="inp-tune" value="0.0" step="0.1">
-            </div>
-        </div>
-    </div>
+// 2. MAAKUNNAT (Provinces 1-19)
+const data_regions = [
+  {id:1, name:"Ahvenanmaa", lat:60.2, lon:20.0},
+  {id:2, name:"Etelä-Karjala", lat:61.0, lon:28.0},
+  {id:3, name:"Etelä-Pohjanmaa", lat:62.8, lon:23.0},
+  {id:4, name:"Etelä-Savo", lat:62.0, lon:27.5},
+  {id:5, name:"Kainuu", lat:64.5, lon:28.5},
+  {id:6, name:"Kanta-Häme", lat:60.9, lon:24.0},
+  {id:7, name:"Keski-Pohjanmaa", lat:63.6, lon:24.0},
+  {id:8, name:"Keski-Suomi", lat:62.5, lon:25.5},
+  {id:9, name:"Kymenlaakso", lat:60.8, lon:26.8},
+  {id:10, name:"Lappi", lat:67.0, lon:26.0},
+  {id:11, name:"Pirkanmaa", lat:61.7, lon:23.5},
+  {id:12, name:"Pohjanmaa", lat:63.0, lon:22.0},
+  {id:13, name:"Pohjois-Karjala", lat:63.0, lon:30.0},
+  {id:14, name:"Pohjois-Pohjanmaa", lat:65.0, lon:26.5},
+  {id:15, name:"Pohjois-Savo", lat:63.2, lon:27.0},
+  {id:16, name:"Päijät-Häme", lat:61.2, lon:25.5},
+  {id:17, name:"Satakunta", lat:61.5, lon:22.0},
+  {id:18, name:"Uusimaa", lat:60.5, lon:25.0},
+  {id:19, name:"Varsinais-Suomi", lat:60.5, lon:22.5}
+];
 
-    <div class="card flex items-center justify-between py-3">
-        <div class="flex flex-col">
-            <span class="font-medium text-sm text-gray-800">Compressor</span>
-            <span class="text-xs text-gray-500">Normalize loudness</span>
-        </div>
-        <label class="toggle-switch">
-            <input type="checkbox" id="comp-toggle">
-            <span class="slider-round"></span>
-        </label>
-    </div>
-</div>
+// 3. MAAKUNTAKESKUKSET (Provincial Centers 1-19)
+const data_centers = [
+  {id:1, name:"Maarianhamina", lat:60.097, lon:19.934},
+  {id:2, name:"Lappeenranta", lat:61.054, lon:28.188},
+  {id:3, name:"Seinäjoki", lat:62.787, lon:22.840},
+  {id:4, name:"Mikkeli", lat:61.688, lon:27.272},
+  {id:5, name:"Kajaani", lat:64.225, lon:27.733},
+  {id:6, name:"Hämeenlinna", lat:60.996, lon:24.464},
+  {id:7, name:"Kokkola", lat:63.838, lon:23.132},
+  {id:8, name:"Jyväskylä", lat:62.242, lon:25.747},
+  {id:9, name:"Kouvola", lat:60.870, lon:26.700},
+  {id:10, name:"Rovaniemi", lat:66.501, lon:25.728},
+  {id:11, name:"Tampere", lat:61.497, lon:23.760},
+  {id:12, name:"Vaasa", lat:63.095, lon:21.616},
+  {id:13, name:"Joensuu", lat:62.601, lon:29.763},
+  {id:14, name:"Oulu", lat:65.012, lon:25.468},
+  {id:15, name:"Kuopio", lat:62.892, lon:27.677},
+  {id:16, name:"Lahti", lat:60.982, lon:25.661},
+  {id:17, name:"Pori", lat:61.485, lon:21.797},
+  {id:18, name:"Helsinki", lat:60.169, lon:24.938},
+  {id:19, name:"Turku", lat:60.451, lon:22.266}
+];
 
-</main><input type="file" id="file-input-mob" accept="audio/*" style="display:none"><script>
-const DEF = { pro: false, vol: 40, speed: 1, pitch: 0, tune: 0, reverb: 0, echo: 0, comp: true, eq: [0,0,0,0,0,0,0,0,0,0] };
-let s = {};
-try { s = JSON.parse(localStorage.getItem('gt_state_v2')) || JSON.parse(JSON.stringify(DEF)); } catch(e) { s = JSON.parse(JSON.stringify(DEF)); }
+// --- APP STATE ---
+let currentMode = '1-30';
+let currentData = data_1_30;
+let currentTarget = null;
+let score = 0;
+let attempts = 0;
+let isWaiting = false;
+let markers = {};
 
-let actx, src, mast, anal, buf, comp, rev, revG, del, delG, gain, bands = [];
-let isPlay = false, tStart = 0, tPause = 0, rafId, saveT;
-const freqs = [32, 64, 125, 250, 500, '1k', '2k', '4k', '8k', '16k'];
-
-const $ = id => document.getElementById(id);
-const qsa = sel => document.querySelectorAll(sel);
-
-function initUI() {
-    $('tab-eq').innerHTML = freqs.map((f, i) => `
-        <div class="vert-slider-container">
-            <div class="vert-slider-track">
-                <input type="range" class="vert-slider eq-sl" data-i="${i}" min="-12" max="12" step="1" value="${s.eq[i]}">
-            </div>
-            <span class="text-[10px] font-bold text-gray-400 mt-2">${f}</span>
-            <span class="text-[10px] font-mono text-gray-600 mt-0.5 eq-val">${s.eq[i] > 0 ? '+'+s.eq[i] : s.eq[i]}</span>
-        </div>
-    `).join('');
-
-    $('pro-toggle').checked = s.pro;
-    $('comp-toggle').checked = s.comp;
-    
-    setUI('speed', s.speed);
-    setUI('pitch', s.pitch);
-    setUI('tune', s.tune);
-    setUI('reverb', s.reverb);
-    setUI('echo', s.echo);
-    setUI('vol', s.vol);
-    
-    updMode();
-    
-    qsa('.eq-sl').forEach(el => {
-        el.addEventListener('input', e => {
-            const i = e.target.dataset.i;
-            const v = parseInt(e.target.value);
-            s.eq[i] = v;
-            e.target.parentElement.nextElementSibling.nextElementSibling.textContent = v > 0 ? '+'+v : v;
-            updAud();
-            save();
-        });
-    });
-}
-
-function setUI(k, v) {
-    const sl = $(`sl-${k}`);
-    const inp = $(`inp-${k}`);
-    if(sl) sl.value = v;
-    if(inp) inp.value = v;
-    updDisp(k, v);
-}
-
-function updDisp(k, v) {
-    const el = $(`disp-${k}`);
-    if(!el) return;
-    if(k === 'speed') el.textContent = parseFloat(v).toFixed(2) + 'x';
-    else if(k === 'pitch') el.textContent = parseFloat(v).toFixed(2);
-    else if(k === 'tune') el.textContent = parseFloat(v).toFixed(1);
-    else if(k === 'vol') el.textContent = (s.pro ? parseFloat(v).toFixed(1) : Math.round(v)) + '%';
-    else el.textContent = Math.round(v) + '%';
-}
-
-function updMode() {
-    document.body.classList.toggle('pro-mode', s.pro);
-    $('mode-badge').classList.toggle('hidden', !s.pro);
-    updDisp('vol', s.vol);
-}
-
-function save() {
-    clearTimeout(saveT);
-    saveT = setTimeout(() => {
-        try { localStorage.setItem('gt_state_v2', JSON.stringify(s)); } catch(e){}
-    }, 500);
-}
-
-function rst() {
-    if(confirm('Reset all settings?')) {
-        s = JSON.parse(JSON.stringify(DEF));
-        initUI();
-        save();
-        updAud();
-    }
-}
-
-function initAud() {
-    if(actx) return;
-    const AC = window.AudioContext || window.webkitAudioContext;
-    actx = new AC();
-    
-    mast = actx.createGain();
-    anal = actx.createAnalyser();
-    anal.fftSize = 256;
-    anal.smoothingTimeConstant = 0.8;
-    
-    comp = actx.createDynamicsCompressor();
-    comp.attack.value = 0.003;
-
-    rev = actx.createConvolver();
-    revG = actx.createGain();
-    const rate = actx.sampleRate, len = rate * 3, imp = actx.createBuffer(2, len, rate);
-    for(let i=0; i<len; i++) {
-        const d = Math.pow(1 - i/len, 3);
-        imp.getChannelData(0)[i] = (Math.random()*2-1)*d;
-        imp.getChannelData(1)[i] = (Math.random()*2-1)*d;
-    }
-    rev.buffer = imp;
-
-    del = actx.createDelay();
-    del.delayTime.value = 0.35;
-    delG = actx.createGain();
-    const fb = actx.createGain();
-    fb.gain.value = 0.4;
-    del.connect(fb); fb.connect(del);
-
-    bands = [];
-    let chain = actx.createGain();
-    gain = chain;
-    let curr = chain;
-    freqs.forEach(() => {
-        const f = actx.createBiquadFilter();
-        f.type = 'peaking';
-        f.Q.value = 1.0;
-        curr.connect(f);
-        curr = f;
-        bands.push(f);
-    });
-
-    curr.connect(comp);
-    comp.connect(mast);
-    comp.connect(rev); rev.connect(revG); revG.connect(mast);
-    comp.connect(del); del.connect(delG); delG.connect(mast);
-    mast.connect(anal);
-    anal.connect(actx.destination);
-    
-    updAud();
-}
-
-function updAud() {
-    if(!actx) return;
-    bands.forEach((b, i) => b.gain.setTargetAtTime(s.eq[i], actx.currentTime, 0.1));
-    
-    if(src && src.buffer) {
-        src.playbackRate.value = s.speed;
-        src.detune.value = (s.pitch * 100) + s.tune;
-    }
-    
-    if(revG) revG.gain.setTargetAtTime(s.reverb / 150, actx.currentTime, 0.1);
-    if(delG) delG.gain.setTargetAtTime(s.echo / 150, actx.currentTime, 0.1);
-    
-    const n = s.vol / 100;
-    const v = n > 0 ? n * Math.pow(10, (n - 1) * 1.5) : 0;
-    if(mast) mast.gain.setTargetAtTime(v, actx.currentTime, 0.1);
-    
-    if(s.comp) {
-        comp.threshold.value = -24;
-        comp.ratio.value = 12;
-    } else {
-        comp.threshold.value = 0;
-        comp.ratio.value = 1;
-    }
-}
-
-async function loadFile(f) {
-    if(!f) return;
-    initAud();
-    if(actx.state === 'suspended') await actx.resume();
-    $('loader').classList.add('visible');
-    $('play-btn').disabled = true;
-    try {
-        const ab = await f.arrayBuffer();
-        buf = await actx.decodeAudioData(ab);
-        $('t-total').textContent = fmtT(buf.duration);
-        $('empty-state').style.opacity = 0;
-        $('play-btn').disabled = false;
-        stop();
-        play();
-        $('loader').classList.remove('visible');
-    } catch(e) {
-        console.error(e);
-        alert('Could not decode audio.');
-        $('loader').classList.remove('visible');
-    }
-}
-
-function play() {
-    if(!buf) return;
-    if(actx.state === 'suspended') actx.resume();
-    if(src) { try{src.stop(); src.disconnect();}catch(e){} }
-    src = actx.createBufferSource();
-    src.buffer = buf;
-    src.connect(gain);
-    updAud();
-    const effectiveRate = src.playbackRate.value * Math.pow(2, src.detune.value / 1200);
-    src.start(0, tPause);
-    tStart = actx.currentTime - (tPause / effectiveRate);
-    isPlay = true;
-    $('play-btn').innerHTML = '<span class="material-symbols-rounded text-4xl">pause</span>';
-    loop();
-}
-
-function pause() {
-    if(src) { try{src.stop()}catch(e){}; }
-    if(actx) {
-        const det = src && src.detune ? src.detune.value : ((s.pitch*100)+s.tune);
-        const rate = s.speed * Math.pow(2, det/1200);
-        tPause = (actx.currentTime - tStart) * rate;
-    }
-    isPlay = false;
-    $('play-btn').innerHTML = '<span class="material-symbols-rounded text-4xl ml-1">play_arrow</span>';
-    cancelAnimationFrame(rafId);
-}
-
-function stop() {
-    pause();
-    tPause = 0;
-    $('seek-fill').style.width = '0%';
-    $('seek').value = 0;
-    $('t-curr').textContent = '0:00';
-}
-
-function loop() {
-    if(!isPlay) return;
-    rafId = requestAnimationFrame(loop);
-    const canvas = $('viz');
-    const w = canvas.width = canvas.offsetWidth;
-    const h = canvas.height = canvas.offsetHeight;
-    const dat = new Uint8Array(anal.frequencyBinCount);
-    anal.getByteFrequencyData(dat);
-    const det = src && src.detune ? src.detune.value : ((s.pitch*100)+s.tune);
-    const rate = s.speed * Math.pow(2, det/1200);
-    const curr = (actx.currentTime - tStart) * rate;
-    if(curr >= buf.duration) { stop(); return; }
-    $('t-curr').textContent = fmtT(curr);
-    const pct = (curr/buf.duration)*100;
-    $('seek-fill').style.width = pct+'%';
-    $('seek').value = pct;
-    const c = canvas.getContext('2d');
-    c.clearRect(0,0,w,h);
-    const bw = (w/dat.length)*2.5;
-    let x = 0;
-    for(let i=0; i<dat.length; i++) {
-        const bh = (dat[i]/255)*h;
-        c.fillStyle = i<dat.length/3 ? '#0b57d0' : i<dat.length*2/3 ? '#7c3aed' : '#be185d';
-        c.fillRect(x, h-bh, bw, bh);
-        x+=bw+1;
-    }
-}
-
-function fmtT(s) {
-    const m = Math.floor(s/60), sc = Math.floor(s%60);
-    return `${m}:${sc.toString().padStart(2,'0')}`;
-}
-
-$('file-input-desk').addEventListener('change', e => loadFile(e.target.files[0]));
-$('file-input-mob').addEventListener('change', e => loadFile(e.target.files[0]));
-$('load-btn-mob').addEventListener('click', () => $('file-input-mob').click());
-$('play-btn').addEventListener('click', () => isPlay ? pause() : play());
-$('reset-btn').addEventListener('click', rst);
-
-$('seek').addEventListener('input', e => {
-    if(!buf) return;
-    const p = parseFloat(e.target.value);
-    tPause = (p/100)*buf.duration;
-    $('seek-fill').style.width = p+'%';
-    $('t-curr').textContent = fmtT(tPause);
-    if(isPlay) {
-        if(src) { try{src.stop()}catch(e){} }
-        play();
-    }
+// --- INITIALIZE MAP ---
+// Optimized settings for smoother performance
+const map = L.map('map', {
+  center: [65.0, 26.0],
+  zoom: 5,
+  zoomControl: false,
+  fadeAnimation: true,
+  markerZoomAnimation: true,
+  preferCanvas: true // Helps with performance on some devices
 });
 
-$('pro-toggle').addEventListener('change', e => { s.pro = e.target.checked; updMode(); save(); });
-$('comp-toggle').addEventListener('change', e => { s.comp = e.target.checked; updAud(); save(); });
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap & CARTO',
+  maxZoom: 10,
+  minZoom: 4
+}).addTo(map);
 
-qsa('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', e => {
-        qsa('.tab-btn').forEach(b => b.classList.remove('active'));
-        e.target.classList.add('active');
-        ['eq','fx','mix'].forEach(t => $(`tab-${t}`).style.display = 'none');
-        $(`tab-${e.target.dataset.target}`).style.display = 'flex';
-    });
-});
+L.control.zoom({ position: 'topright' }).addTo(map);
 
-const bindNum = (k) => {
-    const fn = e => {
-        let v = parseFloat(e.target.value);
-        if(isNaN(v)) return;
-        if(k === 'speed') v = Math.max(0.25, Math.min(3, v));
-        if(k === 'pitch') v = Math.max(-12, Math.min(12, v));
-        if(k === 'tune') v = Math.max(-100, Math.min(100, v));
-        if(k === 'vol') v = Math.max(0, Math.min(100, v));
-        s[k] = v;
-        setUI(k, v);
-        updAud();
-        save();
-    };
-    if($(`sl-${k}`)) $(`sl-${k}`).addEventListener('input', fn);
-    if($(`inp-${k}`)) $(`inp-${k}`).addEventListener('change', fn);
+// --- UI ELEMENTS ---
+const ui = {
+  question: document.getElementById('question'),
+  score: document.getElementById('score'),
+  mode: document.getElementById('modeSelect'),
+  nextBtn: document.getElementById('nextBtn'),
+  resetBtn: document.getElementById('resetBtn')
 };
 
-bindNum('speed');
-bindNum('pitch');
-bindNum('tune');
-bindNum('reverb');
-bindNum('echo');
-bindNum('vol');
+// --- LOGIC ---
 
-window.onload = initUI;
-</script></body>
+function loadMode(mode) {
+  currentMode = mode;
+  // Clear map
+  Object.values(markers).forEach(m => map.removeLayer(m));
+  markers = {};
+  
+  // Select Data
+  if (mode === '1-30') currentData = data_1_30;
+  else if (mode === 'regions') currentData = data_regions;
+  else if (mode === 'centers') currentData = data_centers;
+
+  // Render Markers
+  currentData.forEach(item => {
+    let icon;
+    if (mode === 'regions') {
+      // Province Label Style
+      icon = L.divIcon({
+        className: 'custom-icon',
+        html: `<div class="marker-province">${item.id}</div>`,
+        iconSize: [30, 20],
+        iconAnchor: [15, 10]
+      });
+    } else {
+      // Standard Dot Style
+      icon = L.divIcon({
+        className: 'custom-icon',
+        html: `<div class="marker-std">${item.id}</div>`,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15]
+      });
+    }
+
+    const m = L.marker([item.lat, item.lon], { icon: icon }).addTo(map);
+    m.itemData = item;
+    // Optimize click handler
+    m.on('click', (e) => {
+        L.DomEvent.stopPropagation(e); // Prevent map click bleed
+        handleGuess(item);
+    });
+    markers[item.id] = m;
+  });
+
+  resetScore();
+  startQuestion();
+}
+
+function startQuestion() {
+  isWaiting = false;
+  // Reset marker visuals
+  Object.values(markers).forEach(m => {
+    const el = m.getElement().querySelector('div');
+    if (el) {
+        el.classList.remove('marker-correct', 'marker-wrong');
+        if (currentMode === 'regions') el.textContent = m.itemData.id;
+    }
+  });
+
+  // Pick random
+  currentTarget = currentData[Math.floor(Math.random() * currentData.length)];
+  
+  ui.question.style.color = "#0f172a";
+  ui.question.textContent = `Etsi: ${currentTarget.name}`;
+}
+
+function handleGuess(clickedItem) {
+  if (isWaiting) return;
+  isWaiting = true;
+  attempts++;
+
+  const correctM = markers[currentTarget.id];
+  const clickedM = markers[clickedItem.id];
+  
+  const correctEl = correctM.getElement().querySelector('div');
+  const clickedEl = clickedM.getElement().querySelector('div');
+
+  if (clickedItem.id === currentTarget.id) {
+    // CORRECT
+    score++;
+    ui.question.style.color = "#16a34a";
+    ui.question.textContent = `Oikein! ${currentTarget.name}`;
+    correctEl.classList.add('marker-correct');
+    
+    // If region, show name
+    if (currentMode === 'regions') correctEl.textContent = currentTarget.name;
+    
+    setTimeout(startQuestion, 1200);
+  } else {
+    // WRONG
+    ui.question.style.color = "#dc2626";
+    ui.question.textContent = `Väärin. Se oli ${clickedItem.name}.`;
+    clickedEl.classList.add('marker-wrong');
+    
+    // Highlight correct one too so they learn
+    correctEl.classList.add('marker-correct');
+    if (currentMode === 'regions') correctEl.textContent = currentTarget.name;
+
+    // Wait longer on wrong answer to study
+    setTimeout(startQuestion, 2000);
+  }
+  updateScoreUI();
+}
+
+function resetScore() {
+  score = 0;
+  attempts = 0;
+  updateScoreUI();
+}
+
+function updateScoreUI() {
+  ui.score.textContent = `${score} / ${attempts}`;
+}
+
+// --- EVENTS ---
+ui.mode.addEventListener('change', (e) => loadMode(e.target.value));
+ui.nextBtn.addEventListener('click', startQuestion);
+ui.resetBtn.addEventListener('click', () => { resetScore(); startQuestion(); });
+
+// --- BOOTSTRAP ---
+loadMode('1-30'); // Default
+
+</script>
+</body>
 </html>
