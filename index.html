@@ -50,7 +50,7 @@
     <div id="fullscreen-overlay" class="fixed inset-0 bg-[#11111b] z-[9999] flex flex-col items-center justify-center transition-opacity duration-300 text-center px-6">
         <i class="ph-bold ph-terminal-window text-7xl text-[#89b4fa] mb-6 animate-pulse"></i>
         <h2 class="text-3xl font-bold text-[#cdd6f4] mb-2">Lua UI Studio</h2>
-        <p class="text-[#a6adc8] mb-8 max-w-md">Origin (0,0) is Center. Live coordinates in top right. Tooltips active on type.</p>
+        <p class="text-[#a6adc8] mb-8 max-w-md">Origin (0,0) is Center. Live coordinates in top right. Tooltips active on hover and type.</p>
         
         <div class="flex flex-col sm:flex-row gap-4">
             <button id="btn-enter-fullscreen" class="px-8 py-3 bg-[#89b4fa] text-[#11111b] font-bold rounded-lg hover:bg-[#b4befe] transition-colors shadow-lg flex items-center gap-3">
@@ -130,10 +130,30 @@ local function addSharedMethods(obj, el)
     el:addEventListener("mouseup", function() if hoverEnabled then el.style.transform = "translate(-50%, 50%) scale(1.05)" end end)
     el:addEventListener("mouseleave", function() if hoverEnabled then el.style.transform = "translate(-50%, 50%) scale(1)"; el.style.filter = "brightness(1)" end end)
     el:addEventListener("mouseenter", function() if hoverEnabled then el.style.transform = "translate(-50%, 50%) scale(1.05)"; el.style.filter = "brightness(1.15)" end end)
+
+    -- MAGIC METATABLE: Allows simple property assignments like `label.text = "Hi"`
+    setmetatable(obj, {
+        __index = function(t, k)
+            if k == "text" and rawget(t, "getText") then return t:getText() end
+            if k == "value" and rawget(t, "getValue") then return t:getValue() end
+            if k == "state" and rawget(t, "getState") then return t:getState() end
+            if k == "visible" then return el.style.display ~= "none" end
+            return nil
+        end,
+        __newindex = function(t, k, v)
+            if k == "text" and rawget(t, "setText") then t:setText(v)
+            elseif k == "value" and rawget(t, "setValue") then t:setValue(v)
+            elseif k == "state" and rawget(t, "setState") then t:setState(v)
+            elseif k == "options" and rawget(t, "setOptions") then t:setOptions(v)
+            elseif k == "visible" and rawget(t, "setVisible") then t:setVisible(v)
+            else rawset(t, k, v) end
+        end
+    })
 end
 
 local function addTextMethods(obj, el, textSpan)
     function obj:setText(newText) textSpan.innerText = newText end
+    function obj:getText() return textSpan.innerText end
     function obj:setTextPlacement(centered, offsets)
         el.style.justifyContent = "center"; el.style.alignItems = "center"
         if centered then textSpan.style.transform = "translate(0, 0)"
@@ -189,7 +209,7 @@ function _G.btn.new(size, pos, color, radius, text, textColor, layer)
     el.style.border = "none"; el.style.cursor = "pointer"; el.style.color = parseColor(textColor, "#ffffff")
     el.style.fontFamily = "sans-serif"; el.style.fontWeight = "bold"; el.style.display = "flex"
     el.style.alignItems = "center"; el.style.justifyContent = "center"; el.style.boxShadow = "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
-    local obj = { element = el, callbacks = {} }
+    local obj = { element = el }
     local holdEnabled, showHoldBar, holdDuration, holdTimer = false, true, 1000, nil
     local function clearHold()
         if holdTimer then window:clearTimeout(holdTimer); holdTimer = nil end
@@ -201,14 +221,22 @@ function _G.btn.new(size, pos, color, radius, text, textColor, layer)
             holdTimer = window:setTimeout(function()
                 holdTimer = nil
                 if showHoldBar then fillBar.style.transition = "opacity 0.2s"; fillBar.style.opacity = "0"; window:setTimeout(function() fillBar.style.transition = "none"; fillBar.style.width = "0%"; fillBar.style.opacity = "1" end, 200) end
-                for i, cb in ipairs(obj.callbacks) do cb() end
+                if obj._action then obj._action() end
             end, holdDuration)
         end
     end)
     el:addEventListener("mouseup", clearHold); el:addEventListener("mouseleave", clearHold)
-    el:addEventListener("click", function() if not holdEnabled then for i, cb in ipairs(obj.callbacks) do cb() end end end)
+    el:addEventListener("click", function() if not holdEnabled and obj._action then obj._action() end end)
     previewArea:appendChild(el)
-    function obj:onClick(cb) table.insert(obj.callbacks, cb) end
+    
+    -- SMART CALLBACK: Pass a function, string, OR link directly to a target object's property!
+    function obj:onClick(a, b, c) 
+        if type(a) == "table" and type(b) == "string" then
+            if c ~= nil then obj._action = function() a[b] = c end
+            else obj._action = function() a[b] = true end end
+        else obj._action = type(a) == "string" and load(a) or a end
+    end
+    
     function obj:setDraggable(d) if d then makeDraggable(el) end end
     function obj:setHold(e, d, s) holdEnabled = e and true or false; if type(d) == "number" then holdDuration = d * 1000 end; showHoldBar = (s == nil) and true or (s and true or false) end
     addTextMethods(obj, el, textSpan); addSharedMethods(obj, el); obj:setHoverEffect(true); return obj
@@ -252,10 +280,11 @@ function _G.progressbar.new(size, pos, bgColor, fillValue, fillColor, radius, la
     local x, y = parseCoord(pos, 0, 0); el.style.left, el.style.bottom = x, y
     el.style.transform = "translate(-50%, 50%) scale(1)"; el.style.backgroundColor = parseColor(bgColor, "#11111b")
     el.style.borderRadius = (radius or 8).."px"; el.style.overflow = "hidden"; el.style.zIndex = tostring(layer or 1)
-    local fillEl = document:createElement("div"); fillEl.style.height = "100%"; fillEl.style.backgroundColor = parseColor(fillColor, "#a6e3a1")
+    local fillEl = document:createElement("div"); fillEl.style.height = "100%"; fillEl.style.backgroundColor = parseColor(fillColor, "#cba6f7")
     fillEl.style.width = ((tonumber(fillValue) or 0) * 100).."%"; fillEl.style.transition = "width 0.3s ease"; el:appendChild(fillEl)
     previewArea:appendChild(el); local obj = { element = el, fillEl = fillEl }
     function obj:setValue(v) fillEl.style.width = ((tonumber(v) or 0) * 100).."%" end
+    function obj:getValue() return tonumber(fillEl.style.width:sub(1, -2)) / 100 end
     function obj:setDraggable(d) if d then makeDraggable(el) end end
     addSharedMethods(obj, el); return obj
 end
@@ -273,19 +302,32 @@ function _G.toggle.new(size, pos, activeColor, inactiveColor, startState, layer)
     local knob = document:createElement("div"); knob.style.position = "absolute"; knob.style.top = "2px"
     knob.style.width, knob.style.height = knobSize, knobSize; knob.style.backgroundColor = "#ffffff"; knob.style.borderRadius = "50%"
     knob.style.transition = "left 0.3s"; knob.style.left = state and "calc(100% - "..knobSize.." - 2px)" or "2px"; el:appendChild(knob)
-    previewArea:appendChild(el); local obj = { element = el, state = state, callbacks = {} }
+    previewArea:appendChild(el); local obj = { element = el, state = state }
+    
     el:addEventListener("click", function()
         obj.state = not obj.state; el.style.backgroundColor = obj.state and ac or ic
         knob.style.left = obj.state and "calc(100% - "..knobSize.." - 2px)" or "2px"
-        for i, cb in ipairs(obj.callbacks) do cb(obj.state) end
+        if obj._action then obj._action(obj.state) end
     end)
-    function obj:onChange(cb) table.insert(obj.callbacks, cb) end; function obj:getState() return self.state end
+    
+    -- SMART CALLBACK: Pass function, OR directly bind to a property! e.g., toggle:onChange(panel, "visible")
+    function obj:onChange(a, b) 
+        if type(a) == "table" and type(b) == "string" then obj._action = function(s) a[b] = s end
+        else obj._action = type(a) == "string" and load(a) or a end
+    end
+    
+    function obj:getState() return self.state end
+    function obj:setState(s)
+        self.state = s and true or false
+        el.style.backgroundColor = self.state and ac or ic
+        knob.style.left = self.state and "calc(100% - "..knobSize.." - 2px)" or "2px"
+    end
     function obj:setDraggable(d) if d then makeDraggable(el) end end
     addSharedMethods(obj, el); return obj
 end
 
 _G.dropdown = {}
-function _G.dropdown.new(size, pos, options, bgColor, textColor, radius, layer)
+function _G.dropdown.new(size, pos, optionsOrMin, max, step, bgColor, textColor, radius, layer)
     local el = document:createElement("select"); el.style.position = "absolute"
     local w, h = parseCoord(size, 150, 40); el.style.width, el.style.height = w, h
     local x, y = parseCoord(pos, 0, 0); el.style.left, el.style.bottom = x, y
@@ -293,77 +335,97 @@ function _G.dropdown.new(size, pos, options, bgColor, textColor, radius, layer)
     el.style.color, el.style.borderRadius = parseColor(textColor, "#cdd6f4"), (radius or 4).."px"
     el.style.zIndex, el.style.border, el.style.padding = tostring(layer or 1), "1px solid #313244", "0 10px"
     el.style.outline, el.style.fontFamily, el.style.cursor = "none", "sans-serif", "pointer"
-    if type(options) == "table" then for _, opt in ipairs(options) do
-        local optionEl = document:createElement("option"); optionEl.value, optionEl.innerText = tostring(opt), tostring(opt)
-        el:appendChild(optionEl)
-    end end
-    previewArea:appendChild(el); local obj = { element = el, callbacks = {} }
-    el:addEventListener("change", function() for _, cb in ipairs(obj.callbacks) do cb(el.value) end end)
-    function obj:onSelect(cb) table.insert(obj.callbacks, cb) end
+    
+    local obj = { element = el }
+    
+    function obj:setOptions(opts)
+        el.innerHTML = ""
+        if type(opts) == "table" then 
+            for _, opt in ipairs(opts) do
+                local optionEl = document:createElement("option"); optionEl.value, optionEl.innerText = tostring(opt), tostring(opt)
+                el:appendChild(optionEl)
+            end 
+        end
+    end
+    function obj:setRange(startN, endN, inc)
+        el.innerHTML = ""
+        startN, endN, inc = tonumber(startN) or 0, tonumber(endN) or 100, tonumber(inc) or 1
+        for i = startN, endN, inc do
+            local optionEl = document:createElement("option"); optionEl.value, optionEl.innerText = tostring(i), tostring(i)
+            el:appendChild(optionEl)
+        end
+    end
+    
+    if type(optionsOrMin) == "table" then obj:setOptions(optionsOrMin)
+    elseif optionsOrMin ~= nil then obj:setRange(optionsOrMin, max, step) end
+    
+    function obj:setValue(val) el.value = tostring(val) end
+    function obj:getValue() return tonumber(el.value) or el.value end
+
+    el:addEventListener("change", function() if obj._action then obj._action(obj:getValue()) end end)
+    
+    -- SMART CALLBACK: Bind selection value directly to another component's property!
+    function obj:onSelect(a, b) 
+        if type(a) == "table" and type(b) == "string" then obj._action = function(v) a[b] = v end
+        else obj._action = type(a) == "string" and load(a) or a end
+    end
+    
     function obj:setDraggable(d) if d then makeDraggable(el) end end
     addSharedMethods(obj, el); return obj
 end
     </script>
 
-    <!-- Master Tutorial -->
+    <!-- Tutorial Template -->
     <script id="default-lua" type="text/plain">
 -- ==========================================================
--- MASTER TEMPLATE: All Functions Guide
+-- MASTER TEMPLATE: Property Linking & Smart Callbacks
 -- ==========================================================
--- Tip: Origin (0,0) is Center. Live mouse tracker is top-right.
--- Tip: Watch the tooltip appear as you type!
--- ==========================================================
-
 print("Welcome to Lua Studio! Running template...")
 
--- 1. VISUAL FOUNDATION
 local backdrop = imageframe.new({500, 360}, {0, 0}, "https://picsum.photos/800/600", 15, 1)
 
 local glass = frame.new({420, 320}, {0, 0}, {40, 40, 60, 0.75}, 12, 2)
-glass:setBlur(12) -- frosted glass effect
-glass:setDraggable(true)
+glass:setBlur(12); glass:setDraggable(true)
 
--- 2. LABELS & INTERACTIVE HOVER
 local title = label.new({420, 40}, {0, 135}, "Command Center", "#89b4fa", 24, 3)
-title:setHoverEffect(true) -- growth animation on hover
+title:setHoverEffect(true)
 
--- 3. INPUTS & DYNAMIC STATE
-local audioToggle = toggle.new({50, 26}, {-130, 85}, "#a6e3a1", "#45475a", true, 3)
-local audioLabel = label.new({180, 20}, {0, 85}, "Audio: Online", "#cdd6f4", 14, 3)
-audioLabel:setTextPlacement(false, {-20, 0})
+-- 1. DIRECT PROPERTY LINKING
+-- We can link this toggle directly to the glass panel's visibility!
+local hideToggle = toggle.new({50, 26}, {-130, 85}, "#a6e3a1", "#45475a", true, 3)
+hideToggle:onChange(glass, "visible")
 
-audioToggle:onChange(function(state)
-    audioLabel:setText(state and "Audio: Online" or "Audio: Offline")
-    print("System status updated.")
+local hideLabel = label.new({180, 20}, {0, 85}, "Panel: Visible", "#cdd6f4", 14, 3)
+hideLabel:setTextPlacement(false, {-20, 0})
+
+-- 2. SIMPLE VALUE ASSIGNMENT
+-- Generating numbers 0 to 100 via min, max, step
+local menu = dropdown.new({200, 30}, {100, 85}, 0, 100, 10, "#11111b", "#cdd6f4", 6, 3)
+local pBar = progressbar.new({180, 10}, {110, 25}, "#11111b", 0.5, "#cba6f7", 8, 3)
+
+-- When the dropdown changes, update the progress bar directly!
+menu:onSelect(function(val)
+    pBar.value = val / 100 -- Using the new simple property!
+    hideLabel.text = "Bar is: " .. val .. "%"
 end)
 
-local menu = dropdown.new({200, 30}, {100, 85}, {"Standard", "Defense", "Overclock"}, "#11111b", "#cdd6f4", 6, 3)
+-- 3. SMART STRING CALLBACKS
+local clearBtn = btn.new({180, 40}, {-110, 25}, "#f38ba8", 8, "Hold 2s to Zero", "#11111b", 3)
+clearBtn:setHold(true, 2, true) 
 
--- 4. HOLD CONFIRMATIONS
-local deleteBtn = btn.new({180, 40}, {-110, 25}, "#f38ba8", 8, "Hold 2s to Clear", "#11111b", 3)
-deleteBtn:setHold(true, 2, true) 
-
-deleteBtn:onClick(function()
-    print("Action confirmed via long-press.")
+-- Look how simple this is!
+clearBtn:onClick(function()
+    pBar.value = 0
+    menu.value = 0
+    title.text = "System Reset"
 end)
 
--- 5. PROGRESS BARS & STATE
-local storageBar = progressbar.new({180, 10}, {110, 25}, "#11111b", 0.4, "#cba6f7", 5, 3)
-local chargeBtn = btn.new({400, 40}, {0, -40}, "#89b4fa", 8, "Boost Power Level (+10%)", "#11111b", 3)
-
-local load = 0.4
-chargeBtn:onClick(function()
-    load = load + 0.1
-    if load > 1 then load = 0 end
-    storageBar:setValue(load)
-end)
-
--- 6. TEXT PROCESSING
-local userInput = input.new({270, 40}, {-55, -100}, "Identification code...", "#11111b", "#cdd6f4", 8, 3)
-local submitBtn = btn.new({100, 40}, {145, -100}, "#a6e3a1", 8, "Process", "#11111b", 3)
+-- 4. INPUT PROCESSING
+local userInput = input.new({270, 40}, {-55, -100}, "Change title...", "#11111b", "#cdd6f4", 8, 3)
+local submitBtn = btn.new({100, 40}, {145, -100}, "#a6e3a1", 8, "Update", "#11111b", 3)
 
 submitBtn:onClick(function()
-    print("Identification Accepted: " .. userInput:getText())
+    title.text = userInput.text
 end)
     </script>
 
@@ -383,7 +445,7 @@ end)
     </header>
 
     <div class="flex-1 flex overflow-hidden relative">
-        <div id="param-tooltip" class="absolute z-50 px-3 py-2 rounded text-[13px] hidden opacity-0"></div>
+        <div id="param-tooltip" class="absolute z-50 px-3 py-1.5 rounded text-[13px] hidden opacity-0"></div>
 
         <div id="editor-column" class="w-1/2 flex flex-col border-r border-[#313244]">
             <div class="h-10 bg-[#1e1e2e] flex items-center px-4 text-sm font-medium text-[#bac2de] border-b border-[#313244] shrink-0 gap-2">
@@ -419,7 +481,7 @@ end)
             'imageframe.new': ['size: {w, h}', 'pos: {x, y}', 'url: str', 'radius: px', 'layer: num'],
             'progressbar.new': ['size: {w, h}', 'pos: {x, y}', 'bgColor: str', 'fillVal: 0-1', 'fillColor: str', 'radius: px', 'layer: num'],
             'toggle.new': ['size: {w, h}', 'pos: {x, y}', 'activeColor: str', 'inactiveColor: str', 'startState: bool', 'layer: num'],
-            'dropdown.new': ['size: {w, h}', 'pos: {x, y}', 'options: {str}', 'bgColor: str', 'textColor: str', 'radius: px', 'layer: num'],
+            'dropdown.new': ['size: {w, h}', 'pos: {x, y}', 'options OR min', 'max', 'step', 'bgColor: str', 'textColor: str', 'radius: px', 'layer: num'],
             ':setTextPlacement': ['centered: bool', 'offsets: {x, y}'],
             ':setHold': ['enabled: bool', 'duration: sec', 'showBar: bool'],
             ':setVisible': ['visible: bool'],
@@ -428,9 +490,9 @@ end)
             ':setValue': ['value: 0-1'],
             ':setSource': ['url: str'],
             ':setText': ['text: str'],
-            ':onClick': ['cb: func'],
-            ':onChange': ['cb: func(state)'],
-            ':onSelect': ['cb: func(val)'],
+            ':onClick': ['function() OR target', '"property"', 'value'],
+            ':onChange': ['function(state) OR target', '"property"'],
+            ':onSelect': ['function(val) OR target', '"property"'],
             ':getText': [],
             ':hide': [],
             ':show': [],
@@ -438,6 +500,9 @@ end)
         };
 
         let editor;
+        let lastMousePos = { x: 0, y: 0 };
+        let isMouseInEditor = false;
+
         document.addEventListener("DOMContentLoaded", () => {
             const overlay = document.getElementById('fullscreen-overlay');
             document.getElementById('btn-enter-fullscreen').onclick = () => { document.documentElement.requestFullscreen().catch(e=>console.warn(e)); overlay.classList.add('hidden'); };
@@ -458,70 +523,108 @@ end)
 
             const tooltipEl = document.getElementById('param-tooltip');
 
-            // SMARTER TOOLTIP ENGINE
-            const updateTooltip = () => {
-                const cursor = editor.getCursorPosition();
-                const line = editor.session.getLine(cursor.row);
-                
-                let funcName = null;
-                let argIdx = -1;
+            // HIGH PERFORMANCE CONTEXT ENGINE
+            const getContextAt = (row, col) => {
+                const line = editor.session.getLine(row);
+                if (!line) return { funcName: null, argIdx: -1 };
 
-                // 1. Get the current full word under/before cursor to check for name-based hover
-                const getFullWordAt = (row, col) => {
-                    let start = col, end = col;
-                    while (start > 0 && /[a-zA-Z0-9_.:]/.test(line[start-1])) start--;
-                    while (end < line.length && /[a-zA-Z0-9_.:]/.test(line[end])) end++;
-                    return line.substring(start, end).replace(/^local\s+/, '').trim();
+                const isInsideString = (text, pos) => {
+                    let inS = false; let q = null;
+                    for(let i=0; i < pos; i++) {
+                        if(!inS && (text[i]==='"' || text[i]==="'")) { inS=true; q=text[i]; }
+                        else if(inS && text[i]===q && text[i-1]!=='\\') { inS=false; }
+                    }
+                    return inS;
                 };
 
-                const currentWord = getFullWordAt(cursor.row, cursor.column);
-
-                // 2. Check if cursor is inside parentheses
-                const beforeCursor = line.substring(0, cursor.column);
+                // Part 1: Search back for unclosed parens to find argument context
                 let depth = 0, openIdx = -1;
-                for (let i = beforeCursor.length - 1; i >= 0; i--) {
-                    if (beforeCursor[i] === ')') depth++;
-                    else if (beforeCursor[i] === '(') { 
+                for (let i = col - 1; i >= 0; i--) {
+                    if (isInsideString(line, i)) continue;
+                    if (line[i] === ')') depth++;
+                    else if (line[i] === '(') { 
                         if (depth === 0) { openIdx = i; break; } 
                         else depth--; 
                     }
                 }
 
                 if (openIdx !== -1) {
-                    // We are inside parens, find the function name to the left
                     const prefix = line.substring(0, openIdx);
                     const match = prefix.match(/([a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)?|:[a-zA-Z0-9_]+)\s*$/);
-                    if (match && signatures[match[1]]) {
-                        funcName = match[1];
-                        // Calculate which argument we are on
-                        let fDepth = 0; argIdx = 0;
-                        for (let i = openIdx + 1; i < beforeCursor.length; i++) {
-                            if (beforeCursor[i] === '(' || beforeCursor[i] === '{' || beforeCursor[i] === '[') fDepth++;
-                            else if (beforeCursor[i] === ')' || beforeCursor[i] === '}' || beforeCursor[i] === ']') fDepth--;
-                            else if (beforeCursor[i] === ',' && fDepth === 0) argIdx++;
+                    let funcName = null;
+                    if (match) {
+                        const rawName = match[1];
+                        if (signatures[rawName]) funcName = rawName;
+                        else if (rawName.includes(':')) {
+                            const methodOnly = ":" + rawName.split(':').pop();
+                            if (signatures[methodOnly]) funcName = methodOnly;
                         }
                     }
-                } else if (signatures[currentWord]) {
-                    // We are touching the word directly
-                    funcName = currentWord;
+
+                    if (funcName) {
+                        let fDepth = 0, inS = false, qC = null, argIdx = 0;
+                        for (let i = openIdx + 1; i < col; i++) {
+                            const char = line[i];
+                            if (!inS) {
+                                if (char === '"' || char === "'") { inS = true; qC = char; }
+                                else if (char === '(' || char === '{' || char === '[') fDepth++;
+                                else if (char === ')' || char === '}' || char === ']') fDepth--;
+                                else if (char === ',' && fDepth === 0) argIdx++;
+                            } else {
+                                if (char === qC && line[i-1] !== '\\') inS = false;
+                            }
+                        }
+                        return { funcName, argIdx };
+                    }
                 }
 
-                if (funcName) {
-                    const sig = signatures[funcName];
-                    let html = `<span class="text-[#89b4fa] font-bold">${funcName}</span>( `;
-                    sig.forEach((param, i) => {
-                        if (i === argIdx) {
-                            html += `<span class="text-[#a6e3a1] font-bold px-1 bg-[#a6e3a1]/20 rounded border border-[#a6e3a1]/30 animate-pulse">${param}</span>`;
-                        } else {
-                            html += `<span class="text-[#a6adc8]">${param.split(':')[0]}</span>`;
-                        }
-                        if (i < sig.length - 1) html += '<span class="text-[#6c7086]">, </span>';
-                    });
-                    tooltipEl.innerHTML = html + ' )';
+                // Part 2: If not inside parens, search forward/backward for the word under the cursor
+                let start = col, end = col;
+                while (start > 0 && /[a-zA-Z0-9_.:]/.test(line[start-1])) start--;
+                while (end < line.length && /[a-zA-Z0-9_.:]/.test(line[end])) end++;
+                
+                let word = line.substring(start, end).trim();
+                if (signatures[word]) return { funcName: word, argIdx: -1 };
+                
+                // Method call handling (e.g. name:setHoverEffect)
+                if (word.includes(':')) {
+                    const methodOnly = ":" + word.split(':').pop();
+                    if (signatures[methodOnly]) return { funcName: methodOnly, argIdx: -1 };
+                }
+
+                // Part 3: Deep Scan
+                let forwardParen = line.indexOf('(', col);
+                if (forwardParen !== -1) {
+                    let preParen = line.substring(0, forwardParen);
+                    let m = preParen.match(/([a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)?|:[a-zA-Z0-9_]+)\s*$/);
+                    if (m) {
+                        let name = m[1];
+                        if (name.includes(':')) name = ":" + name.split(':').pop();
+                        if (signatures[name]) return { funcName: name, argIdx: -1 };
+                    }
+                }
+
+                return { funcName: null, argIdx: -1 };
+            };
+
+            const updateTooltipUI = (ctx, displayPos) => {
+                if (ctx.funcName) {
+                    const sig = signatures[ctx.funcName];
+                    let html = `<span class="text-[#89b4fa] font-bold">${ctx.funcName}</span>( `;
+                    if (sig.length === 0) {
+                        html += ')';
+                    } else {
+                        sig.forEach((param, i) => {
+                            if (i === ctx.argIdx) html += `<span class="text-[#a6e3a1] font-bold px-1 bg-[#a6e3a1]/20 rounded border border-[#a6e3a1]/30 animate-pulse">${param}</span>`;
+                            else html += `<span class="text-[#a6adc8]">${param}</span>`;
+                            if (i < sig.length - 1) html += '<span class="text-[#6c7086]">, </span>';
+                        });
+                        html += ' )';
+                    }
                     
-                    const screenPos = editor.renderer.textToScreenCoordinates(cursor.row, cursor.column);
-                    tooltipEl.style.left = (screenPos.pageX + 10) + 'px';
-                    tooltipEl.style.top = (screenPos.pageY - 40) + 'px';
+                    tooltipEl.innerHTML = html;
+                    tooltipEl.style.left = (displayPos.x + 10) + 'px';
+                    tooltipEl.style.top = (displayPos.y - 45) + 'px';
                     tooltipEl.classList.remove('hidden');
                     tooltipEl.style.opacity = '1';
                 } else {
@@ -530,12 +633,51 @@ end)
                 }
             };
 
-            // Trigger on move, type, or click
-            editor.on("changeSelection", updateTooltip);
-            editor.on("change", updateTooltip);
+            // MOUSE TRACKING (Priority)
+            editor.container.addEventListener("mousemove", (e) => {
+                lastMousePos = { x: e.clientX, y: e.clientY };
+                const textPos = editor.renderer.screenToTextCoordinates(e.clientX, e.clientY);
+                const ctx = getContextAt(textPos.row, textPos.column);
+                
+                if (ctx.funcName) {
+                    updateTooltipUI(ctx, lastMousePos);
+                } else {
+                    const cursor = editor.getCursorPosition();
+                    const cursorCtx = getContextAt(cursor.row, cursor.column);
+                    const screenPos = editor.renderer.textToScreenCoordinates(cursor.row, cursor.column);
+                    updateTooltipUI(cursorCtx, { x: screenPos.pageX, y: screenPos.pageY });
+                }
+            });
+
+            editor.container.addEventListener("mouseenter", () => isMouseInEditor = true);
+            editor.container.addEventListener("mouseleave", () => {
+                isMouseInEditor = false;
+                const cursor = editor.getCursorPosition();
+                const cursorCtx = getContextAt(cursor.row, cursor.column);
+                const screenPos = editor.renderer.textToScreenCoordinates(cursor.row, cursor.column);
+                updateTooltipUI(cursorCtx, { x: screenPos.pageX, y: screenPos.pageY });
+            });
+
+            // CURSOR/TYPE TRACKING
+            editor.on("changeSelection", () => {
+                if (!isMouseInEditor) {
+                    const cursor = editor.getCursorPosition();
+                    const ctx = getContextAt(cursor.row, cursor.column);
+                    const screenPos = editor.renderer.textToScreenCoordinates(cursor.row, cursor.column);
+                    updateTooltipUI(ctx, { x: screenPos.pageX, y: screenPos.pageY });
+                }
+            });
+
+            editor.on("change", () => {
+                const cursor = editor.getCursorPosition();
+                const ctx = getContextAt(cursor.row, cursor.column);
+                const screenPos = editor.renderer.textToScreenCoordinates(cursor.row, cursor.column);
+                updateTooltipUI(ctx, { x: screenPos.pageX, y: screenPos.pageY });
+            });
+
             editor.on("blur", () => { tooltipEl.classList.add('hidden'); tooltipEl.style.opacity = '0'; });
 
-            // Simple Completer
+            // Completer
             const langTools = ace.require("ace/ext/language_tools");
             langTools.addCompleter({
                 getCompletions: (editor, session, pos, prefix, callback) => {
