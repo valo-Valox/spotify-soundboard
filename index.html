@@ -17,9 +17,6 @@
     
     <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-
-    <!-- html2canvas for Screenshot Export -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
         /* Custom scrollbars */
@@ -60,7 +57,7 @@
 local js = require "js"
 local window = js.global
 local document = window.document
-local previewArea = document:getElementById("ui-preview")
+local previewArea = document:getElementById("ui-center-anchor")
 
 _G.print = function(...)
     local args = {...}
@@ -126,18 +123,20 @@ local function addSharedMethods(obj, el)
     function obj:setHoverEffect(enabled)
         hoverEnabled = enabled and true or false
         if hoverEnabled then
-            el.style.transition = "scale 0.1s, filter 0.1s"
+            el.style.transition = "transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), filter 0.15s"
+            if el.tagName ~= "BUTTON" then el.style.cursor = "pointer" end
         else
             el.style.transition = "none"
-            el.style.scale = "1"
+            el.style.transform = "translate(-50%, 50%) scale(1)"
             el.style.filter = "brightness(1)"
+            if el.tagName ~= "BUTTON" then el.style.cursor = "default" end
         end
     end
     
-    el:addEventListener("mousedown", function() if hoverEnabled then el.style.scale = "0.95" end end)
-    el:addEventListener("mouseup", function() if hoverEnabled then el.style.scale = "1" end end)
-    el:addEventListener("mouseleave", function() if hoverEnabled then el.style.scale = "1"; el.style.filter = "brightness(1)" end end)
-    el:addEventListener("mouseenter", function() if hoverEnabled then el.style.filter = "brightness(1.1)" end end)
+    el:addEventListener("mousedown", function() if hoverEnabled then el.style.transform = "translate(-50%, 50%) scale(0.95)" end end)
+    el:addEventListener("mouseup", function() if hoverEnabled then el.style.transform = "translate(-50%, 50%) scale(1.05)" end end)
+    el:addEventListener("mouseleave", function() if hoverEnabled then el.style.transform = "translate(-50%, 50%) scale(1)"; el.style.filter = "brightness(1)" end end)
+    el:addEventListener("mouseenter", function() if hoverEnabled then el.style.transform = "translate(-50%, 50%) scale(1.05)"; el.style.filter = "brightness(1.15)" end end)
 end
 
 local function addTextMethods(obj, el, textSpan)
@@ -146,20 +145,17 @@ local function addTextMethods(obj, el, textSpan)
         el.style.justifyContent = "center"
         el.style.alignItems = "center"
         if centered then
-            textSpan.style.translate = "0px 0px"
+            textSpan.style.transform = "translate(0px, 0px)"
         else
             local ox, oy = 0, 0
             if type(offsets) == "table" then
                 ox = offsets[1] or 0
                 oy = offsets[2] or 0
             end
-            
-            -- Invert Y for offsets so Positive means UP (matching component origin coords)
             if type(oy) == "number" then oy = -oy end
-            
             if type(ox) == "number" then ox = ox .. "px" end
             if type(oy) == "number" then oy = oy .. "px" end
-            textSpan.style.translate = ox .. " " .. oy
+            textSpan.style.transform = "translate(" .. ox .. ", " .. oy .. ")"
         end
     end
 end
@@ -173,12 +169,9 @@ function _G.frame.new(size, pos, color, radius, layer)
     el.style.position = "absolute"
     local w, h = parseCoord(size, 100, 100)
     el.style.width = w; el.style.height = h
-    
-    -- Bottom-Left Origin + Center Translate
     local x, y = parseCoord(pos, 0, 0)
     el.style.left = x; el.style.bottom = y
-    el.style.translate = "-50% 50%"
-    
+    el.style.transform = "translate(-50%, 50%) scale(1)"
     el.style.backgroundColor = parseColor(color, "transparent")
     el.style.borderRadius = (radius or 0).."px"
     el.style.zIndex = tostring(layer or 1)
@@ -198,12 +191,9 @@ function _G.imageframe.new(size, pos, url, radius, layer)
     el.style.position = "absolute"
     local w, h = parseCoord(size, 100, 100)
     el.style.width = w; el.style.height = h
-    
-    -- Bottom-Left Origin + Center Translate
     local x, y = parseCoord(pos, 0, 0)
     el.style.left = x; el.style.bottom = y
-    el.style.translate = "-50% 50%"
-    
+    el.style.transform = "translate(-50%, 50%) scale(1)"
     el.style.borderRadius = (radius or 0).."px"
     el.style.zIndex = tostring(layer or 1)
     el.style.backgroundColor = "transparent"
@@ -212,7 +202,6 @@ function _G.imageframe.new(size, pos, url, radius, layer)
     el.style.backgroundRepeat = "no-repeat"
     if url then el.style.backgroundImage = "url('"..url.."')" end
     previewArea:appendChild(el)
-    
     local obj = { element = el }
     function obj:setSource(newUrl) el.style.backgroundImage = "url('"..newUrl.."')" end
     function obj:setDraggable(d) if d then makeDraggable(el) end end
@@ -229,19 +218,25 @@ function _G.btn.new(size, pos, color, radius, text, textColor, layer)
     el.style.position = "absolute"
     local w, h = parseCoord(size, 150, 50)
     el.style.width = w; el.style.height = h
-    
-    -- Bottom-Left Origin + Center Translate
     local x, y = parseCoord(pos, 0, 0)
     el.style.left = x; el.style.bottom = y
-    el.style.translate = "-50% 50%"
-    
+    el.style.transform = "translate(-50%, 50%) scale(1)"
     el.style.backgroundColor = parseColor(color, "#313244")
     el.style.borderRadius = (radius or 0).."px"
     el.style.zIndex = tostring(layer or 1)
+    el.style.overflow = "hidden"
+    
+    local fillBar = document:createElement("div")
+    fillBar.style.position = "absolute"
+    fillBar.style.left = "0"; fillBar.style.top = "0"; fillBar.style.bottom = "0"
+    fillBar.style.width = "0%"; fillBar.style.backgroundColor = "rgba(255, 255, 255, 0.25)"
+    fillBar.style.pointerEvents = "none"
+    el:appendChild(fillBar)
     
     local textSpan = document:createElement("span")
     textSpan.innerText = text or ""
     textSpan.style.pointerEvents = "none"
+    textSpan.style.position = "relative"; textSpan.style.zIndex = "10"
     el:appendChild(textSpan)
     
     el.style.border = "none"; el.style.cursor = "pointer"
@@ -249,53 +244,57 @@ function _G.btn.new(size, pos, color, radius, text, textColor, layer)
     el.style.fontWeight = "bold"; el.style.display = "flex"
     el.style.alignItems = "center"; el.style.justifyContent = "center"
     el.style.boxShadow = "0 4px 6px -1px rgba(0,0,0,0.1)"
-    el.style.transformStyle = "preserve-3d"
     
     local obj = { element = el, callbacks = {} }
     local holdEnabled = false
+    local showHoldBar = true
     local holdDuration = 1000
     local holdTimer = nil
     
     local function clearHold()
-        if holdTimer then
-            window:clearTimeout(holdTimer)
-            holdTimer = nil
-        end
+        if holdTimer then window:clearTimeout(holdTimer); holdTimer = nil end
+        fillBar.style.transition = "none"
+        fillBar.style.width = "0%"
     end
 
     el:addEventListener("mousedown", function() 
         if holdEnabled then
+            if showHoldBar then
+                fillBar.style.transition = "width " .. holdDuration .. "ms linear"
+                fillBar.style.width = "100%"
+            end
             holdTimer = window:setTimeout(function()
                 holdTimer = nil
-                el.style.scale = "1" 
+                if showHoldBar then
+                    fillBar.style.transition = "opacity 0.2s"
+                    fillBar.style.opacity = "0"
+                    window:setTimeout(function()
+                        fillBar.style.transition = "none"
+                        fillBar.style.width = "0%"
+                        fillBar.style.opacity = "1"
+                    end, 200)
+                end
                 for i, cb in ipairs(obj.callbacks) do cb() end
             end, holdDuration)
         end
     end)
     el:addEventListener("mouseup", function() clearHold() end)
     el:addEventListener("mouseleave", function() clearHold() end)
-    
-    el:addEventListener("click", function()
-        if not holdEnabled then
-            for i, cb in ipairs(obj.callbacks) do cb() end
-        end
-    end)
+    el:addEventListener("click", function() if not holdEnabled then for i, cb in ipairs(obj.callbacks) do cb() end end end)
 
     previewArea:appendChild(el)
-    
     function obj:onClick(cb) table.insert(obj.callbacks, cb) end
     function obj:setDraggable(d) if d then makeDraggable(el) end end
     
-    function obj:setHold(enabled, duration)
+    function obj:setHold(enabled, duration, showBar)
         holdEnabled = enabled and true or false
-        if type(duration) == "number" then
-            holdDuration = duration * 1000
-        end
+        if type(duration) == "number" then holdDuration = duration * 1000 end
+        showHoldBar = (showBar == nil) and true or (showBar and true or false)
     end
     
     addTextMethods(obj, el, textSpan)
     addSharedMethods(obj, el)
-    obj:setHoverEffect(true) -- Buttons are hoverable by default!
+    obj:setHoverEffect(true) 
     return obj
 end
 
@@ -308,23 +307,17 @@ function _G.label.new(size, pos, text, textColor, textSize, layer)
     el.style.position = "absolute"
     local w, h = parseCoord(size, 100, 30)
     el.style.width = w; el.style.height = h
-    
-    -- Bottom-Left Origin + Center Translate
     local x, y = parseCoord(pos, 0, 0)
     el.style.left = x; el.style.bottom = y
-    el.style.translate = "-50% 50%"
-    
+    el.style.transform = "translate(-50%, 50%) scale(1)"
     el.style.color = parseColor(textColor, "#ffffff")
     el.style.fontSize = (textSize or 14).."px"
     el.style.zIndex = tostring(layer or 1)
-    
     local textSpan = document:createElement("span")
     textSpan.innerText = text or "Label"
     el:appendChild(textSpan)
-    
     el.style.fontFamily = "sans-serif"; el.style.display = "flex"
     el.style.alignItems = "center"; el.style.justifyContent = "center"
-    
     previewArea:appendChild(el)
     local obj = { element = el }
     function obj:setDraggable(d) if d then makeDraggable(el) end end
@@ -339,29 +332,21 @@ end
 _G.input = {}
 function _G.input.new(size, pos, placeholder, bgColor, textColor, radius, layer)
     local el = document:createElement("input")
-    el.type = "text"
-    el.style.position = "absolute"
+    el.type = "text"; el.style.position = "absolute"
     local w, h = parseCoord(size, 150, 40)
     el.style.width = w; el.style.height = h
-    
-    -- Bottom-Left Origin + Center Translate
     local x, y = parseCoord(pos, 0, 0)
     el.style.left = x; el.style.bottom = y
-    el.style.translate = "-50% 50%"
-    
+    el.style.transform = "translate(-50%, 50%) scale(1)"
     el.placeholder = placeholder or "Enter text..."
     el.style.backgroundColor = parseColor(bgColor, "#11111b")
     el.style.color = parseColor(textColor, "#cdd6f4")
     el.style.borderRadius = (radius or 4).."px"
     el.style.zIndex = tostring(layer or 1)
-    el.style.border = "1px solid #313244"
-    el.style.padding = "0 10px"
-    el.style.outline = "none"
-    el.style.fontFamily = "sans-serif"
-    
+    el.style.border = "1px solid #313244"; el.style.padding = "0 10px"
+    el.style.outline = "none"; el.style.fontFamily = "sans-serif"
     el:addEventListener("focus", function() el.style.borderColor = "#89b4fa" end)
     el:addEventListener("blur", function() el.style.borderColor = "#313244" end)
-    
     previewArea:appendChild(el)
     local obj = { element = el }
     function obj:getText() return el.value end
@@ -380,26 +365,18 @@ function _G.progressbar.new(size, pos, bgColor, fillValue, fillColor, radius, la
     el.style.position = "absolute"
     local w, h = parseCoord(size, 200, 20)
     el.style.width = w; el.style.height = h
-    
-    -- Bottom-Left Origin + Center Translate
     local x, y = parseCoord(pos, 0, 0)
     el.style.left = x; el.style.bottom = y
-    el.style.translate = "-50% 50%"
-    
+    el.style.transform = "translate(-50%, 50%) scale(1)"
     el.style.backgroundColor = parseColor(bgColor, "#11111b")
     el.style.borderRadius = (radius or 8).."px"
-    el.style.overflow = "hidden"
-    el.style.zIndex = tostring(layer or 1)
-
+    el.style.overflow = "hidden"; el.style.zIndex = tostring(layer or 1)
     local fillEl = document:createElement("div")
-    fillEl.style.height = "100%"
-    fillEl.style.backgroundColor = parseColor(fillColor, "#a6e3a1")
-    
+    fillEl.style.height = "100%"; fillEl.style.backgroundColor = parseColor(fillColor, "#a6e3a1")
     local pct = (tonumber(fillValue) or 0) * 100
     fillEl.style.width = math.max(0, math.min(100, pct)) .. "%"
     fillEl.style.transition = "width 0.3s ease"
     el:appendChild(fillEl)
-
     previewArea:appendChild(el)
     local obj = { element = el, fillEl = fillEl }
     function obj:setValue(val) 
@@ -420,41 +397,27 @@ function _G.toggle.new(size, pos, activeColor, inactiveColor, startState, layer)
     el.style.position = "absolute"
     local w, h = parseCoord(size, 50, 26)
     el.style.width = w; el.style.height = h
-    
-    -- Bottom-Left Origin + Center Translate
     local x, y = parseCoord(pos, 0, 0)
     el.style.left = x; el.style.bottom = y
-    el.style.translate = "-50% 50%"
-    
-    el.style.borderRadius = "999px"
-    el.style.cursor = "pointer"
-    el.style.zIndex = tostring(layer or 1)
-    el.style.transition = "background-color 0.3s"
-
+    el.style.transform = "translate(-50%, 50%) scale(1)"
+    el.style.borderRadius = "999px"; el.style.cursor = "pointer"
+    el.style.zIndex = tostring(layer or 1); el.style.transition = "background-color 0.3s"
     local ac = parseColor(activeColor, "#a6e3a1")
     local ic = parseColor(inactiveColor, "#45475a")
     local state = startState and true or false
     el.style.backgroundColor = state and ac or ic
-
     local hNum = tonumber(string.match(h, "%d+")) or 26
     local wNum = tonumber(string.match(w, "%d+")) or 50
     local knobSize = (hNum - 4) .. "px"
     local knobRight = (wNum - hNum + 2) .. "px"
-
     local knob = document:createElement("div")
-    knob.style.position = "absolute"
-    knob.style.top = "2px"
-    knob.style.width = knobSize
-    knob.style.height = knobSize
-    knob.style.backgroundColor = "#ffffff"
-    knob.style.borderRadius = "50%"
-    knob.style.transition = "left 0.3s"
-    knob.style.left = state and knobRight or "2px"
+    knob.style.position = "absolute"; knob.style.top = "2px"
+    knob.style.width = knobSize; knob.style.height = knobSize
+    knob.style.backgroundColor = "#ffffff"; knob.style.borderRadius = "50%"
+    knob.style.transition = "left 0.3s"; knob.style.left = state and knobRight or "2px"
     knob.style.boxShadow = "0 1px 3px rgba(0,0,0,0.3)"
     el:appendChild(knob)
-
     previewArea:appendChild(el)
-
     local obj = { element = el, state = state, callbacks = {} }
     el:addEventListener("click", function()
         obj.state = not obj.state
@@ -462,7 +425,6 @@ function _G.toggle.new(size, pos, activeColor, inactiveColor, startState, layer)
         knob.style.left = obj.state and knobRight or "2px"
         for i, cb in ipairs(obj.callbacks) do cb(obj.state) end
     end)
-
     function obj:onChange(cb) table.insert(obj.callbacks, cb) end
     function obj:getState() return self.state end
     function obj:setState(s)
@@ -484,36 +446,25 @@ function _G.dropdown.new(size, pos, options, bgColor, textColor, radius, layer)
     el.style.position = "absolute"
     local w, h = parseCoord(size, 150, 40)
     el.style.width = w; el.style.height = h
-    
-    -- Bottom-Left Origin + Center Translate
     local x, y = parseCoord(pos, 0, 0)
     el.style.left = x; el.style.bottom = y
-    el.style.translate = "-50% 50%"
-    
+    el.style.transform = "translate(-50%, 50%) scale(1)"
     el.style.backgroundColor = parseColor(bgColor, "#181825")
     el.style.color = parseColor(textColor, "#cdd6f4")
     el.style.borderRadius = (radius or 4).."px"
-    el.style.zIndex = tostring(layer or 1)
-    el.style.border = "1px solid #313244"
-    el.style.padding = "0 10px"
-    el.style.outline = "none"
-    el.style.fontFamily = "sans-serif"
-    el.style.cursor = "pointer"
-
+    el.style.zIndex = tostring(layer or 1); el.style.border = "1px solid #313244"
+    el.style.padding = "0 10px"; el.style.outline = "none"
+    el.style.fontFamily = "sans-serif"; el.style.cursor = "pointer"
     if type(options) == "table" then
         for i, opt in ipairs(options) do
             local optionEl = document:createElement("option")
-            optionEl.value = tostring(opt)
-            optionEl.innerText = tostring(opt)
+            optionEl.value = tostring(opt); optionEl.innerText = tostring(opt)
             el:appendChild(optionEl)
         end
     end
-
     previewArea:appendChild(el)
     local obj = { element = el, callbacks = {} }
-    el:addEventListener("change", function()
-        for i, cb in ipairs(obj.callbacks) do cb(el.value) end
-    end)
+    el:addEventListener("change", function() for i, cb in ipairs(obj.callbacks) do cb(el.value) end end)
     function obj:onSelect(cb) table.insert(obj.callbacks, cb) end
     function obj:getValue() return el.value end
     function obj:setDraggable(d) if d then makeDraggable(el) end end
@@ -526,70 +477,28 @@ end
     <script id="default-lua" type="text/plain">
 clearUI()
 
-print("Welcome to Lua UI Editor! Origin (0,0) is Bottom-Left. Size expands from Center!")
+print("Origin (0,0) is Center. Added configurable Hold animations!")
 
--- 1. Image Background Frame
-local bg = imageframe.new({400, 350}, {220, 220}, "https://picsum.photos/400/350", 12, 1)
-bg:setDraggable(true)
+-- 1. Create a "Confirmation" button WITH the loading bar
+local dangerousBtn = btn.new({200, 45}, {0, 60}, "#f38ba8", 8, "Long Press (With Bar)", "#11111b", 2)
+dangerousBtn:setHold(true, 3, true) -- Enabled, 3 seconds, SHOW bar
 
--- 2. Glass Panel on top
--- We pass an Alpha value to color for transparency, and test out our new blur setting!
-local panel = frame.new({360, 310}, {220, 220}, {30, 30, 46, 0.75}, 12, 2)
-panel:setBlur(8) -- Adds a beautiful frosted glass blur!
-panel:setDraggable(true)
-
--- You can now make ANY element have a hover animation, not just buttons!
-local title = label.new({360, 30}, {220, 340}, "Game Settings", "#89b4fa", 20, 3)
-title:setHoverEffect(true) 
-
--- 3. Toggle Switch for Audio
-local audioToggle = toggle.new({50, 26}, {100, 290}, "#a6e3a1", "#45475a", true, 3)
-local audioLabel = label.new({100, 26}, {180, 290}, "Audio Enabled", "#cdd6f4", 14, 3)
-audioLabel:setTextPlacement(false, {-20, 0})
-
-audioToggle:onChange(function(state)
-    audioLabel:setText(state and "Audio Enabled" or "Audio Disabled")
-    print("Audio toggled to: " .. tostring(state))
+dangerousBtn:onClick(function()
+    print("Confirmed! (Visual bar shown)")
 end)
 
--- 4. Dropdown Menu for Quality
-local ddLabel = label.new({100, 30}, {100, 240}, "Graphics:", "#cdd6f4", 14, 3)
-ddLabel:setTextPlacement(false, {-20, 0})
-local qualityDropdown = dropdown.new({150, 30}, {220, 240}, {"Low", "Medium", "High", "Ultra"}, "#11111b", "#cdd6f4", 6, 3)
+-- 2. Create a button that requires a hold but has NO bar (stealthy hold)
+local stealthBtn = btn.new({200, 45}, {0, -10}, "#89b4fa", 8, "Long Press (No Bar)", "#11111b", 2)
+stealthBtn:setHold(true, 1.5, false) -- Enabled, 1.5 seconds, HIDE bar
 
-qualityDropdown:onSelect(function(val)
-    print("Graphics set to: " .. val)
+stealthBtn:onClick(function()
+    print("Triggered stealthily! (No visual bar was shown)")
 end)
 
--- 5. Progress Bar for Master Volume
-local volLabel = label.new({100, 20}, {100, 190}, "Master Volume", "#cdd6f4", 14, 3)
-volLabel:setTextPlacement(false, {-5, 0})
-local volBar = progressbar.new({220, 15}, {240, 190}, "#11111b", 0.7, "#cba6f7", 8, 3)
-
--- 6. Interactive Buttons (with hold/hide functionality!)
-local boostBtn = btn.new({140, 35}, {130, 120}, "#89b4fa", 6, "Boost Vol +10%", "#11111b", 3)
-local hideBtn = btn.new({140, 35}, {290, 120}, "#f38ba8", 6, "Hold to Hide BG", "#11111b", 3)
-local currentVol = 0.7
-local bgVisible = true
-
--- Make the hide button require a 2 second hold to trigger!
-hideBtn:setHold(true, 2)
-
-boostBtn:onClick(function()
-    currentVol = currentVol + 0.1
-    if currentVol > 1 then currentVol = 0 end
-    volBar:setValue(currentVol)
-    print("Volume adjusted to: " .. math.floor(currentVol * 100) .. "%")
-end)
-
-hideBtn:onClick(function()
-    bgVisible = not bgVisible
-    
-    -- Here is where we hide or show the background!
-    if bgVisible then bg:show() else bg:hide() end
-    
-    hideBtn:setText(bgVisible and "Hold to Hide BG" or "Hold to Show BG")
-    print(bgVisible and "Background restored" or "Background hidden")
+-- 3. A normal button (no hold required)
+local normalBtn = btn.new({200, 45}, {0, -80}, "#a6e3a1", 8, "Normal Click", "#11111b", 2)
+normalBtn:onClick(function()
+    print("Normal click triggered instantly.")
 end)
     </script>
 
@@ -601,7 +510,6 @@ end)
         </div>
         
         <div class="flex items-center gap-2">
-            <!-- Utility Buttons (Icon Only with Tooltips) -->
             <button class="p-2 bg-[#313244] hover:bg-[#45475a] text-[#cdd6f4] rounded-md transition-colors" title="Format Code" onclick="formatCode()">
                 <i class="ph-bold ph-text-align-left text-lg"></i>
             </button>
@@ -618,7 +526,6 @@ end)
                 <i class="ph-bold ph-trash text-lg text-[#f38ba8]"></i>
             </button>
 
-            <!-- Main Play Button -->
             <button id="btnPlay" class="flex items-center gap-2 bg-[#a6e3a1] hover:bg-[#8bd586] text-[#11111b] px-5 py-1.5 rounded-md font-bold transition-colors shadow-sm" onclick="runScript()">
                 <i class="ph-fill ph-play"></i> Run
             </button>
@@ -627,148 +534,104 @@ end)
 
     <!-- Main Workspace -->
     <div class="flex-1 flex overflow-hidden relative">
-        
-        <!-- Hover Tooltip Element for Parameters -->
         <div id="param-tooltip" class="absolute z-50 bg-[#181825] border border-[#313244] text-[#cdd6f4] text-[13px] px-3 py-1.5 rounded shadow-lg pointer-events-none hidden font-mono shadow-[#11111b]/50">
         </div>
 
-        <!-- Left Column: Code Editor -->
-        <div class="w-1/2 flex flex-col border-r border-[#313244]">
+        <div id="editor-column" class="w-1/2 flex flex-col border-r border-[#313244]">
             <div class="h-10 bg-[#1e1e2e] flex items-center px-4 text-sm font-medium text-[#bac2de] border-b border-[#313244] shadow-sm z-10 shrink-0 gap-2">
                 <i class="ph-fill ph-file-code text-[#89b4fa]"></i> main.lua
             </div>
             <div id="editor" class="flex-1 text-[15px]"></div>
         </div>
 
-        <!-- Right Column: UI Preview & Output -->
-        <div class="w-1/2 flex flex-col bg-[#1e1e2e]">
-            
-            <!-- UI Preview Area -->
-            <div class="h-3/5 flex flex-col border-b border-[#313244]">
-                <div class="h-10 bg-[#181825] flex items-center px-4 text-sm font-medium text-[#bac2de] border-b border-[#313244] shrink-0 gap-2 justify-between">
-                    <div class="flex items-center gap-2">
-                        <i class="ph-fill ph-desktop text-[#cba6f7]"></i> UI Preview Screen
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <div class="text-xs text-[#6c7086] font-mono bg-[#11111b] px-2 py-0.5 rounded border border-[#313244]">
-                            x: 0, y: 0 (Bottom Left Origin)
-                        </div>
-                        <button onclick="togglePreviewFullscreen()" class="p-1.5 bg-[#313244] hover:bg-[#45475a] text-[#cdd6f4] rounded-md transition-colors" title="Fullscreen Preview">
-                            <i class="ph-bold ph-corners-out text-sm"></i>
-                        </button>
-                    </div>
+        <div id="preview-column" class="w-1/2 flex flex-col bg-[#1e1e2e]">
+            <div id="preview-header" class="h-10 bg-[#181825] flex items-center px-4 text-sm font-medium text-[#bac2de] border-b border-[#313244] shrink-0 gap-2 justify-between">
+                <div class="flex items-center gap-2">
+                    <i class="ph-fill ph-desktop text-[#cba6f7]"></i> UI Preview Screen
                 </div>
-                <!-- The actual container where Lua script generates UI -->
-                <div class="flex-1 relative overflow-hidden preview-bg" id="ui-preview" style="perspective: 1000px;">
-                    <!-- Dynamic elements injected here -->
+                <div class="flex items-center gap-2">
+                    <div class="text-xs text-[#6c7086] font-mono bg-[#11111b] px-2 py-0.5 rounded border border-[#313244]">
+                        x: 0, y: 0 (Center Origin)
+                    </div>
+                    <button onclick="togglePreviewFullscreen()" class="p-1.5 bg-[#313244] hover:bg-[#45475a] text-[#cdd6f4] rounded-md transition-colors" title="Fullscreen Preview">
+                        <i class="ph-bold ph-corners-out text-sm"></i>
+                    </button>
                 </div>
             </div>
-
-            <!-- Output Console -->
-            <div class="h-2/5 flex flex-col bg-[#11111b]">
+            <div class="flex-1 relative overflow-hidden preview-bg" id="ui-preview" style="perspective: 1000px;">
+                <div id="ui-center-anchor" class="absolute left-1/2 bottom-1/2 w-0 h-0 overflow-visible"></div>
+            </div>
+            <div id="console-container" class="h-2/5 flex flex-col bg-[#11111b]">
                 <div class="h-9 bg-[#181825] flex items-center px-4 text-xs font-medium text-[#bac2de] border-b border-[#313244] shrink-0 gap-2">
                     <i class="ph-bold ph-terminal text-[#f38ba8]"></i> Output Console
                 </div>
                 <div id="console-output" class="flex-1 overflow-y-auto p-3 text-[13px] font-mono text-[#a6adc8] space-y-1 select-text">
-                    <!-- Logs injected here -->
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Application Logic -->
     <script>
-        // Fullscreen Enforcement Logic
         document.addEventListener("DOMContentLoaded", () => {
             const overlay = document.getElementById('fullscreen-overlay');
             const btnFullscreen = document.getElementById('btn-enter-fullscreen');
             const btnWindowed = document.getElementById('btn-enter-windowed');
             
             btnFullscreen.addEventListener('click', () => {
-                document.documentElement.requestFullscreen().catch(err => {
-                    console.warn(`Error attempting to enable fullscreen: ${err.message}`);
-                });
+                document.documentElement.requestFullscreen().catch(err => console.warn(err));
                 overlay.classList.add('hidden');
-                overlay.classList.remove('flex');
             });
 
-            btnWindowed.addEventListener('click', () => {
-                overlay.classList.add('hidden');
-                overlay.classList.remove('flex');
-            });
+            btnWindowed.addEventListener('click', () => overlay.classList.add('hidden'));
         });
 
         function togglePreviewFullscreen() {
             const preview = document.getElementById('ui-preview');
             if (document.fullscreenElement === preview) {
-                // If they are exiting preview fullscreen, automatically put them back in the main App fullscreen
-                document.exitFullscreen().then(() => {
-                    setTimeout(() => {
-                        document.documentElement.requestFullscreen().catch(e => console.warn(e));
-                    }, 50);
-                });
+                document.exitFullscreen();
             } else {
-                // Enter preview fullscreen
                 preview.requestFullscreen().catch(err => console.warn(err));
             }
         }
 
-        // Setup JS-side Dragging (Optimized for Bottom-Left coordinates)
         window.makeElementDraggable = function(el) {
             let isDragging = false;
             let startX, startY, initialX, initialY;
             let animationFrameId = null;
-
             const updatePosition = (clientX, clientY) => {
                 const dx = clientX - startX;
-                const dy = startY - clientY; // Invert delta Y because Y goes up in our system!
+                const dy = startY - clientY;
                 el.style.left = (initialX + dx) + "px";
                 el.style.bottom = (initialY + dy) + "px";
             };
-
             const onMouseMove = (e) => {
                 if (!isDragging) return;
                 const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0].clientX);
                 const clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0].clientY);
-                if (clientX === undefined || clientY === undefined) return;
-                
                 if (animationFrameId) cancelAnimationFrame(animationFrameId);
                 animationFrameId = requestAnimationFrame(() => updatePosition(clientX, clientY));
             };
-
             const onMouseUp = () => {
                 isDragging = false;
-                if (animationFrameId) cancelAnimationFrame(animationFrameId);
                 document.removeEventListener("mousemove", onMouseMove);
                 document.removeEventListener("mouseup", onMouseUp);
-                document.removeEventListener("touchmove", onMouseMove);
-                document.removeEventListener("touchend", onMouseUp);
             };
-
             const onMouseDown = (e) => {
-                // Ignore drags starting on inputs, textareas, selects, or interactive children
                 if (['INPUT', 'TEXTAREA', 'SELECT', 'OPTION'].includes(e.target.tagName)) return;
-
                 isDragging = true;
                 startX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0].clientX);
                 startY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0].clientY);
                 initialX = parseFloat(el.style.left) || 0;
                 initialY = parseFloat(el.style.bottom) || 0;
-                
                 document.addEventListener("mousemove", onMouseMove);
                 document.addEventListener("mouseup", onMouseUp);
-                document.addEventListener("touchmove", onMouseMove, {passive: false});
-                document.addEventListener("touchend", onMouseUp);
             };
-
             el.addEventListener("mousedown", onMouseDown);
-            el.addEventListener("touchstart", onMouseDown, {passive: true});
         };
 
         let editor;
         let frameworkLoaded = false;
 
-        // Map components and methods to detailed parameter descriptions
         const paramSignatures = {
             'frame.new': ['size: {w, h}', 'pos: {x, y}', 'color: "#hex"|{r,g,b,a}', 'radius: number', 'layer: number'],
             'btn.new': ['size: {w, h}', 'pos: {x, y}', 'color: "#hex"|{r,g,b,a}', 'radius: number', 'text: string', 'textColor: string', 'layer: number'],
@@ -778,9 +641,8 @@ end)
             'progressbar.new': ['size: {w, h}', 'pos: {x, y}', 'bgColor: string', 'fillValue: 0-1', 'fillColor: string', 'radius: number', 'layer: number'],
             'toggle.new': ['size: {w, h}', 'pos: {x, y}', 'activeColor: string', 'inactiveColor: string', 'startState: boolean', 'layer: number'],
             'dropdown.new': ['size: {w, h}', 'pos: {x, y}', 'options: {"a", "b"}', 'bgColor: string', 'textColor: string', 'radius: number', 'layer: number'],
-            // Methods mapping
             ':setTextPlacement': ['centered: boolean', 'offsets: {x, y}'],
-            ':setHold': ['enabled: boolean', 'duration: seconds'],
+            ':setHold': ['enabled: boolean', 'duration: seconds', 'showBar: boolean'],
             ':setVisible': ['visible: boolean'],
             ':setBlur': ['radius: pixels'],
             ':setHoverEffect': ['enabled: boolean'],
@@ -797,13 +659,11 @@ end)
             ':getState': [],
             ':setState': ['state: boolean'],
             ':getValue': [],
-            // Global functions
             'clearUI': [],
             'print': ['...'],
             'warn': ['...']
         };
 
-        // --- Initialization ---
         document.addEventListener("DOMContentLoaded", () => {
             editor = ace.edit("editor");
             editor.setTheme("ace/theme/tomorrow_night_eighties");
@@ -817,108 +677,67 @@ end)
                 tabSize: 4,
                 useSoftTabs: true
             });
-            
-            // Load the default script safely from the hidden HTML tag
             const defaultScriptRaw = document.getElementById('default-lua').textContent.trim();
             editor.setValue(defaultScriptRaw, -1);
             editor.clearSelection(); 
-            
             editor.commands.addCommand({
                 name: 'runScript',
                 bindKey: {win: 'F5|Ctrl-Enter',  mac: 'F5|Command-Enter'},
                 exec: function() { runScript(); }
             });
 
-            // Smart Parameter Hover Logic
             const tooltipEl = document.getElementById('param-tooltip');
             editor.on("mousemove", function (e) {
                 const pos = e.getDocumentPosition();
                 const line = editor.session.getLine(pos.row);
-                
                 const beforeCursor = line.substring(0, pos.column);
-                
-                let depth = 0;
-                let foundOpenParen = false;
-                let openParenIndex = -1;
-                let inString = false;
-                let stringChar = '';
-                
-                // Parse backward to find the unclosed parenthesis for the current scope
+                let depth = 0; let foundOpenParen = false; let openParenIndex = -1;
+                let inString = false; let stringChar = '';
                 for (let i = beforeCursor.length - 1; i >= 0; i--) {
                     let char = beforeCursor[i];
                     if (char === '"' || char === "'") {
-                        if (!inString) {
-                            inString = true;
-                            stringChar = char;
-                        } else if (char === stringChar && beforeCursor[i-1] !== '\\') {
-                            inString = false;
-                        }
+                        if (!inString) { inString = true; stringChar = char; }
+                        else if (char === stringChar && beforeCursor[i-1] !== '\\') inString = false;
                         continue;
                     }
                     if (inString) continue;
-
                     if (char === ')') depth++;
                     else if (char === '(') {
-                        if (depth === 0) {
-                            foundOpenParen = true;
-                            openParenIndex = i;
-                            break;
-                        } else {
-                            depth--;
-                        }
+                        if (depth === 0) { foundOpenParen = true; openParenIndex = i; break; }
+                        else depth--;
                     }
                 }
-
                 if (foundOpenParen) {
-                    // Extract the function or method name just before the open parenthesis
                     let funcMatch = beforeCursor.substring(0, openParenIndex).match(/([a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)?|:[a-zA-Z0-9_]+)\s*$/);
-                    
                     if (funcMatch) {
                         let type = funcMatch[1];
-                        
-                        let argIndex = 0;
-                        let forwardDepth = 0;
-                        let fInString = false;
-                        let fStringChar = '';
-                        
-                        // Count commas moving forward to determine which parameter we are writing
+                        let argIndex = 0; let forwardDepth = 0; let fInString = false; let fStringChar = '';
                         for (let i = openParenIndex + 1; i < beforeCursor.length; i++) {
                             let char = beforeCursor[i];
-                            if (fInString) {
-                                if (char === fStringChar && beforeCursor[i-1] !== '\\') fInString = false;
-                            } else {
+                            if (fInString) { if (char === fStringChar && beforeCursor[i-1] !== '\\') fInString = false; }
+                            else {
                                 if (char === '"' || char === "'") { fInString = true; fStringChar = char; }
                                 else if (char === '(' || char === '{') forwardDepth++;
                                 else if (char === ')' || char === '}') forwardDepth--;
                                 else if (char === ',' && forwardDepth === 0) argIndex++;
                             }
                         }
-                        
                         const sigArray = paramSignatures[type];
                         if (sigArray && sigArray.length > 0) {
                             let html = `<span class="text-[#89b4fa]">${type}</span>( `;
                             for(let i = 0; i < sigArray.length; i++){
-                                // Extract just the parameter name (before colon) for inactive items
                                 let shortName = sigArray[i].split(':')[0];
-                                
-                                if(i === argIndex) {
-                                    // Highlight active parameter with its full description/type
-                                    html += `<span class="text-[#a6e3a1] font-bold px-1 bg-[#a6e3a1]/20 rounded border border-[#a6e3a1]/30">${sigArray[i]}</span>`;
-                                } else {
-                                    // Dim and shorten inactive parameters
-                                    html += `<span class="text-[#a6adc8]">${shortName}</span>`;
-                                }
+                                if(i === argIndex) html += `<span class="text-[#a6e3a1] font-bold px-1 bg-[#a6e3a1]/20 rounded border border-[#a6e3a1]/30">${sigArray[i]}</span>`;
+                                else html += `<span class="text-[#a6adc8]">${shortName}</span>`;
                                 if(i < sigArray.length-1) html += '<span class="text-[#6c7086]">, </span>';
                             }
                             html += ' )';
-                            
                             tooltipEl.innerHTML = html;
                             tooltipEl.style.left = (e.domEvent.clientX + 15) + 'px';
                             tooltipEl.style.top = (e.domEvent.clientY + 15) + 'px';
                             tooltipEl.classList.remove('hidden');
                             return;
                         } else if (sigArray && sigArray.length === 0) {
-                             // Handle parameter-less methods (like :hide())
                              tooltipEl.innerHTML = `<span class="text-[#89b4fa]">${type}</span>()`;
                              tooltipEl.style.left = (e.domEvent.clientX + 15) + 'px';
                              tooltipEl.style.top = (e.domEvent.clientY + 15) + 'px';
@@ -929,16 +748,9 @@ end)
                 }
                 tooltipEl.classList.add('hidden');
             });
-
-            document.getElementById('editor').addEventListener('mouseleave', () => {
-                tooltipEl.classList.add('hidden');
-            });
-
-            uiPrint("Environment ready. Press Ctrl+Enter to execute UI code.", "text-[#89b4fa]");
+            uiPrint("Environment ready. Origin is center (0,0).", "text-[#89b4fa]");
             setTimeout(runScript, 300);
         });
-
-        // --- Toolbar Utilities ---
 
         function formatCode() {
             let code = editor.getValue();
@@ -948,119 +760,60 @@ end)
             for (let line of lines) {
                 line = line.trim();
                 if (!line) { out.push(''); continue; }
-                
-                // Decrease indent before writing line
-                if (line.match(/^(end|elseif|else|until)\b/) || line.match(/^}/)) {
-                    indent = Math.max(0, indent - 1);
-                }
-                
+                if (line.match(/^(end|elseif|else|until)\b/) || line.match(/^}/)) indent = Math.max(0, indent - 1);
                 out.push('    '.repeat(indent) + line);
-                
-                // Increase indent for next line
-                if (line.match(/\bthen\b\s*(--.*)?$/) || 
-                    line.match(/\bdo\b\s*(--.*)?$/) || 
-                    line.match(/\bfunction.*[^{]\s*(--.*)?$/) || 
-                    line.match(/^else\b/) || 
-                    line.match(/^elseif\b/) || 
-                    line.match(/\brepeat\b\s*(--.*)?$/) ||
-                    line.match(/{\s*(--.*)?$/)) {
-                    indent++;
-                }
+                if (line.match(/\bthen\b\s*(--.*)?$/) || line.match(/\bdo\b\s*(--.*)?$/) || line.match(/\bfunction.*[^{]\s*(--.*)?$/) || line.match(/^else\b/) || line.match(/^elseif\b/) || line.match(/\brepeat\b\s*(--.*)?$/) || line.match(/{\s*(--.*)?$/)) indent++;
             }
             editor.setValue(out.join('\n'), -1);
-            uiPrint("Code neatly formatted.", "text-[#a6e3a1]");
         }
 
         function clearComments() {
             let code = editor.getValue();
-            let out = "";
-            let inString = false;
-            let stringChar = '';
-            
+            let out = ""; let inString = false; let stringChar = '';
             for (let i = 0; i < code.length; i++) {
                 if (inString) {
                     out += code[i];
-                    if (code[i] === '\\') {
-                        i++;
-                        if (i < code.length) out += code[i];
-                    } else if (code[i] === stringChar) {
-                        inString = false;
-                    }
+                    if (code[i] === '\\') { i++; if (i < code.length) out += code[i]; }
+                    else if (code[i] === stringChar) inString = false;
                 } else {
-                    if (code[i] === '"' || code[i] === "'") {
-                        inString = true;
-                        stringChar = code[i];
-                        out += code[i];
-                    } else if (code.substring(i, i + 4) === '--[[') {
+                    if (code[i] === '"' || code[i] === "'") { inString = true; stringChar = code[i]; out += code[i]; }
+                    else if (code.substring(i, i + 4) === '--[[') {
                         let endIdx = code.indexOf(']]', i + 4);
-                        if (endIdx === -1) endIdx = code.length;
-                        else endIdx += 2;
-
-                        let start = i;
-                        let removeBefore = 0;
-                        while (start - removeBefore - 1 >= 0 && (code[start - removeBefore - 1] === ' ' || code[start - removeBefore - 1] === '\t')) {
-                            removeBefore++;
-                        }
+                        if (endIdx === -1) endIdx = code.length; else endIdx += 2;
+                        let start = i; let removeBefore = 0;
+                        while (start - removeBefore - 1 >= 0 && (code[start - removeBefore - 1] === ' ' || code[start - removeBefore - 1] === '\t')) removeBefore++;
                         let isStartOfLine = (start - removeBefore === 0 || code[start - removeBefore - 1] === '\n');
-
                         let removeAfter = 0;
-                        if (code[endIdx] === '\r') removeAfter++;
-                        if (code[endIdx + removeAfter] === '\n') removeAfter++;
+                        if (code[endIdx] === '\r') removeAfter++; if (code[endIdx + removeAfter] === '\n') removeAfter++;
                         let isEndOfLine = (removeAfter > 0 || endIdx === code.length);
-
-                        if (isStartOfLine && isEndOfLine) {
-                            out = out.substring(0, out.length - removeBefore);
-                            i = endIdx + removeAfter - 1;
-                        } else {
-                            out = out.substring(0, out.length - removeBefore);
-                            i = endIdx - 1;
-                        }
+                        if (isStartOfLine && isEndOfLine) { out = out.substring(0, out.length - removeBefore); i = endIdx + removeAfter - 1; }
+                        else { out = out.substring(0, out.length - removeBefore); i = endIdx - 1; }
                     } else if (code.substring(i, i + 2) === '--') {
                         let endIdx = code.indexOf('\n', i + 2);
                         if (endIdx === -1) endIdx = code.length;
-
-                        let start = i;
-                        let removeBefore = 0;
-                        while (start - removeBefore - 1 >= 0 && (code[start - removeBefore - 1] === ' ' || code[start - removeBefore - 1] === '\t')) {
-                            removeBefore++;
-                        }
+                        let start = i; let removeBefore = 0;
+                        while (start - removeBefore - 1 >= 0 && (code[start - removeBefore - 1] === ' ' || code[start - removeBefore - 1] === '\t')) removeBefore++;
                         let isStartOfLine = (start - removeBefore === 0 || code[start - removeBefore - 1] === '\n');
-
-                        if (isStartOfLine) {
-                            out = out.substring(0, out.length - removeBefore);
-                            i = endIdx; 
-                        } else {
-                            out = out.substring(0, out.length - removeBefore);
-                            i = endIdx - 1; 
-                        }
-                    } else {
-                        out += code[i];
-                    }
+                        if (isStartOfLine) { out = out.substring(0, out.length - removeBefore); i = endIdx; }
+                        else { out = out.substring(0, out.length - removeBefore); i = endIdx - 1; }
+                    } else out += code[i];
                 }
             }
-            
             editor.setValue(out, -1);
-            uiPrint("Comments cleared safely.", "text-[#a6e3a1]");
         }
 
         function copyCode() {
             navigator.clipboard.writeText(editor.getValue());
-            uiPrint("Code copied to clipboard!", "text-[#a6e3a1]");
+            uiPrint("Code copied!", "text-[#a6e3a1]");
         }
 
-        // --- Execution Logic ---
         function runScript() {
             const btn = document.getElementById('btnPlay');
-            const originalHtml = btn.innerHTML;
-            btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Running...';
             btn.classList.add('opacity-80');
-            
             setTimeout(() => {
                 const code = editor.getValue();
                 try {
-                    // Prevent memory leak by only loading framework once
                     if (!frameworkLoaded) {
-                        // Extract Lua code directly from the hidden HTML tag (Bypasses OneCompiler minifier bugs)
                         const frameworkSetupLua = document.getElementById('framework-lua').textContent;
                         fengari.load(frameworkSetupLua)();
                         frameworkLoaded = true;
@@ -1069,29 +822,23 @@ end)
                 } catch(err) {
                     uiError(err.toString());
                 }
-                btn.innerHTML = originalHtml;
                 btn.classList.remove('opacity-80');
             }, 50);
         }
 
-        // --- Console Logic ---
         window.uiPrint = function(msg, customClass = "text-[#cdd6f4]") { appendLog(msg, customClass); }
         window.uiWarn = function(msg) { appendLog(`[WARN] ${msg}`, "text-[#f9e2af] bg-[#f9e2af]/10 border-l-2 border-[#f9e2af] pl-2"); }
         function uiError(msg) { appendLog(`[ERROR] ${msg}`, "text-[#f38ba8] bg-[#f38ba8]/10 border-l-2 border-[#f38ba8] pl-2 font-semibold"); }
-
         function appendLog(msg, classes) {
             const consoleDiv = document.getElementById('console-output');
             const line = document.createElement('div');
             const now = new Date();
             const timeStr = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
-            
             line.innerHTML = `<span class="text-[#6c7086] mr-2">[${timeStr}]</span> <span>${msg}</span>`;
             line.className = `py-1 border-b border-[#313244]/50 hover:bg-[#313244]/30 ${classes}`;
-            
             consoleDiv.appendChild(line);
             consoleDiv.scrollTop = consoleDiv.scrollHeight;
         }
-
         function clearConsole() { document.getElementById('console-output').innerHTML = ''; }
     </script>
 </body>
