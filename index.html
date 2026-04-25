@@ -40,6 +40,13 @@
 </head>
 <body class="bg-[#11111b] text-[#cdd6f4] h-screen flex flex-col font-sans overflow-hidden">
 
+    <!-- App Fullscreen Enforcer Overlay -->
+    <div id="fullscreen-overlay" class="fixed inset-0 bg-[#11111b] z-[9999] flex flex-col items-center justify-center cursor-pointer transition-opacity duration-300">
+        <i class="ph-bold ph-arrows-out text-6xl text-[#89b4fa] mb-4 animate-pulse"></i>
+        <h2 class="text-2xl font-bold text-[#cdd6f4]">Tap anywhere to enter App Mode</h2>
+        <p class="text-[#a6adc8] mt-2 text-sm">This editor requires fullscreen to function.</p>
+    </div>
+
     <!-- Store Lua Code Safely away from JS Minifiers (like OneCompiler's) -->
     <script id="framework-lua" type="text/plain">
 local js = require "js"
@@ -211,7 +218,7 @@ function _G.btn.new(size, pos, color, radius, text, textColor, layer)
     el.style.fontWeight = "bold"; el.style.display = "flex"
     el.style.alignItems = "center"; el.style.justifyContent = "center"
     el.style.boxShadow = "0 4px 6px -1px rgba(0,0,0,0.1)"
-    el.style.transition = "scale 0.1s, filter 0.1s" -- Replaced transform with modern scale property
+    el.style.transition = "scale 0.1s, filter 0.1s"
     
     local obj = { element = el, callbacks = {} }
     local holdEnabled = false
@@ -612,8 +619,13 @@ end)
                     <div class="flex items-center gap-2">
                         <i class="ph-fill ph-desktop text-[#cba6f7]"></i> UI Preview Screen
                     </div>
-                    <div class="text-xs text-[#6c7086] font-mono bg-[#11111b] px-2 py-0.5 rounded border border-[#313244]">
-                        x: 0, y: 0 (Bottom Left Origin)
+                    <div class="flex items-center gap-2">
+                        <div class="text-xs text-[#6c7086] font-mono bg-[#11111b] px-2 py-0.5 rounded border border-[#313244]">
+                            x: 0, y: 0 (Bottom Left Origin)
+                        </div>
+                        <button onclick="togglePreviewFullscreen()" class="p-1.5 bg-[#313244] hover:bg-[#45475a] text-[#cdd6f4] rounded-md transition-colors" title="Fullscreen Preview">
+                            <i class="ph-bold ph-corners-out text-sm"></i>
+                        </button>
                     </div>
                 </div>
                 <!-- The actual container where Lua script generates UI -->
@@ -636,6 +648,44 @@ end)
 
     <!-- Application Logic -->
     <script>
+        // Fullscreen Enforcement Logic
+        document.addEventListener("DOMContentLoaded", () => {
+            const overlay = document.getElementById('fullscreen-overlay');
+            
+            overlay.addEventListener('click', () => {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.warn(`Error attempting to enable fullscreen: ${err.message}`);
+                });
+            });
+
+            document.addEventListener('fullscreenchange', () => {
+                if (!document.fullscreenElement) {
+                    // Exited all fullscreen - Enforce App Mode
+                    overlay.classList.remove('hidden');
+                    overlay.classList.add('flex');
+                } else {
+                    // Entered fullscreen (App or Preview) - Hide Overlay
+                    overlay.classList.add('hidden');
+                    overlay.classList.remove('flex');
+                }
+            });
+        });
+
+        function togglePreviewFullscreen() {
+            const preview = document.getElementById('ui-preview');
+            if (document.fullscreenElement === preview) {
+                // If they are exiting preview fullscreen, automatically put them back in the main App fullscreen
+                document.exitFullscreen().then(() => {
+                    setTimeout(() => {
+                        document.documentElement.requestFullscreen().catch(e => console.warn(e));
+                    }, 50);
+                });
+            } else {
+                // Enter preview fullscreen
+                preview.requestFullscreen().catch(err => console.warn(err));
+            }
+        }
+
         // Setup JS-side Dragging (Optimized for Bottom-Left coordinates)
         window.makeElementDraggable = function(el) {
             let isDragging = false;
@@ -691,16 +741,29 @@ end)
         let editor;
         let frameworkLoaded = false;
 
-        // Tooltip logic constants
+        // Map components and methods to detailed parameter descriptions
         const paramSignatures = {
-            'frame': ['size', 'pos', 'color', 'radius', 'layer'],
-            'btn': ['size', 'pos', 'color', 'radius', 'text', 'textColor', 'layer'],
-            'label': ['size', 'pos', 'text', 'textColor', 'textSize', 'layer'],
-            'input': ['size', 'pos', 'placeholder', 'bgColor', 'textColor', 'radius', 'layer'],
-            'imageframe': ['size', 'pos', 'url', 'radius', 'layer'],
-            'progressbar': ['size', 'pos', 'bgColor', 'fillValue', 'fillColor', 'radius', 'layer'],
-            'toggle': ['size', 'pos', 'activeColor', 'inactiveColor', 'startState', 'layer'],
-            'dropdown': ['size', 'pos', 'options', 'bgColor', 'textColor', 'radius', 'layer']
+            'frame.new': ['size: {w, h}', 'pos: {x, y}', 'color: "#hex"|{r,g,b,a}', 'radius: number', 'layer: number'],
+            'btn.new': ['size: {w, h}', 'pos: {x, y}', 'color: "#hex"|{r,g,b,a}', 'radius: number', 'text: string', 'textColor: string', 'layer: number'],
+            'label.new': ['size: {w, h}', 'pos: {x, y}', 'text: string', 'textColor: string', 'textSize: number', 'layer: number'],
+            'input.new': ['size: {w, h}', 'pos: {x, y}', 'placeholder: string', 'bgColor: string', 'textColor: string', 'radius: number', 'layer: number'],
+            'imageframe.new': ['size: {w, h}', 'pos: {x, y}', 'url: string', 'radius: number', 'layer: number'],
+            'progressbar.new': ['size: {w, h}', 'pos: {x, y}', 'bgColor: string', 'fillValue: 0-1', 'fillColor: string', 'radius: number', 'layer: number'],
+            'toggle.new': ['size: {w, h}', 'pos: {x, y}', 'activeColor: string', 'inactiveColor: string', 'startState: boolean', 'layer: number'],
+            'dropdown.new': ['size: {w, h}', 'pos: {x, y}', 'options: {"a", "b"}', 'bgColor: string', 'textColor: string', 'radius: number', 'layer: number'],
+            // Methods mapping
+            ':setTextPlacement': ['centered: boolean', 'offsets: {x, y}'],
+            ':setHold': ['enabled: boolean', 'duration: seconds'],
+            ':setVisible': ['visible: boolean'],
+            ':hide': [],
+            ':show': [],
+            ':setDraggable': ['draggable: boolean'],
+            ':setValue': ['value: 0-1'],
+            ':setSource': ['url: string'],
+            ':setText': ['text: string'],
+            ':onClick': ['callback: function()'],
+            ':onChange': ['callback: function(state)'],
+            ':onSelect': ['callback: function(value)']
         };
 
         // --- Initialization ---
@@ -736,44 +799,95 @@ end)
                 const line = editor.session.getLine(pos.row);
                 
                 const beforeCursor = line.substring(0, pos.column);
-                const match = beforeCursor.match(/(frame|btn|label|input|imageframe|progressbar|toggle|dropdown)\.new\s*\([^)]*$/);
                 
-                if (match) {
-                    const type = match[1];
-                    const argsStr = match[0].substring(match[0].indexOf('(') + 1);
-                    
-                    let argIndex = 0;
-                    let depth = 0;
-                    let inString = false;
-                    let stringChar = '';
-                    
-                    for (let i = 0; i < argsStr.length; i++) {
-                        let char = argsStr[i];
-                        if (inString) {
-                            if (char === stringChar) inString = false;
+                let depth = 0;
+                let foundOpenParen = false;
+                let openParenIndex = -1;
+                let inString = false;
+                let stringChar = '';
+                
+                // Parse backward to find the unclosed parenthesis for the current scope
+                for (let i = beforeCursor.length - 1; i >= 0; i--) {
+                    let char = beforeCursor[i];
+                    if (char === '"' || char === "'") {
+                        if (!inString) {
+                            inString = true;
+                            stringChar = char;
+                        } else if (char === stringChar && beforeCursor[i-1] !== '\\') {
+                            inString = false;
+                        }
+                        continue;
+                    }
+                    if (inString) continue;
+
+                    if (char === ')') depth++;
+                    else if (char === '(') {
+                        if (depth === 0) {
+                            foundOpenParen = true;
+                            openParenIndex = i;
+                            break;
                         } else {
-                            if (char === '"' || char === "'") { inString = true; stringChar = char; }
-                            else if (char === '{') depth++;
-                            else if (char === '}') depth--;
-                            else if (char === ',' && depth === 0) argIndex++;
+                            depth--;
                         }
                     }
+                }
+
+                if (foundOpenParen) {
+                    // Extract the function or method name just before the open parenthesis
+                    let funcMatch = beforeCursor.substring(0, openParenIndex).match(/([a-zA-Z]+\.new|:[a-zA-Z]+)\s*$/);
                     
-                    const sigArray = paramSignatures[type];
-                    if (sigArray && argIndex < sigArray.length) {
-                        let html = `<span class="text-[#89b4fa]">${type}.new</span>( `;
-                        for(let i=0; i<sigArray.length; i++){
-                            if(i === argIndex) html += `<span class="text-[#a6e3a1] font-bold underline px-1 bg-[#a6e3a1]/20 rounded">${sigArray[i]}</span>`;
-                            else html += `<span class="text-[#a6adc8]">${sigArray[i]}</span>`;
-                            if(i < sigArray.length-1) html += '<span class="text-[#6c7086]">, </span>';
-                        }
-                        html += ' )';
+                    if (funcMatch) {
+                        let type = funcMatch[1];
                         
-                        tooltipEl.innerHTML = html;
-                        tooltipEl.style.left = (e.domEvent.clientX + 15) + 'px';
-                        tooltipEl.style.top = (e.domEvent.clientY + 15) + 'px';
-                        tooltipEl.classList.remove('hidden');
-                        return;
+                        let argIndex = 0;
+                        let forwardDepth = 0;
+                        let fInString = false;
+                        let fStringChar = '';
+                        
+                        // Count commas moving forward to determine which parameter we are writing
+                        for (let i = openParenIndex + 1; i < beforeCursor.length; i++) {
+                            let char = beforeCursor[i];
+                            if (fInString) {
+                                if (char === fStringChar && beforeCursor[i-1] !== '\\') fInString = false;
+                            } else {
+                                if (char === '"' || char === "'") { fInString = true; fStringChar = char; }
+                                else if (char === '(' || char === '{') forwardDepth++;
+                                else if (char === ')' || char === '}') forwardDepth--;
+                                else if (char === ',' && forwardDepth === 0) argIndex++;
+                            }
+                        }
+                        
+                        const sigArray = paramSignatures[type];
+                        if (sigArray && sigArray.length > 0) {
+                            let html = `<span class="text-[#89b4fa]">${type}</span>( `;
+                            for(let i = 0; i < sigArray.length; i++){
+                                // Extract just the parameter name (before colon) for inactive items
+                                let shortName = sigArray[i].split(':')[0];
+                                
+                                if(i === argIndex) {
+                                    // Highlight active parameter with its full description/type
+                                    html += `<span class="text-[#a6e3a1] font-bold px-1 bg-[#a6e3a1]/20 rounded border border-[#a6e3a1]/30">${sigArray[i]}</span>`;
+                                } else {
+                                    // Dim and shorten inactive parameters
+                                    html += `<span class="text-[#a6adc8]">${shortName}</span>`;
+                                }
+                                if(i < sigArray.length-1) html += '<span class="text-[#6c7086]">, </span>';
+                            }
+                            html += ' )';
+                            
+                            tooltipEl.innerHTML = html;
+                            tooltipEl.style.left = (e.domEvent.clientX + 15) + 'px';
+                            tooltipEl.style.top = (e.domEvent.clientY + 15) + 'px';
+                            tooltipEl.classList.remove('hidden');
+                            return;
+                        } else if (sigArray && sigArray.length === 0) {
+                             // Handle parameter-less methods (like :hide())
+                             tooltipEl.innerHTML = `<span class="text-[#89b4fa]">${type}</span>()`;
+                             tooltipEl.style.left = (e.domEvent.clientX + 15) + 'px';
+                             tooltipEl.style.top = (e.domEvent.clientY + 15) + 'px';
+                             tooltipEl.classList.remove('hidden');
+                             return;
+                        }
                     }
                 }
                 tooltipEl.classList.add('hidden');
