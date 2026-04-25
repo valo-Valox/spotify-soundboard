@@ -1,351 +1,947 @@
 <!DOCTYPE html>
-<html lang="fi">
+<html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Karttakoe — Maakunnat ja Kohteet</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<style>
-  :root { color-scheme: light dark; }
-  body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #e2e8f0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-  
-  /* HEADER */
-  header {
-    background: #1e293b; color: white; padding: 10px 15px; 
-    display: flex; flex-direction: column; gap: 10px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); z-index: 1000;
-  }
-  .header-top { display: flex; justify-content: space-between; align-items: center; }
-  h1 { margin: 0; font-size: 1.2rem; font-weight: 700; }
-  
-  /* CONTROLS */
-  .controls { display: flex; gap: 10px; flex-wrap: wrap; }
-  select, button {
-    padding: 8px 12px; border-radius: 6px; border: 1px solid #475569;
-    font-size: 14px; font-weight: 600; cursor: pointer;
-  }
-  select { background: #334155; color: white; flex: 1; min-width: 150px; }
-  button { background: #3b82f6; color: white; border: none; flex: 1; }
-  button:hover { background: #2563eb; }
-  button#resetBtn { background: #ef4444; flex: 0 0 auto; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lua UI Editor</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Ace Code Editor -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.3/ace.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.3/ext-language_tools.min.js"></script>
+    
+    <!-- Fengari Lua VM for Web -->
+    <script src="https://cdn.jsdelivr.net/npm/fengari-web@0.1.4/dist/fengari-web.js"></script>
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
-  /* GAME INFO */
-  .info-bar {
-    background: #ffffff; color: #334155; padding: 12px;
-    display: flex; justify-content: space-between; align-items: center;
-    border-bottom: 1px solid #cbd5e1;
-  }
-  #question { font-size: 1.1rem; font-weight: 800; color: #0f172a; }
-  #score { font-weight: 700; color: #2563eb; background: #eff6ff; padding: 4px 10px; border-radius: 12px; }
+    <!-- html2canvas for Screenshot Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <style>
+        /* Custom scrollbars */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #11111b; }
+        ::-webkit-scrollbar-thumb { background: #313244; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #45475a; }
+        
+        /* Clean background for the UI preview canvas */
+        .preview-bg { background-color: #1e1e2e; }
 
-  /* MAP */
-  #map { flex: 1; width: 100%; z-index: 1; background: #f8fafc; }
-
-  /* MARKER STYLES */
-  .leaflet-marker-icon {
-    will-change: transform; 
-    transition: transform 0.1s linear;
-  }
-
-  .marker-std {
-    display: flex; align-items: center; justify-content: center;
-    width: 28px; height: 28px; border-radius: 50%;
-    background: #0ea5e9; border: 2px solid #ffffff;
-    color: white; font-weight: 700; font-size: 13px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2); 
-  }
-  .marker-province {
-    display: flex; align-items: center; justify-content: center;
-    width: auto; padding: 4px 8px; border-radius: 12px;
-    background: rgba(255, 255, 255, 0.95); border: 2px solid #64748b;
-    color: #0f172a; font-weight: 700; font-size: 12px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.15);
-    white-space: nowrap;
-  }
-  .marker-correct { background: #22c55e !important; border-color: #bbf7d0 !important; transform: scale(1.15); z-index: 1000; }
-  .marker-wrong { background: #ef4444 !important; border-color: #fecaca !important; }
-
-  /* HIDE Countries outside Finland (Visual Trick using bounds/whiteout if needed, but here using focus) */
-  .leaflet-container { background: #f1f5f9; }
-
-</style>
+        /* Prevent text selection in preview while dragging/clicking */
+        #ui-preview { user-select: none; }
+        
+        /* But allow selection inside text inputs */
+        #ui-preview input { user-select: text; }
+    </style>
 </head>
-<body>
+<body class="bg-[#11111b] text-[#cdd6f4] h-screen flex flex-col font-sans overflow-hidden">
 
-<header>
-  <div class="header-top">
-    <h1>Karttakoe</h1>
-    <button id="resetBtn" title="Nollaa pisteet">↻</button>
-  </div>
-  <div class="controls">
-    <select id="modeSelect">
-      <option value="1-30">Kohteet (Muut)</option>
-      <option value="centers">Maakuntakeskukset</option>
-      <option value="regions">Maakunnat 1–19</option>
-    </select>
-    <button id="nextBtn">Seuraava Kysymys</button>
-  </div>
-</header>
+    <!-- Store Lua Code Safely away from JS Minifiers (like OneCompiler's) -->
+    <script id="framework-lua" type="text/plain">
+local js = require "js"
+local window = js.global
+local document = window.document
+local previewArea = document:getElementById("ui-preview")
 
-<div class="info-bar">
-  <div id="question">Valitse tila aloittaaksesi</div>
-  <div id="score">0 / 0</div>
-</div>
+_G.print = function(...)
+    local args = {...}
+    local str = ""
+    for i, v in ipairs(args) do str = str .. tostring(v) .. "  " end
+    window:uiPrint(str)
+end
 
-<div id="map"></div>
+_G.warn = function(...)
+    local args = {...}
+    local str = ""
+    for i, v in ipairs(args) do str = str .. tostring(v) .. "  " end
+    window:uiWarn(str)
+end
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-// --- DATASETS ---
+_G.clearUI = function()
+    previewArea.innerHTML = ""
+end
 
-// 1. MAAKUNTAKESKUKSET (Provincial Centers 1-19)
-// These cover many major cities.
-const data_centers = [
-  {id:1, name:"Maarianhamina", lat:60.097, lon:19.934},
-  {id:2, name:"Lappeenranta", lat:61.054, lon:28.188},
-  {id:3, name:"Seinäjoki", lat:62.787, lon:22.840},
-  {id:4, name:"Mikkeli", lat:61.688, lon:27.272},
-  {id:5, name:"Kajaani", lat:64.225, lon:27.733},
-  {id:6, name:"Hämeenlinna", lat:60.996, lon:24.464},
-  {id:7, name:"Kokkola", lat:63.838, lon:23.132},
-  {id:8, name:"Jyväskylä", lat:62.242, lon:25.747},
-  {id:9, name:"Kouvola", lat:60.870, lon:26.700},
-  {id:10, name:"Rovaniemi", lat:66.501, lon:25.728},
-  {id:11, name:"Tampere", lat:61.497, lon:23.760},
-  {id:12, name:"Vaasa", lat:63.095, lon:21.616},
-  {id:13, name:"Joensuu", lat:62.601, lon:29.763},
-  {id:14, name:"Oulu", lat:65.012, lon:25.468},
-  {id:15, name:"Kuopio", lat:62.892, lon:27.677},
-  {id:16, name:"Lahti", lat:60.982, lon:25.661},
-  {id:17, name:"Pori", lat:61.485, lon:21.797},
-  {id:18, name:"Helsinki", lat:60.169, lon:24.938},
-  {id:19, name:"Turku", lat:60.451, lon:22.266}
-];
+local function parseCoord(c, defW, defH)
+    if type(c) == "table" then 
+        return (c[1] or defW).."px", (c[2] or defH).."px" 
+    elseif type(c) == "number" then
+        return c.."px", c.."px"
+    end
+    return defW.."px", defH.."px"
+end
 
-// 2. MAAKUNNAT (Provinces 1-19)
-const data_regions = [
-  {id:1, name:"Ahvenanmaa", lat:60.2, lon:20.0},
-  {id:2, name:"Etelä-Karjala", lat:61.0, lon:28.0},
-  {id:3, name:"Etelä-Pohjanmaa", lat:62.8, lon:23.0},
-  {id:4, name:"Etelä-Savo", lat:62.0, lon:27.5},
-  {id:5, name:"Kainuu", lat:64.5, lon:28.5},
-  {id:6, name:"Kanta-Häme", lat:60.9, lon:24.0},
-  {id:7, name:"Keski-Pohjanmaa", lat:63.6, lon:24.0},
-  {id:8, name:"Keski-Suomi", lat:62.5, lon:25.5},
-  {id:9, name:"Kymenlaakso", lat:60.8, lon:26.8},
-  {id:10, name:"Lappi", lat:67.0, lon:26.0},
-  {id:11, name:"Pirkanmaa", lat:61.7, lon:23.5},
-  {id:12, name:"Pohjanmaa", lat:63.0, lon:22.0},
-  {id:13, name:"Pohjois-Karjala", lat:63.0, lon:30.0},
-  {id:14, name:"Pohjois-Pohjanmaa", lat:65.0, lon:26.5},
-  {id:15, name:"Pohjois-Savo", lat:63.2, lon:27.0},
-  {id:16, name:"Päijät-Häme", lat:61.2, lon:25.5},
-  {id:17, name:"Satakunta", lat:61.5, lon:22.0},
-  {id:18, name:"Uusimaa", lat:60.5, lon:25.0},
-  {id:19, name:"Varsinais-Suomi", lat:60.5, lon:22.5}
-];
+local function parseColor(c, defColor)
+    if type(c) == "table" then 
+        local r = math.floor(tonumber(c[1]) or 255)
+        local g = math.floor(tonumber(c[2]) or 255)
+        local b = math.floor(tonumber(c[3]) or 255)
+        local a = tonumber(c[4]) or 1
+        return "rgba("..r..","..g..","..b..","..a..")" 
+    end
+    if type(c) == "string" then return c end
+    return defColor or "transparent"
+end
 
-// 3. KOHTEET 1-30 (Filtered)
-// Only items from the 1-30 list that are NOT in data_centers
-const full_1_30 = [
-  {id:1,  name:"Enontekiö",      lat:68.385, lon:23.635},
-  {id:2,  name:"Helsinki",       lat:60.169, lon:24.938}, // In centers
-  {id:3,  name:"Inari",          lat:68.906, lon:27.027},
-  {id:4,  name:"Jyväskylä",      lat:62.242, lon:25.747}, // In centers
-  {id:5,  name:"Kajaani",        lat:64.225, lon:27.733}, // In centers
-  {id:6,  name:"Kittilä",        lat:67.651, lon:24.908},
-  {id:7,  name:"Kotka",          lat:60.466, lon:26.941},
-  {id:8,  name:"Kuopio",         lat:62.892, lon:27.677}, // In centers
-  {id:9,  name:"Kuusamo",        lat:65.964, lon:29.188},
-  {id:10, name:"Lappeenranta",   lat:61.054, lon:28.188}, // In centers
-  {id:11, name:"Maarianhamina",  lat:60.097, lon:19.934}, // In centers
-  {id:12, name:"Oulu",           lat:65.012, lon:25.468}, // In centers
-  {id:13, name:"Pori",           lat:61.485, lon:21.797}, // In centers
-  {id:14, name:"Porvoo",         lat:60.393, lon:25.665},
-  {id:15, name:"Rauma",          lat:61.127, lon:21.511},
-  {id:16, name:"Rovaniemi",      lat:66.501, lon:25.728}, // In centers
-  {id:17, name:"Salo",           lat:60.383, lon:23.129},
-  {id:18, name:"Savonlinna",     lat:61.868, lon:28.886},
-  {id:19, name:"Seinäjoki",      lat:62.787, lon:22.840}, // In centers
-  {id:20, name:"Tampere",        lat:61.497, lon:23.760}, // In centers
-  {id:21, name:"Utsjoki",        lat:69.908, lon:27.027},
-  {id:22, name:"Vaasa",          lat:63.095, lon:21.616}, // In centers
-  {id:23, name:"Turku",          lat:60.451, lon:22.266}, // In centers
-  {id:24, name:"Joensuu",        lat:62.601, lon:29.763}, // In centers
-  {id:25, name:"Lahti",          lat:60.982, lon:25.661}, // In centers
-  {id:26, name:"Hailuoto",       lat:65.009, lon:24.715},
-  {id:27, name:"Perämeri",       lat:65.200, lon:24.000, type:'sea'},
-  {id:28, name:"Saaristomeri",   lat:60.200, lon:21.500, type:'sea'},
-  {id:29, name:"Selkämeri",      lat:61.700, lon:20.500, type:'sea'},
-  {id:30, name:"Suomenlahti",    lat:59.900, lon:25.500, type:'sea'}
-];
+local function makeDraggable(el) window:makeElementDraggable(el) end
 
-// Filtering Logic
-const centerNames = new Set(data_centers.map(c => c.name));
-const data_1_30_filtered = full_1_30.filter(item => !centerNames.has(item.name));
+-- Helper to add .hide() / .show() / .setVisible() to all components
+local function addVisibilityMethods(obj, el)
+    local initialDisplay = el.style.display
+    function obj:setVisible(visible)
+        if visible == false then
+            el.style.display = "none"
+        else
+            el.style.display = initialDisplay
+        end
+    end
+    function obj:hide() self:setVisible(false) end
+    function obj:show() self:setVisible(true) end
+end
 
-// --- APP STATE ---
-let currentMode = '1-30';
-let currentData = data_1_30_filtered;
-let currentTarget = null;
-let score = 0;
-let attempts = 0;
-let isWaiting = false;
-let markers = {};
-let regionLayer = null;
+local function addTextMethods(obj, el, textSpan)
+    function obj:setText(newText) textSpan.innerText = newText end
+    function obj:setTextPlacement(centered, offsets)
+        el.style.justifyContent = "center"
+        el.style.alignItems = "center"
+        if centered then
+            textSpan.style.translate = "0px 0px"
+        else
+            local ox, oy = 0, 0
+            if type(offsets) == "table" then
+                ox = offsets[1] or 0
+                oy = offsets[2] or 0
+            end
+            
+            -- Invert Y for offsets so Positive means UP (matching component origin coords)
+            if type(oy) == "number" then oy = -oy end
+            
+            if type(ox) == "number" then ox = ox .. "px" end
+            if type(oy) == "number" then oy = oy .. "px" end
+            textSpan.style.translate = ox .. " " .. oy
+        end
+    end
+end
 
-// --- INITIALIZE MAP ---
-const map = L.map('map', {
-  center: [65.0, 26.0],
-  zoom: 5,
-  minZoom: 4,
-  maxZoom: 10,
-  zoomControl: false,
-  fadeAnimation: true,
-  markerZoomAnimation: true,
-  preferCanvas: true,
-  maxBounds: [
-    [58.0, 18.0],
-    [71.0, 33.0]
-  ],
-  maxBoundsViscosity: 1.0
-});
+-- ==========================================
+-- Frame
+-- ==========================================
+_G.frame = {}
+function _G.frame.new(size, pos, color, radius, layer)
+    local el = document:createElement("div")
+    el.style.position = "absolute"
+    local w, h = parseCoord(size, 100, 100)
+    el.style.width = w; el.style.height = h
+    
+    -- Bottom-Left Origin + Center Translate
+    local x, y = parseCoord(pos, 0, 0)
+    el.style.left = x; el.style.bottom = y
+    el.style.translate = "-50% 50%"
+    
+    el.style.backgroundColor = parseColor(color, "transparent")
+    el.style.borderRadius = (radius or 0).."px"
+    el.style.zIndex = tostring(layer or 1)
+    previewArea:appendChild(el)
+    local obj = { element = el }
+    function obj:setDraggable(d) if d then makeDraggable(el) end end
+    addVisibilityMethods(obj, el)
+    return obj
+end
 
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png', {
-  attribution: '&copy; CARTO',
-}).addTo(map);
+-- ==========================================
+-- Image Frame
+-- ==========================================
+_G.imageframe = {}
+function _G.imageframe.new(size, pos, url, radius, layer)
+    local el = document:createElement("div")
+    el.style.position = "absolute"
+    local w, h = parseCoord(size, 100, 100)
+    el.style.width = w; el.style.height = h
+    
+    -- Bottom-Left Origin + Center Translate
+    local x, y = parseCoord(pos, 0, 0)
+    el.style.left = x; el.style.bottom = y
+    el.style.translate = "-50% 50%"
+    
+    el.style.borderRadius = (radius or 0).."px"
+    el.style.zIndex = tostring(layer or 1)
+    el.style.backgroundColor = "transparent"
+    el.style.backgroundSize = "cover"
+    el.style.backgroundPosition = "center"
+    el.style.backgroundRepeat = "no-repeat"
+    if url then el.style.backgroundImage = "url('"..url.."')" end
+    previewArea:appendChild(el)
+    
+    local obj = { element = el }
+    function obj:setSource(newUrl) el.style.backgroundImage = "url('"..newUrl.."')" end
+    function obj:setDraggable(d) if d then makeDraggable(el) end end
+    addVisibilityMethods(obj, el)
+    return obj
+end
 
-L.control.zoom({ position: 'topright' }).addTo(map);
+-- ==========================================
+-- Button
+-- ==========================================
+_G.btn = {}
+function _G.btn.new(size, pos, color, radius, text, textColor, layer)
+    local el = document:createElement("button")
+    el.style.position = "absolute"
+    local w, h = parseCoord(size, 150, 50)
+    el.style.width = w; el.style.height = h
+    
+    -- Bottom-Left Origin + Center Translate
+    local x, y = parseCoord(pos, 0, 0)
+    el.style.left = x; el.style.bottom = y
+    el.style.translate = "-50% 50%"
+    
+    el.style.backgroundColor = parseColor(color, "#313244")
+    el.style.borderRadius = (radius or 0).."px"
+    el.style.zIndex = tostring(layer or 1)
+    
+    local textSpan = document:createElement("span")
+    textSpan.innerText = text or ""
+    textSpan.style.pointerEvents = "none"
+    el:appendChild(textSpan)
+    
+    el.style.border = "none"; el.style.cursor = "pointer"
+    el.style.color = parseColor(textColor, "#ffffff"); el.style.fontFamily = "sans-serif"
+    el.style.fontWeight = "bold"; el.style.display = "flex"
+    el.style.alignItems = "center"; el.style.justifyContent = "center"
+    el.style.boxShadow = "0 4px 6px -1px rgba(0,0,0,0.1)"
+    el.style.transition = "scale 0.1s, filter 0.1s" -- Replaced transform with modern scale property
+    
+    local obj = { element = el, callbacks = {} }
+    local holdEnabled = false
+    local holdDuration = 1000
+    local holdTimer = nil
+    
+    local function clearHold()
+        if holdTimer then
+            window:clearTimeout(holdTimer)
+            holdTimer = nil
+        end
+        el.style.scale = "1"
+    end
 
-// --- LOAD REGION BORDERS ---
-async function loadRegionBorders() {
-    try {
-        const response = await fetch('https://raw.githubusercontent.com/geohako/suomi-geojson/master/maakunnat/maakunnat_2024_miljoona.geojson');
-        if (!response.ok) throw new Error('Network error');
-        const geojson = await response.json();
+    el:addEventListener("mousedown", function() 
+        el.style.scale = "0.95" 
+        if holdEnabled then
+            holdTimer = window:setTimeout(function()
+                holdTimer = nil
+                el.style.scale = "1" 
+                for i, cb in ipairs(obj.callbacks) do cb() end
+            end, holdDuration)
+        end
+    end)
+    el:addEventListener("mouseup", function() clearHold() end)
+    el:addEventListener("mouseleave", function() 
+        clearHold()
+        el.style.filter = "brightness(1)" 
+    end)
+    el:addEventListener("mouseenter", function() el.style.filter = "brightness(1.1)" end)
+    
+    el:addEventListener("click", function()
+        if not holdEnabled then
+            for i, cb in ipairs(obj.callbacks) do cb() end
+        end
+    end)
 
-        // Style the regions: Slate border, subtle fill
-        const style = {
-            color: "#64748b",
-            weight: 1.5,
-            opacity: 1,
-            fillColor: "#e2e8f0",
-            fillOpacity: 0.1
+    previewArea:appendChild(el)
+    
+    function obj:onClick(cb) table.insert(obj.callbacks, cb) end
+    function obj:setDraggable(d) if d then makeDraggable(el) end end
+    
+    function obj:setHold(enabled, duration)
+        holdEnabled = enabled and true or false
+        if type(duration) == "number" then
+            holdDuration = duration * 1000
+        end
+    end
+    
+    addTextMethods(obj, el, textSpan)
+    addVisibilityMethods(obj, el)
+    return obj
+end
+
+-- ==========================================
+-- Label
+-- ==========================================
+_G.label = {}
+function _G.label.new(size, pos, text, textColor, textSize, layer)
+    local el = document:createElement("div")
+    el.style.position = "absolute"
+    local w, h = parseCoord(size, 100, 30)
+    el.style.width = w; el.style.height = h
+    
+    -- Bottom-Left Origin + Center Translate
+    local x, y = parseCoord(pos, 0, 0)
+    el.style.left = x; el.style.bottom = y
+    el.style.translate = "-50% 50%"
+    
+    el.style.color = parseColor(textColor, "#ffffff")
+    el.style.fontSize = (textSize or 14).."px"
+    el.style.zIndex = tostring(layer or 1)
+    
+    local textSpan = document:createElement("span")
+    textSpan.innerText = text or "Label"
+    el:appendChild(textSpan)
+    
+    el.style.fontFamily = "sans-serif"; el.style.display = "flex"
+    el.style.alignItems = "center"; el.style.justifyContent = "center"
+    
+    previewArea:appendChild(el)
+    local obj = { element = el }
+    function obj:setDraggable(d) if d then makeDraggable(el) end end
+    addTextMethods(obj, el, textSpan)
+    addVisibilityMethods(obj, el)
+    return obj
+end
+
+-- ==========================================
+-- Text Input
+-- ==========================================
+_G.input = {}
+function _G.input.new(size, pos, placeholder, bgColor, textColor, radius, layer)
+    local el = document:createElement("input")
+    el.type = "text"
+    el.style.position = "absolute"
+    local w, h = parseCoord(size, 150, 40)
+    el.style.width = w; el.style.height = h
+    
+    -- Bottom-Left Origin + Center Translate
+    local x, y = parseCoord(pos, 0, 0)
+    el.style.left = x; el.style.bottom = y
+    el.style.translate = "-50% 50%"
+    
+    el.placeholder = placeholder or "Enter text..."
+    el.style.backgroundColor = parseColor(bgColor, "#11111b")
+    el.style.color = parseColor(textColor, "#cdd6f4")
+    el.style.borderRadius = (radius or 4).."px"
+    el.style.zIndex = tostring(layer or 1)
+    el.style.border = "1px solid #313244"
+    el.style.padding = "0 10px"
+    el.style.outline = "none"
+    el.style.fontFamily = "sans-serif"
+    
+    el:addEventListener("focus", function() el.style.borderColor = "#89b4fa" end)
+    el:addEventListener("blur", function() el.style.borderColor = "#313244" end)
+    
+    previewArea:appendChild(el)
+    local obj = { element = el }
+    function obj:getText() return el.value end
+    function obj:setText(t) el.value = t end
+    function obj:setDraggable(d) if d then makeDraggable(el) end end
+    addVisibilityMethods(obj, el)
+    return obj
+end
+
+-- ==========================================
+-- Progress Bar
+-- ==========================================
+_G.progressbar = {}
+function _G.progressbar.new(size, pos, bgColor, fillValue, fillColor, radius, layer)
+    local el = document:createElement("div")
+    el.style.position = "absolute"
+    local w, h = parseCoord(size, 200, 20)
+    el.style.width = w; el.style.height = h
+    
+    -- Bottom-Left Origin + Center Translate
+    local x, y = parseCoord(pos, 0, 0)
+    el.style.left = x; el.style.bottom = y
+    el.style.translate = "-50% 50%"
+    
+    el.style.backgroundColor = parseColor(bgColor, "#11111b")
+    el.style.borderRadius = (radius or 8).."px"
+    el.style.overflow = "hidden"
+    el.style.zIndex = tostring(layer or 1)
+
+    local fillEl = document:createElement("div")
+    fillEl.style.height = "100%"
+    fillEl.style.backgroundColor = parseColor(fillColor, "#a6e3a1")
+    
+    local pct = (tonumber(fillValue) or 0) * 100
+    fillEl.style.width = math.max(0, math.min(100, pct)) .. "%"
+    fillEl.style.transition = "width 0.3s ease"
+    el:appendChild(fillEl)
+
+    previewArea:appendChild(el)
+    local obj = { element = el, fillEl = fillEl }
+    function obj:setValue(val) 
+        local v = (tonumber(val) or 0) * 100
+        fillEl.style.width = math.max(0, math.min(100, v)) .. "%" 
+    end
+    function obj:setDraggable(d) if d then makeDraggable(el) end end
+    addVisibilityMethods(obj, el)
+    return obj
+end
+
+-- ==========================================
+-- Toggle Switch
+-- ==========================================
+_G.toggle = {}
+function _G.toggle.new(size, pos, activeColor, inactiveColor, startState, layer)
+    local el = document:createElement("div")
+    el.style.position = "absolute"
+    local w, h = parseCoord(size, 50, 26)
+    el.style.width = w; el.style.height = h
+    
+    -- Bottom-Left Origin + Center Translate
+    local x, y = parseCoord(pos, 0, 0)
+    el.style.left = x; el.style.bottom = y
+    el.style.translate = "-50% 50%"
+    
+    el.style.borderRadius = "999px"
+    el.style.cursor = "pointer"
+    el.style.zIndex = tostring(layer or 1)
+    el.style.transition = "background-color 0.3s"
+
+    local ac = parseColor(activeColor, "#a6e3a1")
+    local ic = parseColor(inactiveColor, "#45475a")
+    local state = startState and true or false
+    el.style.backgroundColor = state and ac or ic
+
+    local hNum = tonumber(string.match(h, "%d+")) or 26
+    local wNum = tonumber(string.match(w, "%d+")) or 50
+    local knobSize = (hNum - 4) .. "px"
+    local knobRight = (wNum - hNum + 2) .. "px"
+
+    local knob = document:createElement("div")
+    knob.style.position = "absolute"
+    knob.style.top = "2px"
+    knob.style.width = knobSize
+    knob.style.height = knobSize
+    knob.style.backgroundColor = "#ffffff"
+    knob.style.borderRadius = "50%"
+    knob.style.transition = "left 0.3s"
+    knob.style.left = state and knobRight or "2px"
+    knob.style.boxShadow = "0 1px 3px rgba(0,0,0,0.3)"
+    el:appendChild(knob)
+
+    previewArea:appendChild(el)
+
+    local obj = { element = el, state = state, callbacks = {} }
+    el:addEventListener("click", function()
+        obj.state = not obj.state
+        el.style.backgroundColor = obj.state and ac or ic
+        knob.style.left = obj.state and knobRight or "2px"
+        for i, cb in ipairs(obj.callbacks) do cb(obj.state) end
+    end)
+
+    function obj:onChange(cb) table.insert(obj.callbacks, cb) end
+    function obj:getState() return self.state end
+    function obj:setState(s)
+        self.state = s and true or false
+        el.style.backgroundColor = self.state and ac or ic
+        knob.style.left = self.state and knobRight or "2px"
+    end
+    function obj:setDraggable(d) if d then makeDraggable(el) end end
+    addVisibilityMethods(obj, el)
+    return obj
+end
+
+-- ==========================================
+-- Dropdown Menu
+-- ==========================================
+_G.dropdown = {}
+function _G.dropdown.new(size, pos, options, bgColor, textColor, radius, layer)
+    local el = document:createElement("select")
+    el.style.position = "absolute"
+    local w, h = parseCoord(size, 150, 40)
+    el.style.width = w; el.style.height = h
+    
+    -- Bottom-Left Origin + Center Translate
+    local x, y = parseCoord(pos, 0, 0)
+    el.style.left = x; el.style.bottom = y
+    el.style.translate = "-50% 50%"
+    
+    el.style.backgroundColor = parseColor(bgColor, "#181825")
+    el.style.color = parseColor(textColor, "#cdd6f4")
+    el.style.borderRadius = (radius or 4).."px"
+    el.style.zIndex = tostring(layer or 1)
+    el.style.border = "1px solid #313244"
+    el.style.padding = "0 10px"
+    el.style.outline = "none"
+    el.style.fontFamily = "sans-serif"
+    el.style.cursor = "pointer"
+
+    if type(options) == "table" then
+        for i, opt in ipairs(options) do
+            local optionEl = document:createElement("option")
+            optionEl.value = tostring(opt)
+            optionEl.innerText = tostring(opt)
+            el:appendChild(optionEl)
+        end
+    end
+
+    previewArea:appendChild(el)
+    local obj = { element = el, callbacks = {} }
+    el:addEventListener("change", function()
+        for i, cb in ipairs(obj.callbacks) do cb(el.value) end
+    end)
+    function obj:onSelect(cb) table.insert(obj.callbacks, cb) end
+    function obj:getValue() return el.value end
+    function obj:setDraggable(d) if d then makeDraggable(el) end end
+    addVisibilityMethods(obj, el)
+    return obj
+end
+    </script>
+
+    <!-- Default User Code inside a script block to protect it -->
+    <script id="default-lua" type="text/plain">
+clearUI()
+
+print("Welcome to Lua UI Editor! Origin (0,0) is Bottom-Left. Size expands from Center!")
+
+-- 1. Image Background Frame
+local bg = imageframe.new({400, 350}, {220, 220}, "https://picsum.photos/400/350", 12, 1)
+bg:setDraggable(true)
+
+-- 2. Glass Panel on top
+local panel = frame.new({360, 310}, {220, 220}, {30, 30, 46, 0.9}, 12, 2)
+panel:setDraggable(true)
+
+local title = label.new({360, 30}, {220, 340}, "Game Settings", "#89b4fa", 20, 3)
+
+-- 3. Toggle Switch for Audio
+local audioToggle = toggle.new({50, 26}, {100, 290}, "#a6e3a1", "#45475a", true, 3)
+local audioLabel = label.new({100, 26}, {180, 290}, "Audio Enabled", "#cdd6f4", 14, 3)
+audioLabel:setTextPlacement(false, {-20, 0})
+
+audioToggle:onChange(function(state)
+    audioLabel:setText(state and "Audio Enabled" or "Audio Disabled")
+    print("Audio toggled to: " .. tostring(state))
+end)
+
+-- 4. Dropdown Menu for Quality
+local ddLabel = label.new({100, 30}, {100, 240}, "Graphics:", "#cdd6f4", 14, 3)
+ddLabel:setTextPlacement(false, {-20, 0})
+local qualityDropdown = dropdown.new({150, 30}, {220, 240}, {"Low", "Medium", "High", "Ultra"}, "#11111b", "#cdd6f4", 6, 3)
+
+qualityDropdown:onSelect(function(val)
+    print("Graphics set to: " .. val)
+end)
+
+-- 5. Progress Bar for Master Volume
+local volLabel = label.new({100, 20}, {100, 190}, "Master Volume", "#cdd6f4", 14, 3)
+volLabel:setTextPlacement(false, {-5, 0})
+local volBar = progressbar.new({220, 15}, {240, 190}, "#11111b", 0.7, "#cba6f7", 8, 3)
+
+-- 6. Interactive Buttons (with hold/hide functionality!)
+local boostBtn = btn.new({140, 35}, {130, 120}, "#89b4fa", 6, "Boost Vol +10%", "#11111b", 3)
+local hideBtn = btn.new({140, 35}, {290, 120}, "#f38ba8", 6, "Hold to Hide BG", "#11111b", 3)
+local currentVol = 0.7
+local bgVisible = true
+
+-- Make the hide button require a 2 second hold to trigger!
+hideBtn:setHold(true, 2)
+
+boostBtn:onClick(function()
+    currentVol = currentVol + 0.1
+    if currentVol > 1 then currentVol = 0 end
+    volBar:setValue(currentVol)
+    print("Volume adjusted to: " .. math.floor(currentVol * 100) .. "%")
+end)
+
+hideBtn:onClick(function()
+    bgVisible = not bgVisible
+    
+    -- Here is where we hide or show the background!
+    if bgVisible then bg:show() else bg:hide() end
+    
+    hideBtn:setText(bgVisible and "Hold to Hide BG" or "Hold to Show BG")
+    print(bgVisible and "Background restored" or "Background hidden")
+end)
+    </script>
+
+    <!-- Header -->
+    <header class="h-14 bg-[#181825] border-b border-[#313244] flex items-center px-4 justify-between select-none shrink-0 shadow-sm z-10">
+        <div class="flex items-center gap-3">
+            <i class="ph-fill ph-terminal-window text-[#89b4fa] text-2xl"></i>
+            <h1 class="text-lg font-semibold tracking-wide text-[#cdd6f4] mr-4">Lua UI IDE</h1>
+        </div>
+        
+        <div class="flex items-center gap-2">
+            <!-- Utility Buttons (Icon Only with Tooltips) -->
+            <button class="p-2 bg-[#313244] hover:bg-[#45475a] text-[#cdd6f4] rounded-md transition-colors" title="Format Code" onclick="formatCode()">
+                <i class="ph-bold ph-text-align-left text-lg"></i>
+            </button>
+            <button class="p-2 bg-[#313244] hover:bg-[#45475a] text-[#cdd6f4] rounded-md transition-colors" title="Clear Comments" onclick="clearComments()">
+                <i class="ph-bold ph-eraser text-lg"></i>
+            </button>
+            <button class="p-2 bg-[#313244] hover:bg-[#45475a] text-[#cdd6f4] rounded-md transition-colors" title="Copy Code" onclick="copyCode()">
+                <i class="ph-bold ph-copy text-lg"></i>
+            </button>
+            
+            <div class="w-[1px] h-6 bg-[#45475a] mx-1"></div>
+            
+            <button class="p-2 bg-[#313244] hover:bg-[#45475a] text-[#cdd6f4] rounded-md transition-colors mr-2" title="Clear Console" onclick="clearConsole()">
+                <i class="ph-bold ph-trash text-lg text-[#f38ba8]"></i>
+            </button>
+
+            <!-- Main Play Button -->
+            <button id="btnPlay" class="flex items-center gap-2 bg-[#a6e3a1] hover:bg-[#8bd586] text-[#11111b] px-5 py-1.5 rounded-md font-bold transition-colors shadow-sm" onclick="runScript()">
+                <i class="ph-fill ph-play"></i> Run
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="flex-1 flex overflow-hidden relative">
+        
+        <!-- Hover Tooltip Element for Parameters -->
+        <div id="param-tooltip" class="absolute z-50 bg-[#181825] border border-[#313244] text-[#cdd6f4] text-[13px] px-3 py-1.5 rounded shadow-lg pointer-events-none hidden font-mono shadow-[#11111b]/50">
+        </div>
+
+        <!-- Left Column: Code Editor -->
+        <div class="w-1/2 flex flex-col border-r border-[#313244]">
+            <div class="h-10 bg-[#1e1e2e] flex items-center px-4 text-sm font-medium text-[#bac2de] border-b border-[#313244] shadow-sm z-10 shrink-0 gap-2">
+                <i class="ph-fill ph-file-code text-[#89b4fa]"></i> main.lua
+            </div>
+            <div id="editor" class="flex-1 text-[15px]"></div>
+        </div>
+
+        <!-- Right Column: UI Preview & Output -->
+        <div class="w-1/2 flex flex-col bg-[#1e1e2e]">
+            
+            <!-- UI Preview Area -->
+            <div class="h-3/5 flex flex-col border-b border-[#313244]">
+                <div class="h-10 bg-[#181825] flex items-center px-4 text-sm font-medium text-[#bac2de] border-b border-[#313244] shrink-0 gap-2 justify-between">
+                    <div class="flex items-center gap-2">
+                        <i class="ph-fill ph-desktop text-[#cba6f7]"></i> UI Preview Screen
+                    </div>
+                    <div class="text-xs text-[#6c7086] font-mono bg-[#11111b] px-2 py-0.5 rounded border border-[#313244]">
+                        x: 0, y: 0 (Bottom Left Origin)
+                    </div>
+                </div>
+                <!-- The actual container where Lua script generates UI -->
+                <div class="flex-1 relative overflow-hidden preview-bg" id="ui-preview" style="perspective: 1000px;">
+                    <!-- Dynamic elements injected here -->
+                </div>
+            </div>
+
+            <!-- Output Console -->
+            <div class="h-2/5 flex flex-col bg-[#11111b]">
+                <div class="h-9 bg-[#181825] flex items-center px-4 text-xs font-medium text-[#bac2de] border-b border-[#313244] shrink-0 gap-2">
+                    <i class="ph-bold ph-terminal text-[#f38ba8]"></i> Output Console
+                </div>
+                <div id="console-output" class="flex-1 overflow-y-auto p-3 text-[13px] font-mono text-[#a6adc8] space-y-1 select-text">
+                    <!-- Logs injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Logic -->
+    <script>
+        // Setup JS-side Dragging (Optimized for Bottom-Left coordinates)
+        window.makeElementDraggable = function(el) {
+            let isDragging = false;
+            let startX, startY, initialX, initialY;
+            let animationFrameId = null;
+
+            const updatePosition = (clientX, clientY) => {
+                const dx = clientX - startX;
+                const dy = startY - clientY; // Invert delta Y because Y goes up in our system!
+                el.style.left = (initialX + dx) + "px";
+                el.style.bottom = (initialY + dy) + "px";
+            };
+
+            const onMouseMove = (e) => {
+                if (!isDragging) return;
+                const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0].clientX);
+                const clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0].clientY);
+                if (clientX === undefined || clientY === undefined) return;
+                
+                if (animationFrameId) cancelAnimationFrame(animationFrameId);
+                animationFrameId = requestAnimationFrame(() => updatePosition(clientX, clientY));
+            };
+
+            const onMouseUp = () => {
+                isDragging = false;
+                if (animationFrameId) cancelAnimationFrame(animationFrameId);
+                document.removeEventListener("mousemove", onMouseMove);
+                document.removeEventListener("mouseup", onMouseUp);
+                document.removeEventListener("touchmove", onMouseMove);
+                document.removeEventListener("touchend", onMouseUp);
+            };
+
+            const onMouseDown = (e) => {
+                // Ignore drags starting on inputs, textareas, selects, or interactive children
+                if (['INPUT', 'TEXTAREA', 'SELECT', 'OPTION'].includes(e.target.tagName)) return;
+
+                isDragging = true;
+                startX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0].clientX);
+                startY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0].clientY);
+                initialX = parseFloat(el.style.left) || 0;
+                initialY = parseFloat(el.style.bottom) || 0;
+                
+                document.addEventListener("mousemove", onMouseMove);
+                document.addEventListener("mouseup", onMouseUp);
+                document.addEventListener("touchmove", onMouseMove, {passive: false});
+                document.addEventListener("touchend", onMouseUp);
+            };
+
+            el.addEventListener("mousedown", onMouseDown);
+            el.addEventListener("touchstart", onMouseDown, {passive: true});
         };
 
-        regionLayer = L.geoJSON(geojson, {
-            style: style,
-            interactive: false
-        }).addTo(map);
-    } catch (e) { console.log("Border load failed", e); }
-}
-loadRegionBorders();
+        let editor;
+        let frameworkLoaded = false;
 
-// --- UI ELEMENTS ---
-const ui = {
-  question: document.getElementById('question'),
-  score: document.getElementById('score'),
-  mode: document.getElementById('modeSelect'),
-  nextBtn: document.getElementById('nextBtn'),
-  resetBtn: document.getElementById('resetBtn')
-};
+        // Tooltip logic constants
+        const paramSignatures = {
+            'frame': ['size', 'pos', 'color', 'radius', 'layer'],
+            'btn': ['size', 'pos', 'color', 'radius', 'text', 'textColor', 'layer'],
+            'label': ['size', 'pos', 'text', 'textColor', 'textSize', 'layer'],
+            'input': ['size', 'pos', 'placeholder', 'bgColor', 'textColor', 'radius', 'layer'],
+            'imageframe': ['size', 'pos', 'url', 'radius', 'layer'],
+            'progressbar': ['size', 'pos', 'bgColor', 'fillValue', 'fillColor', 'radius', 'layer'],
+            'toggle': ['size', 'pos', 'activeColor', 'inactiveColor', 'startState', 'layer'],
+            'dropdown': ['size', 'pos', 'options', 'bgColor', 'textColor', 'radius', 'layer']
+        };
 
-// --- LOGIC ---
-function loadMode(mode) {
-  currentMode = mode;
-  // Clear markers
-  Object.values(markers).forEach(m => map.removeLayer(m));
-  markers = {};
-  
-  if (mode === '1-30') currentData = data_1_30_filtered;
-  else if (mode === 'regions') currentData = data_regions;
-  else if (mode === 'centers') currentData = data_centers;
+        // --- Initialization ---
+        document.addEventListener("DOMContentLoaded", () => {
+            editor = ace.edit("editor");
+            editor.setTheme("ace/theme/tomorrow_night_eighties");
+            editor.session.setMode("ace/mode/lua");
+            editor.setOptions({
+                fontFamily: "ui-monospace, SFMono-Regular, Consolas, monospace",
+                fontSize: "14px",
+                showPrintMargin: false,
+                enableBasicAutocompletion: true,
+                enableLiveAutocompletion: true,
+                tabSize: 4,
+                useSoftTabs: true
+            });
+            
+            // Load the default script safely from the hidden HTML tag
+            const defaultScriptRaw = document.getElementById('default-lua').textContent.trim();
+            editor.setValue(defaultScriptRaw, -1);
+            editor.clearSelection(); 
+            
+            editor.commands.addCommand({
+                name: 'runScript',
+                bindKey: {win: 'F5|Ctrl-Enter',  mac: 'F5|Command-Enter'},
+                exec: function() { runScript(); }
+            });
 
-  currentData.forEach(item => {
-    let icon;
-    if (mode === 'regions') {
-      icon = L.divIcon({
-        className: 'custom-icon',
-        html: `<div class="marker-province">${item.id}</div>`,
-        iconSize: [30, 20],
-        iconAnchor: [15, 10]
-      });
-    } else {
-      icon = L.divIcon({
-        className: 'custom-icon',
-        html: `<div class="marker-std">${item.id}</div>`,
-        iconSize: [30, 30],
-        iconAnchor: [15, 15]
-      });
-    }
+            // Smart Parameter Hover Logic
+            const tooltipEl = document.getElementById('param-tooltip');
+            editor.on("mousemove", function (e) {
+                const pos = e.getDocumentPosition();
+                const line = editor.session.getLine(pos.row);
+                
+                const beforeCursor = line.substring(0, pos.column);
+                const match = beforeCursor.match(/(frame|btn|label|input|imageframe|progressbar|toggle|dropdown)\.new\s*\([^)]*$/);
+                
+                if (match) {
+                    const type = match[1];
+                    const argsStr = match[0].substring(match[0].indexOf('(') + 1);
+                    
+                    let argIndex = 0;
+                    let depth = 0;
+                    let inString = false;
+                    let stringChar = '';
+                    
+                    for (let i = 0; i < argsStr.length; i++) {
+                        let char = argsStr[i];
+                        if (inString) {
+                            if (char === stringChar) inString = false;
+                        } else {
+                            if (char === '"' || char === "'") { inString = true; stringChar = char; }
+                            else if (char === '{') depth++;
+                            else if (char === '}') depth--;
+                            else if (char === ',' && depth === 0) argIndex++;
+                        }
+                    }
+                    
+                    const sigArray = paramSignatures[type];
+                    if (sigArray && argIndex < sigArray.length) {
+                        let html = `<span class="text-[#89b4fa]">${type}.new</span>( `;
+                        for(let i=0; i<sigArray.length; i++){
+                            if(i === argIndex) html += `<span class="text-[#a6e3a1] font-bold underline px-1 bg-[#a6e3a1]/20 rounded">${sigArray[i]}</span>`;
+                            else html += `<span class="text-[#a6adc8]">${sigArray[i]}</span>`;
+                            if(i < sigArray.length-1) html += '<span class="text-[#6c7086]">, </span>';
+                        }
+                        html += ' )';
+                        
+                        tooltipEl.innerHTML = html;
+                        tooltipEl.style.left = (e.domEvent.clientX + 15) + 'px';
+                        tooltipEl.style.top = (e.domEvent.clientY + 15) + 'px';
+                        tooltipEl.classList.remove('hidden');
+                        return;
+                    }
+                }
+                tooltipEl.classList.add('hidden');
+            });
 
-    const m = L.marker([item.lat, item.lon], { icon: icon }).addTo(map);
-    m.itemData = item;
-    m.on('click', (e) => {
-        L.DomEvent.stopPropagation(e);
-        handleGuess(item);
-    });
-    markers[item.id] = m;
-  });
+            document.getElementById('editor').addEventListener('mouseleave', () => {
+                tooltipEl.classList.add('hidden');
+            });
 
-  resetScore();
-  startQuestion();
-}
+            uiPrint("Environment ready. Press Ctrl+Enter to execute UI code.", "text-[#89b4fa]");
+            setTimeout(runScript, 300);
+        });
 
-function startQuestion() {
-  isWaiting = false;
-  Object.values(markers).forEach(m => {
-    const el = m.getElement().querySelector('div');
-    if (el) {
-        el.classList.remove('marker-correct', 'marker-wrong');
-        if (currentMode === 'regions') el.textContent = m.itemData.id;
-    }
-  });
+        // --- Toolbar Utilities ---
 
-  currentTarget = currentData[Math.floor(Math.random() * currentData.length)];
-  ui.question.style.color = "#0f172a";
-  ui.question.textContent = `Etsi: ${currentTarget.name}`;
-}
+        function formatCode() {
+            let code = editor.getValue();
+            let lines = code.split('\n');
+            let indent = 0;
+            let out = [];
+            for (let line of lines) {
+                line = line.trim();
+                if (!line) { out.push(''); continue; }
+                
+                // Decrease indent before writing line
+                if (line.match(/^(end|elseif|else|until)\b/) || line.match(/^}/)) {
+                    indent = Math.max(0, indent - 1);
+                }
+                
+                out.push('    '.repeat(indent) + line);
+                
+                // Increase indent for next line
+                if (line.match(/\bthen\b\s*(--.*)?$/) || 
+                    line.match(/\bdo\b\s*(--.*)?$/) || 
+                    line.match(/\bfunction.*[^{]\s*(--.*)?$/) || 
+                    line.match(/^else\b/) || 
+                    line.match(/^elseif\b/) || 
+                    line.match(/\brepeat\b\s*(--.*)?$/) ||
+                    line.match(/{\s*(--.*)?$/)) {
+                    indent++;
+                }
+            }
+            editor.setValue(out.join('\n'), -1);
+            uiPrint("Code neatly formatted.", "text-[#a6e3a1]");
+        }
 
-function handleGuess(clickedItem) {
-  if (isWaiting) return;
-  isWaiting = true;
-  attempts++;
+        function clearComments() {
+            let code = editor.getValue();
+            let out = "";
+            let inString = false;
+            let stringChar = '';
+            
+            for (let i = 0; i < code.length; i++) {
+                if (inString) {
+                    out += code[i];
+                    if (code[i] === '\\') {
+                        i++;
+                        if (i < code.length) out += code[i];
+                    } else if (code[i] === stringChar) {
+                        inString = false;
+                    }
+                } else {
+                    if (code[i] === '"' || code[i] === "'") {
+                        inString = true;
+                        stringChar = code[i];
+                        out += code[i];
+                    } else if (code.substring(i, i + 4) === '--[[') {
+                        let endIdx = code.indexOf(']]', i + 4);
+                        if (endIdx === -1) endIdx = code.length;
+                        else endIdx += 2;
 
-  const correctM = markers[currentTarget.id];
-  const clickedM = markers[clickedItem.id];
-  const correctEl = correctM.getElement().querySelector('div');
-  const clickedEl = clickedM.getElement().querySelector('div');
+                        let start = i;
+                        let removeBefore = 0;
+                        while (start - removeBefore - 1 >= 0 && (code[start - removeBefore - 1] === ' ' || code[start - removeBefore - 1] === '\t')) {
+                            removeBefore++;
+                        }
+                        let isStartOfLine = (start - removeBefore === 0 || code[start - removeBefore - 1] === '\n');
 
-  if (clickedItem.id === currentTarget.id) {
-    score++;
-    ui.question.style.color = "#16a34a";
-    ui.question.textContent = `Oikein! ${currentTarget.name}`;
-    correctEl.classList.add('marker-correct');
-    if (currentMode === 'regions') correctEl.textContent = currentTarget.name;
-    setTimeout(startQuestion, 1200);
-  } else {
-    ui.question.style.color = "#dc2626";
-    ui.question.textContent = `Väärin. Se oli ${clickedItem.name}.`;
-    clickedEl.classList.add('marker-wrong');
-    correctEl.classList.add('marker-correct');
-    if (currentMode === 'regions') correctEl.textContent = currentTarget.name;
-    setTimeout(startQuestion, 2000);
-  }
-  ui.score.textContent = `${score} / ${attempts}`;
-}
+                        let removeAfter = 0;
+                        if (code[endIdx] === '\r') removeAfter++;
+                        if (code[endIdx + removeAfter] === '\n') removeAfter++;
+                        let isEndOfLine = (removeAfter > 0 || endIdx === code.length);
 
-function resetScore() {
-  score = 0; attempts = 0; ui.score.textContent = "0 / 0";
-}
+                        if (isStartOfLine && isEndOfLine) {
+                            out = out.substring(0, out.length - removeBefore);
+                            i = endIdx + removeAfter - 1;
+                        } else {
+                            out = out.substring(0, out.length - removeBefore);
+                            i = endIdx - 1;
+                        }
+                    } else if (code.substring(i, i + 2) === '--') {
+                        let endIdx = code.indexOf('\n', i + 2);
+                        if (endIdx === -1) endIdx = code.length;
 
-ui.mode.addEventListener('change', (e) => loadMode(e.target.value));
-ui.nextBtn.addEventListener('click', startQuestion);
-ui.resetBtn.addEventListener('click', () => { resetScore(); startQuestion(); });
+                        let start = i;
+                        let removeBefore = 0;
+                        while (start - removeBefore - 1 >= 0 && (code[start - removeBefore - 1] === ' ' || code[start - removeBefore - 1] === '\t')) {
+                            removeBefore++;
+                        }
+                        let isStartOfLine = (start - removeBefore === 0 || code[start - removeBefore - 1] === '\n');
 
-// Start
-loadMode('1-30');
+                        if (isStartOfLine) {
+                            out = out.substring(0, out.length - removeBefore);
+                            i = endIdx; 
+                        } else {
+                            out = out.substring(0, out.length - removeBefore);
+                            i = endIdx - 1; 
+                        }
+                    } else {
+                        out += code[i];
+                    }
+                }
+            }
+            
+            editor.setValue(out, -1);
+            uiPrint("Comments cleared safely.", "text-[#a6e3a1]");
+        }
 
-</script>
+        function copyCode() {
+            navigator.clipboard.writeText(editor.getValue());
+            uiPrint("Code copied to clipboard!", "text-[#a6e3a1]");
+        }
+
+        // --- Execution Logic ---
+        function runScript() {
+            const btn = document.getElementById('btnPlay');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Running...';
+            btn.classList.add('opacity-80');
+            
+            setTimeout(() => {
+                const code = editor.getValue();
+                try {
+                    // Prevent memory leak by only loading framework once
+                    if (!frameworkLoaded) {
+                        // Extract Lua code directly from the hidden HTML tag (Bypasses OneCompiler minifier bugs)
+                        const frameworkSetupLua = document.getElementById('framework-lua').textContent;
+                        fengari.load(frameworkSetupLua)();
+                        frameworkLoaded = true;
+                    }
+                    fengari.load(code, "main.lua")();
+                } catch(err) {
+                    uiError(err.toString());
+                }
+                btn.innerHTML = originalHtml;
+                btn.classList.remove('opacity-80');
+            }, 50);
+        }
+
+        // --- Console Logic ---
+        window.uiPrint = function(msg, customClass = "text-[#cdd6f4]") { appendLog(msg, customClass); }
+        window.uiWarn = function(msg) { appendLog(`[WARN] ${msg}`, "text-[#f9e2af] bg-[#f9e2af]/10 border-l-2 border-[#f9e2af] pl-2"); }
+        function uiError(msg) { appendLog(`[ERROR] ${msg}`, "text-[#f38ba8] bg-[#f38ba8]/10 border-l-2 border-[#f38ba8] pl-2 font-semibold"); }
+
+        function appendLog(msg, classes) {
+            const consoleDiv = document.getElementById('console-output');
+            const line = document.createElement('div');
+            const now = new Date();
+            const timeStr = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
+            
+            line.innerHTML = `<span class="text-[#6c7086] mr-2">[${timeStr}]</span> <span>${msg}</span>`;
+            line.className = `py-1 border-b border-[#313244]/50 hover:bg-[#313244]/30 ${classes}`;
+            
+            consoleDiv.appendChild(line);
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        }
+
+        function clearConsole() { document.getElementById('console-output').innerHTML = ''; }
+    </script>
 </body>
 </html>
