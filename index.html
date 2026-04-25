@@ -41,10 +41,18 @@
 <body class="bg-[#11111b] text-[#cdd6f4] h-screen flex flex-col font-sans overflow-hidden">
 
     <!-- App Fullscreen Enforcer Overlay -->
-    <div id="fullscreen-overlay" class="fixed inset-0 bg-[#11111b] z-[9999] flex flex-col items-center justify-center cursor-pointer transition-opacity duration-300">
-        <i class="ph-bold ph-arrows-out text-6xl text-[#89b4fa] mb-4 animate-pulse"></i>
-        <h2 class="text-2xl font-bold text-[#cdd6f4]">Tap anywhere to enter App Mode</h2>
-        <p class="text-[#a6adc8] mt-2 text-sm">This editor requires fullscreen to function.</p>
+    <div id="fullscreen-overlay" class="fixed inset-0 bg-[#11111b] z-[9999] flex flex-col items-center justify-center transition-opacity duration-300">
+        <i class="ph-bold ph-arrows-out text-6xl text-[#89b4fa] mb-6 animate-pulse"></i>
+        <h2 class="text-3xl font-bold text-[#cdd6f4] mb-8">Welcome to Lua UI Editor</h2>
+        
+        <div class="flex flex-col sm:flex-row gap-4">
+            <button id="btn-enter-fullscreen" class="px-6 py-3 bg-[#89b4fa] text-[#11111b] font-bold rounded-lg hover:bg-[#b4befe] transition-colors shadow-lg flex items-center gap-2">
+                <i class="ph-bold ph-arrows-out text-lg"></i> Enter Fullscreen (App Mode)
+            </button>
+            <button id="btn-enter-windowed" class="px-6 py-3 bg-[#313244] text-[#cdd6f4] font-bold rounded-lg hover:bg-[#45475a] transition-colors shadow-lg flex items-center gap-2">
+                <i class="ph-bold ph-browser text-lg"></i> Continue in Browser
+            </button>
+        </div>
     </div>
 
     <!-- Store Lua Code Safely away from JS Minifiers (like OneCompiler's) -->
@@ -95,8 +103,8 @@ end
 
 local function makeDraggable(el) window:makeElementDraggable(el) end
 
--- Helper to add .hide() / .show() / .setVisible() to all components
-local function addVisibilityMethods(obj, el)
+-- Helper to add shared methods (blur, hide, show, hover) to all components
+local function addSharedMethods(obj, el)
     local initialDisplay = el.style.display
     function obj:setVisible(visible)
         if visible == false then
@@ -107,6 +115,29 @@ local function addVisibilityMethods(obj, el)
     end
     function obj:hide() self:setVisible(false) end
     function obj:show() self:setVisible(true) end
+    
+    function obj:setBlur(radius)
+        local r = tonumber(radius) or 0
+        el.style.backdropFilter = "blur(" .. r .. "px)"
+        el.style.webkitBackdropFilter = "blur(" .. r .. "px)"
+    end
+    
+    local hoverEnabled = false
+    function obj:setHoverEffect(enabled)
+        hoverEnabled = enabled and true or false
+        if hoverEnabled then
+            el.style.transition = "scale 0.1s, filter 0.1s"
+        else
+            el.style.transition = "none"
+            el.style.scale = "1"
+            el.style.filter = "brightness(1)"
+        end
+    end
+    
+    el:addEventListener("mousedown", function() if hoverEnabled then el.style.scale = "0.95" end end)
+    el:addEventListener("mouseup", function() if hoverEnabled then el.style.scale = "1" end end)
+    el:addEventListener("mouseleave", function() if hoverEnabled then el.style.scale = "1"; el.style.filter = "brightness(1)" end end)
+    el:addEventListener("mouseenter", function() if hoverEnabled then el.style.filter = "brightness(1.1)" end end)
 end
 
 local function addTextMethods(obj, el, textSpan)
@@ -154,7 +185,7 @@ function _G.frame.new(size, pos, color, radius, layer)
     previewArea:appendChild(el)
     local obj = { element = el }
     function obj:setDraggable(d) if d then makeDraggable(el) end end
-    addVisibilityMethods(obj, el)
+    addSharedMethods(obj, el)
     return obj
 end
 
@@ -185,7 +216,7 @@ function _G.imageframe.new(size, pos, url, radius, layer)
     local obj = { element = el }
     function obj:setSource(newUrl) el.style.backgroundImage = "url('"..newUrl.."')" end
     function obj:setDraggable(d) if d then makeDraggable(el) end end
-    addVisibilityMethods(obj, el)
+    addSharedMethods(obj, el)
     return obj
 end
 
@@ -218,7 +249,7 @@ function _G.btn.new(size, pos, color, radius, text, textColor, layer)
     el.style.fontWeight = "bold"; el.style.display = "flex"
     el.style.alignItems = "center"; el.style.justifyContent = "center"
     el.style.boxShadow = "0 4px 6px -1px rgba(0,0,0,0.1)"
-    el.style.transition = "scale 0.1s, filter 0.1s"
+    el.style.transformStyle = "preserve-3d"
     
     local obj = { element = el, callbacks = {} }
     local holdEnabled = false
@@ -230,11 +261,9 @@ function _G.btn.new(size, pos, color, radius, text, textColor, layer)
             window:clearTimeout(holdTimer)
             holdTimer = nil
         end
-        el.style.scale = "1"
     end
 
     el:addEventListener("mousedown", function() 
-        el.style.scale = "0.95" 
         if holdEnabled then
             holdTimer = window:setTimeout(function()
                 holdTimer = nil
@@ -244,11 +273,7 @@ function _G.btn.new(size, pos, color, radius, text, textColor, layer)
         end
     end)
     el:addEventListener("mouseup", function() clearHold() end)
-    el:addEventListener("mouseleave", function() 
-        clearHold()
-        el.style.filter = "brightness(1)" 
-    end)
-    el:addEventListener("mouseenter", function() el.style.filter = "brightness(1.1)" end)
+    el:addEventListener("mouseleave", function() clearHold() end)
     
     el:addEventListener("click", function()
         if not holdEnabled then
@@ -269,7 +294,8 @@ function _G.btn.new(size, pos, color, radius, text, textColor, layer)
     end
     
     addTextMethods(obj, el, textSpan)
-    addVisibilityMethods(obj, el)
+    addSharedMethods(obj, el)
+    obj:setHoverEffect(true) -- Buttons are hoverable by default!
     return obj
 end
 
@@ -303,7 +329,7 @@ function _G.label.new(size, pos, text, textColor, textSize, layer)
     local obj = { element = el }
     function obj:setDraggable(d) if d then makeDraggable(el) end end
     addTextMethods(obj, el, textSpan)
-    addVisibilityMethods(obj, el)
+    addSharedMethods(obj, el)
     return obj
 end
 
@@ -341,7 +367,7 @@ function _G.input.new(size, pos, placeholder, bgColor, textColor, radius, layer)
     function obj:getText() return el.value end
     function obj:setText(t) el.value = t end
     function obj:setDraggable(d) if d then makeDraggable(el) end end
-    addVisibilityMethods(obj, el)
+    addSharedMethods(obj, el)
     return obj
 end
 
@@ -381,7 +407,7 @@ function _G.progressbar.new(size, pos, bgColor, fillValue, fillColor, radius, la
         fillEl.style.width = math.max(0, math.min(100, v)) .. "%" 
     end
     function obj:setDraggable(d) if d then makeDraggable(el) end end
-    addVisibilityMethods(obj, el)
+    addSharedMethods(obj, el)
     return obj
 end
 
@@ -445,7 +471,7 @@ function _G.toggle.new(size, pos, activeColor, inactiveColor, startState, layer)
         knob.style.left = self.state and knobRight or "2px"
     end
     function obj:setDraggable(d) if d then makeDraggable(el) end end
-    addVisibilityMethods(obj, el)
+    addSharedMethods(obj, el)
     return obj
 end
 
@@ -491,7 +517,7 @@ function _G.dropdown.new(size, pos, options, bgColor, textColor, radius, layer)
     function obj:onSelect(cb) table.insert(obj.callbacks, cb) end
     function obj:getValue() return el.value end
     function obj:setDraggable(d) if d then makeDraggable(el) end end
-    addVisibilityMethods(obj, el)
+    addSharedMethods(obj, el)
     return obj
 end
     </script>
@@ -507,10 +533,14 @@ local bg = imageframe.new({400, 350}, {220, 220}, "https://picsum.photos/400/350
 bg:setDraggable(true)
 
 -- 2. Glass Panel on top
-local panel = frame.new({360, 310}, {220, 220}, {30, 30, 46, 0.9}, 12, 2)
+-- We pass an Alpha value to color for transparency, and test out our new blur setting!
+local panel = frame.new({360, 310}, {220, 220}, {30, 30, 46, 0.75}, 12, 2)
+panel:setBlur(8) -- Adds a beautiful frosted glass blur!
 panel:setDraggable(true)
 
+-- You can now make ANY element have a hover animation, not just buttons!
 local title = label.new({360, 30}, {220, 340}, "Game Settings", "#89b4fa", 20, 3)
+title:setHoverEffect(true) 
 
 -- 3. Toggle Switch for Audio
 local audioToggle = toggle.new({50, 26}, {100, 290}, "#a6e3a1", "#45475a", true, 3)
@@ -651,23 +681,20 @@ end)
         // Fullscreen Enforcement Logic
         document.addEventListener("DOMContentLoaded", () => {
             const overlay = document.getElementById('fullscreen-overlay');
+            const btnFullscreen = document.getElementById('btn-enter-fullscreen');
+            const btnWindowed = document.getElementById('btn-enter-windowed');
             
-            overlay.addEventListener('click', () => {
+            btnFullscreen.addEventListener('click', () => {
                 document.documentElement.requestFullscreen().catch(err => {
                     console.warn(`Error attempting to enable fullscreen: ${err.message}`);
                 });
+                overlay.classList.add('hidden');
+                overlay.classList.remove('flex');
             });
 
-            document.addEventListener('fullscreenchange', () => {
-                if (!document.fullscreenElement) {
-                    // Exited all fullscreen - Enforce App Mode
-                    overlay.classList.remove('hidden');
-                    overlay.classList.add('flex');
-                } else {
-                    // Entered fullscreen (App or Preview) - Hide Overlay
-                    overlay.classList.add('hidden');
-                    overlay.classList.remove('flex');
-                }
+            btnWindowed.addEventListener('click', () => {
+                overlay.classList.add('hidden');
+                overlay.classList.remove('flex');
             });
         });
 
@@ -755,6 +782,8 @@ end)
             ':setTextPlacement': ['centered: boolean', 'offsets: {x, y}'],
             ':setHold': ['enabled: boolean', 'duration: seconds'],
             ':setVisible': ['visible: boolean'],
+            ':setBlur': ['radius: pixels'],
+            ':setHoverEffect': ['enabled: boolean'],
             ':hide': [],
             ':show': [],
             ':setDraggable': ['draggable: boolean'],
@@ -763,7 +792,15 @@ end)
             ':setText': ['text: string'],
             ':onClick': ['callback: function()'],
             ':onChange': ['callback: function(state)'],
-            ':onSelect': ['callback: function(value)']
+            ':onSelect': ['callback: function(value)'],
+            ':getText': [],
+            ':getState': [],
+            ':setState': ['state: boolean'],
+            ':getValue': [],
+            // Global functions
+            'clearUI': [],
+            'print': ['...'],
+            'warn': ['...']
         };
 
         // --- Initialization ---
@@ -834,7 +871,7 @@ end)
 
                 if (foundOpenParen) {
                     // Extract the function or method name just before the open parenthesis
-                    let funcMatch = beforeCursor.substring(0, openParenIndex).match(/([a-zA-Z]+\.new|:[a-zA-Z]+)\s*$/);
+                    let funcMatch = beforeCursor.substring(0, openParenIndex).match(/([a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)?|:[a-zA-Z0-9_]+)\s*$/);
                     
                     if (funcMatch) {
                         let type = funcMatch[1];
