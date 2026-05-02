@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nebula Studio | Ultimate Master Build</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Nebula Studio | Master Release</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -14,23 +14,28 @@
             --text-main: #cdd6f4; --text-muted: #a6adc8;
         }
 
-        /* STRICT MOBILE LOCKDOWN - GUARANTEES FULL SCREEN IN IFRAMES */
+        /* STRICT MOBILE LOCKDOWN & GITHUB DEPLOYMENT STANDARDS */
         * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; user-select: none; }
         input, textarea, select { user-select: text; pointer-events: auto; }
-        html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; touch-action: none; overscroll-behavior: none; }
-        body { background: var(--bg-base); color: var(--text-main); font-family: 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column; position: absolute; inset: 0; }
+        
+        body, html { 
+            background: var(--bg-base); color: var(--text-main); font-family: 'Segoe UI', system-ui, sans-serif; 
+            margin: 0; padding: 0; width: 100vw; height: 100dvh; /* dvh fixes mobile address bar bug */
+            overflow: hidden; touch-action: none; overscroll-behavior: none; 
+            display: flex; flex-direction: column;
+        }
 
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-thumb { background: var(--bg-surface); border-radius: 2px; }
 
-        .ui-input { width: 100%; background: #000; border: 1px solid var(--bg-surface); color: #fff; padding: 8px; border-radius: 6px; font-size: 0.85rem; font-family: monospace; transition: 0.2s; }
+        .ui-input { width: 100%; background: #000; border: 1px solid var(--bg-surface); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; font-family: monospace; transition: 0.2s; }
         .ui-input:focus { border-color: var(--accent); }
-        .btn-tool { background: var(--bg-surface); color: var(--text-main); padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; border: none; font-size: 0.8rem; display: flex; gap: 6px; align-items: center; transition: 0.1s; }
+        .btn-tool { background: var(--bg-surface); color: var(--text-main); padding: 8px 14px; border-radius: 6px; font-weight: bold; cursor: pointer; border: none; font-size: 0.8rem; display: flex; gap: 6px; align-items: center; transition: 0.1s; }
         .btn-tool:active { transform: scale(0.95); filter: brightness(1.2); }
 
-        /* VIEWS */
-        #main-area { flex: 1 1 auto; height: 100%; position: relative; overflow: hidden; touch-action: none; }
-        .workspace { position: absolute; inset: 0; display: none; background-color: #0f0f17; overflow: hidden; }
+        /* VIEWS - min-height:0 fixes flexbox overflow crushing */
+        #main-area { flex: 1; min-height: 0; position: relative; overflow: hidden; touch-action: none; }
+        .workspace { position: absolute; inset: 0; display: none; background-color: var(--bg-base); overflow: hidden; }
         .workspace.active { display: block; }
         .pan-layer { position: absolute; inset: 0; transform-origin: 0 0; touch-action: none; }
 
@@ -41,18 +46,9 @@
         body.mode-edit .el-box.selected { outline: 2px solid var(--accent); box-shadow: 0 0 15px rgba(137,180,250,0.6); z-index: 9999 !important; }
         body.mode-play .el-box.interactive { cursor: pointer; }
 
-        /* 3D CUBE CSS */
-        .cube-container { perspective: 800px; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; pointer-events: none; }
-        .cube { width: 60px; height: 60px; position: relative; transform-style: preserve-3d; animation: spin 4s infinite linear; }
-        .cube div { position: absolute; width: 100%; height: 100%; opacity: 0.8; border: 2px solid rgba(255,255,255,0.2); }
-        .cube .front  { transform: translateZ(30px); } .cube .back   { transform: rotateY(180deg) translateZ(30px); }
-        .cube .right  { transform: rotateY(90deg) translateZ(30px); } .cube .left   { transform: rotateY(-90deg) translateZ(30px); }
-        .cube .top    { transform: rotateX(90deg) translateZ(30px); } .cube .bottom { transform: rotateX(-90deg) translateZ(30px); }
-        @keyframes spin { from { transform: rotateX(0) rotateY(0); } to { transform: rotateX(360deg) rotateY(360deg); } }
-
         /* LOGIC GRAPH */
-        #ws-logic { background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 40px 40px; }
-        .node { position: absolute; width: 250px; background: var(--bg-crust); border: 1px solid var(--bg-surface); border-radius: 8px; box-shadow: 0 10px 20px rgba(0,0,0,0.8); z-index: 10; touch-action: none; }
+        #ws-logic { background-color: #0c0c14; background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 40px 40px; }
+        .node { position: absolute; width: 260px; background: var(--bg-crust); border: 1px solid var(--bg-surface); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.9); z-index: 10; touch-action: none; }
         .node-head { padding: 12px 14px; font-weight: 900; font-size: 0.75rem; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; cursor: grab; border-radius: 7px 7px 0 0; }
         .node-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; pointer-events: auto; }
         .port-row { display: flex; justify-content: space-between; align-items: center; position: relative; margin-bottom: 4px; }
@@ -65,29 +61,34 @@
         .wire { fill: none; stroke-width: 4; stroke-linecap: round; pointer-events: none !important; }
 
         /* PROPS WORKSPACE */
-        #ws-props { overflow-y: auto; padding: 16px; touch-action: auto; padding-bottom: 160px; } /* Massive bottom padding */
-        .prop-group { background: var(--bg-crust); border: 1px solid var(--bg-surface); border-radius: 8px; padding: 12px; margin-bottom: 12px; }
-        .rgba-container { display: flex; gap: 4px; background: #000; padding: 4px; border-radius: 6px; align-items: center; }
-        .rgba-input { flex: 1; min-width: 0; background: transparent; border: none; color: #fff; text-align: center; font-size: 0.75rem; pointer-events: auto; }
+        #ws-props { overflow-y: auto; padding: 16px; touch-action: auto; padding-bottom: 150px; }
+        .prop-group { background: var(--bg-crust); border: 1px solid var(--bg-surface); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+        .rgba-container { display: flex; gap: 4px; background: #000; padding: 6px; border-radius: 8px; align-items: center; }
+        .rgba-input { flex: 1; min-width: 0; background: transparent; border: none; color: #fff; text-align: center; font-size: 0.8rem; pointer-events: auto; }
 
-        /* OVERLAYS */
-        .fab { position: absolute; bottom: 20px; right: 20px; width: 64px; height: 64px; border-radius: 50%; background: var(--accent); color: #000; font-size: 1.8rem; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.5); z-index: 100; border: none; transition: 0.1s; }
+        /* ISOLATED UI OVERLAYS */
+        #ui-layer { position: absolute; inset: 0; pointer-events: none; z-index: 100; overflow: hidden; }
+        .fab { position: absolute; bottom: 20px; right: 20px; width: 64px; height: 64px; border-radius: 50%; background: var(--accent); color: #000; font-size: 1.8rem; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 5px 20px rgba(0,0,0,0.6); border: none; transition: 0.1s; pointer-events: auto; }
         .fab:active { transform: scale(0.9); }
-        .menu-pop { position: absolute; bottom: 95px; right: 20px; width: 220px; background: var(--bg-crust); border: 1px solid var(--bg-surface); border-radius: 12px; flex-direction: column; max-height: 60vh; overflow-y: auto; z-index: 110; box-shadow: 0 10px 30px rgba(0,0,0,0.9); }
+        .menu-pop { position: absolute; bottom: 95px; right: 20px; width: 230px; background: var(--bg-crust); border: 1px solid var(--bg-surface); border-radius: 16px; display: none; flex-direction: column; max-height: 60vh; overflow-y: auto; box-shadow: 0 15px 40px rgba(0,0,0,0.9); pointer-events: auto; }
         .menu-item { padding: 14px; font-size: 0.9rem; font-weight: bold; cursor: pointer; border-bottom: 1px solid var(--bg-surface); color: var(--text-main); display: flex; gap: 12px; align-items: center; transition: 0.1s; }
         .menu-item:active { background: var(--bg-surface); color: var(--accent); }
 
         /* BOTTOM NAV */
-        #bottom-nav { height: 65px; background: var(--bg-crust); border-top: 1px solid var(--bg-surface); display: flex; z-index: 200; flex-shrink: 0; }
-        .nav-tab { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 0.75rem; font-weight: 800; color: var(--text-muted); cursor: pointer; }
+        #bottom-nav { height: 65px; background: var(--bg-crust); border-top: 1px solid var(--bg-surface); display: flex; z-index: 200; flex-shrink: 0; padding-bottom: env(safe-area-inset-bottom); }
+        .nav-tab { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 0.75rem; font-weight: 800; color: var(--text-muted); cursor: pointer; transition: 0.2s; }
         .nav-tab.active-tab { color: var(--accent); background: rgba(137,180,250,0.1); }
+        .nav-tab i { font-size: 1.2rem; margin-bottom: 4px; }
+
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(137,180,250, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(137,180,250, 0); } 100% { box-shadow: 0 0 0 0 rgba(137,180,250, 0); } }
+        .pulse-anim { animation: pulse 2s infinite; }
     </style>
 </head>
 <body class="mode-edit">
 
     <header class="h-16 bg-[#151521] border-b border-[#2a2b3d] flex items-center justify-between px-4 z-50 shrink-0">
         <div class="flex items-center gap-2 font-black tracking-widest uppercase text-xs">
-            <i class="fa-solid fa-code text-accent text-lg"></i> Nebula <span class="text-accent">Master</span>
+            <i class="fa-solid fa-rocket text-accent text-lg"></i> Nebula <span class="text-accent">Master</span>
         </div>
         <div class="flex gap-2">
             <button id="btn-save" class="btn-tool"><i class="fa-solid fa-save"></i></button>
@@ -110,90 +111,85 @@
         
         <div id="ws-props" class="workspace">
             <div class="prop-group">
-                <div class="text-[10px] font-black text-accent mb-2 tracking-widest">HIERARCHY</div>
-                <div id="tree-view" class="flex flex-col gap-1"></div>
+                <div class="text-[10px] font-black text-accent mb-3 tracking-widest">HIERARCHY EXPLORER</div>
+                <div id="tree-view" class="flex flex-col gap-2"></div>
             </div>
-            <div id="prop-view" class="hidden flex-col gap-3 pb-8"></div>
-            <div id="prop-empty" class="text-center py-12 opacity-30 font-black text-sm">SELECT AN ELEMENT</div>
+            <div id="prop-view" class="hidden flex-col gap-3"></div>
+            <div id="prop-empty" class="text-center py-16 opacity-30 font-black text-sm">SELECT AN ELEMENT</div>
         </div>
 
-        <button id="fab-canvas" class="fab"><i class="fa-solid fa-plus"></i></button>
-        <button id="fab-logic" class="fab hidden" style="background:var(--warning); color:#000;"><i class="fa-solid fa-bolt"></i></button>
+        <div id="ui-layer">
+            <button id="fab-canvas" class="fab pulse-anim"><i class="fa-solid fa-plus"></i></button>
+            <button id="fab-logic" class="fab hidden" style="background:var(--warning); color:#000;"><i class="fa-solid fa-bolt"></i></button>
 
-        <div id="pop-canvas" class="menu-pop hidden">
-            <div class="p-2 text-[10px] text-accent font-black tracking-widest bg-[#2a2b3d] sticky top-0 z-10">SHAPES & CONTAINERS</div>
-            <div class="menu-item el-add" data-type="Frame"><i class="fa-solid fa-square w-4 text-gray-400"></i> Frame</div>
-            <div class="menu-item el-add" data-type="Container"><i class="fa-regular fa-square w-4 text-gray-500"></i> Container</div>
-            <div class="menu-item el-add" data-type="GlassPanel"><i class="fa-regular fa-square w-4 text-cyan-200"></i> Glass Panel</div>
-            <div class="menu-item el-add" data-type="Circle"><i class="fa-solid fa-circle w-4 text-blue-300"></i> Circle</div>
-            <div class="menu-item el-add" data-type="Divider"><i class="fa-solid fa-minus w-4 text-gray-400"></i> Divider Line</div>
-            <div class="menu-item el-add" data-type="Viewport3D"><i class="fa-solid fa-cube w-4 text-purple-400"></i> 3D Cube</div>
-            <div class="menu-item el-add" data-type="Loader"><i class="fa-solid fa-spinner w-4 text-accent"></i> Loader (Spinner)</div>
-            
-            <div class="p-2 text-[10px] text-accent font-black tracking-widest bg-[#2a2b3d] sticky top-0 z-10 mt-2">CONTROLS</div>
-            <div class="menu-item el-add" data-type="Text"><i class="fa-solid fa-font text-accent w-4"></i> Text</div>
-            <div class="menu-item el-add" data-type="Button"><i class="fa-solid fa-hand-pointer text-emerald-400 w-4"></i> Button</div>
-            <div class="menu-item el-add" data-type="Bar"><i class="fa-solid fa-bars-progress text-red-400 w-4"></i> Progress Bar</div>
-            <div class="menu-item el-add" data-type="Switch"><i class="fa-solid fa-toggle-on text-purple-400 w-4"></i> iOS Switch</div>
-            <div class="menu-item el-add" data-type="Toggle"><i class="fa-solid fa-check-square text-green-400 w-4"></i> Checkbox</div>
-            <div class="menu-item el-add" data-type="Slider"><i class="fa-solid fa-sliders text-yellow-400 w-4"></i> Slider</div>
-            <div class="menu-item el-add" data-type="Input"><i class="fa-solid fa-i-cursor text-blue-400 w-4"></i> Text Input</div>
-            <div class="menu-item el-add" data-type="TextArea"><i class="fa-solid fa-align-left text-blue-300 w-4"></i> Text Area</div>
-            <div class="menu-item el-add" data-type="Dropdown"><i class="fa-solid fa-caret-down text-orange-400 w-4"></i> Dropdown</div>
-            <div class="menu-item el-add" data-type="ColorPicker"><i class="fa-solid fa-palette text-pink-400 w-4"></i> Color Picker</div>
-            <div class="menu-item el-add" data-type="Joystick"><i class="fa-solid fa-gamepad text-orange-400 w-4"></i> Joystick</div>
-            
-            <div class="p-2 text-[10px] text-accent font-black tracking-widest bg-[#2a2b3d] sticky top-0 z-10 mt-2">MEDIA & WEB</div>
-            <div class="menu-item el-add" data-type="Image"><i class="fa-solid fa-image text-pink-400 w-4"></i> Image Panel</div>
-            <div class="menu-item el-add" data-type="Video"><i class="fa-solid fa-video text-purple-300 w-4"></i> Video Player</div>
-            <div class="menu-item el-add" data-type="Audio"><i class="fa-solid fa-music text-blue-300 w-4"></i> Audio Source</div>
-            <div class="menu-item el-add" data-type="WebView"><i class="fa-solid fa-globe text-emerald-300 w-4"></i> Web View</div>
-        </div>
+            <div id="pop-canvas" class="menu-pop">
+                <div class="p-3 text-[10px] text-accent font-black tracking-widest bg-[#2a2b3d] sticky top-0 z-10">SHAPES & CONTAINERS</div>
+                <div class="menu-item el-add" data-type="Frame"><i class="fa-solid fa-square w-5 text-gray-400"></i> Frame Box</div>
+                <div class="menu-item el-add" data-type="Container"><i class="fa-regular fa-square w-5 text-gray-500"></i> Border Container</div>
+                <div class="menu-item el-add" data-type="GlassPanel"><i class="fa-regular fa-square w-5 text-cyan-200"></i> Glass Panel</div>
+                <div class="menu-item el-add" data-type="Circle"><i class="fa-solid fa-circle w-5 text-blue-300"></i> Circle</div>
+                <div class="menu-item el-add" data-type="Divider"><i class="fa-solid fa-minus w-5 text-gray-400"></i> Divider Line</div>
+                
+                <div class="p-3 text-[10px] text-accent font-black tracking-widest bg-[#2a2b3d] sticky top-0 z-10 mt-2">INTERACTIVE CONTROLS</div>
+                <div class="menu-item el-add" data-type="Text"><i class="fa-solid fa-font text-accent w-5"></i> Text Label</div>
+                <div class="menu-item el-add" data-type="Button"><i class="fa-solid fa-hand-pointer text-emerald-400 w-5"></i> Action Button</div>
+                <div class="menu-item el-add" data-type="Bar"><i class="fa-solid fa-bars-progress text-red-400 w-5"></i> Progress Bar</div>
+                <div class="menu-item el-add" data-type="Switch"><i class="fa-solid fa-toggle-on text-purple-400 w-5"></i> iOS Switch</div>
+                <div class="menu-item el-add" data-type="Toggle"><i class="fa-solid fa-check-square text-green-400 w-5"></i> Checkbox</div>
+                <div class="menu-item el-add" data-type="Slider"><i class="fa-solid fa-sliders text-yellow-400 w-5"></i> Slider</div>
+                <div class="menu-item el-add" data-type="Input"><i class="fa-solid fa-i-cursor text-blue-400 w-5"></i> Text Input Field</div>
+                <div class="menu-item el-add" data-type="Dropdown"><i class="fa-solid fa-caret-down text-orange-400 w-5"></i> Dropdown Menu</div>
+                <div class="menu-item el-add" data-type="Joystick"><i class="fa-solid fa-gamepad text-orange-400 w-5"></i> Thumb Joystick</div>
+                
+                <div class="p-3 text-[10px] text-accent font-black tracking-widest bg-[#2a2b3d] sticky top-0 z-10 mt-2">MEDIA & WEB</div>
+                <div class="menu-item el-add" data-type="Image"><i class="fa-solid fa-image text-pink-400 w-5"></i> Image URL</div>
+                <div class="menu-item el-add" data-type="Video"><i class="fa-solid fa-video text-purple-300 w-5"></i> MP4 Video Player</div>
+                <div class="menu-item el-add" data-type="Audio"><i class="fa-solid fa-music text-blue-300 w-5"></i> Audio Player</div>
+                <div class="menu-item el-add" data-type="WebView"><i class="fa-solid fa-globe text-emerald-300 w-5"></i> Embedded Website</div>
+            </div>
 
-        <div id="pop-logic" class="menu-pop hidden">
-            <div class="p-2 text-[10px] text-emerald-400 font-black tracking-widest bg-[#2a2b3d] sticky top-0 z-10">TRIGGERS</div>
-            <div class="menu-item nd-add" data-type="Evt_Click">On Click</div>
-            <div class="menu-item nd-add" data-type="Evt_Down">On Press (Down)</div>
-            <div class="menu-item nd-add" data-type="Evt_Up">On Release (Up)</div>
-            <div class="menu-item nd-add" data-type="Evt_Start">On App Start</div>
-            <div class="menu-item nd-add" data-type="Evt_Change">On Value Change</div>
-            <div class="menu-item nd-add" data-type="Evt_Tick">On Tick (Loop)</div>
-            
-            <div class="p-2 text-[10px] text-accent font-black tracking-widest bg-[#2a2b3d] sticky top-0 z-10 mt-2">ACTIONS</div>
-            <div class="menu-item nd-add" data-type="Act_Set">Set Property</div>
-            <div class="menu-item nd-add" data-type="Act_SyncProp">Sync Property</div>
-            <div class="menu-item nd-add" data-type="Act_Color">Set Color</div>
-            <div class="menu-item nd-add" data-type="Act_Tween">Smooth Tween</div>
-            <div class="menu-item nd-add" data-type="Act_Wait">Wait (Delay)</div>
-            <div class="menu-item nd-add" data-type="Act_Alert">Show Alert Popup</div>
-            <div class="menu-item nd-add" data-type="Act_Media">Play/Pause Media</div>
-            <div class="menu-item nd-add" data-type="Act_Link">Open URL</div>
-            <div class="menu-item nd-add" data-type="Act_Reload">Restart Engine</div>
-            <div class="menu-item nd-add" data-type="Act_Vibrate">Vibrate Phone</div>
-            
-            <div class="p-2 text-[10px] text-purple-400 font-black tracking-widest bg-[#2a2b3d] sticky top-0 z-10 mt-2">LOGIC & DATA</div>
-            <div class="menu-item nd-add" data-type="Act_Math">Math (+ - *)</div>
-            <div class="menu-item nd-add" data-type="Act_MathAdv">Adv Math (Round/Sqrt)</div>
-            <div class="menu-item nd-add" data-type="Act_Concat">Combine Text</div>
-            <div class="menu-item nd-add" data-type="Flow_If">If Condition</div>
-            <div class="menu-item nd-add" data-type="Flow_Loop">Repeat Loop</div>
-            <div class="menu-item nd-add" data-type="Data_Save">Save to Device</div>
-            <div class="menu-item nd-add" data-type="Data_Load">Load from Device</div>
-            <div class="menu-item nd-add" data-type="Data_Date">Get Date/Time</div>
-            <div class="menu-item nd-add" data-type="Data_Random">Random Number</div>
+            <div id="pop-logic" class="menu-pop">
+                <div class="p-3 text-[10px] text-emerald-400 font-black tracking-widest bg-[#2a2b3d] sticky top-0 z-10">EVENTS (Triggers)</div>
+                <div class="menu-item nd-add" data-type="Evt_Click">On Click / Tap</div>
+                <div class="menu-item nd-add" data-type="Evt_Down">On Press (Down)</div>
+                <div class="menu-item nd-add" data-type="Evt_Up">On Release (Up)</div>
+                <div class="menu-item nd-add" data-type="Evt_Start">On App Start</div>
+                <div class="menu-item nd-add" data-type="Evt_Change">On Value Change</div>
+                <div class="menu-item nd-add" data-type="Evt_Tick">On Tick (Loop ms)</div>
+                
+                <div class="p-3 text-[10px] text-accent font-black tracking-widest bg-[#2a2b3d] sticky top-0 z-10 mt-2">ACTIONS (Visual)</div>
+                <div class="menu-item nd-add" data-type="Act_Set">Set Value / Text</div>
+                <div class="menu-item nd-add" data-type="Act_SyncProp">Sync / Copy Property</div>
+                <div class="menu-item nd-add" data-type="Act_Color">Set Color</div>
+                <div class="menu-item nd-add" data-type="Act_Tween">Smooth Tween Animate</div>
+                <div class="menu-item nd-add" data-type="Act_Wait">Wait (Delay Seconds)</div>
+                <div class="menu-item nd-add" data-type="Act_Alert">Show Alert Popup</div>
+                <div class="menu-item nd-add" data-type="Act_Media">Play/Pause Media</div>
+                <div class="menu-item nd-add" data-type="Act_Link">Open Web Link</div>
+                <div class="menu-item nd-add" data-type="Act_Vibrate">Vibrate Phone</div>
+                
+                <div class="p-3 text-[10px] text-purple-400 font-black tracking-widest bg-[#2a2b3d] sticky top-0 z-10 mt-2">LOGIC & DATA</div>
+                <div class="menu-item nd-add" data-type="Act_Math">Math Operation (+ - *)</div>
+                <div class="menu-item nd-add" data-type="Act_Concat">Combine Text</div>
+                <div class="menu-item nd-add" data-type="Flow_If">If Condition</div>
+                <div class="menu-item nd-add" data-type="Flow_Loop">Repeat Loop</div>
+                <div class="menu-item nd-add" data-type="Data_Save">Save to Device</div>
+                <div class="menu-item nd-add" data-type="Data_Load">Load from Device</div>
+                <div class="menu-item nd-add" data-type="Data_Random">Random Number</div>
+            </div>
         </div>
     </main>
 
     <nav id="bottom-nav">
-        <div class="nav-tab active-tab" data-tab="canvas"><i class="fa-solid fa-shapes text-xl mb-1"></i> Canvas</div>
-        <div class="nav-tab" data-tab="logic"><i class="fa-solid fa-diagram-project text-xl mb-1"></i> Logic</div>
-        <div class="nav-tab" data-tab="props"><i class="fa-solid fa-sliders text-xl mb-1"></i> Props</div>
+        <div class="nav-tab active-tab" data-tab="canvas"><i class="fa-solid fa-shapes"></i> Canvas</div>
+        <div class="nav-tab" data-tab="logic"><i class="fa-solid fa-diagram-project"></i> Logic</div>
+        <div class="nav-tab" data-tab="props"><i class="fa-solid fa-sliders"></i> Props</div>
     </nav>
 
     <input type="file" id="import-file" class="hidden" accept=".json">
 
     <script>
-        // --- CORE ---
+        // --- 1. CORE ENGINE ---
         const Engine = {
             mode: 'edit', elements: [], nodes: [], wires: [], sel: null, 
             panC: {x:0, y:0}, panL: {x:0, y:0}, zoomL: 1, intervals: [],
@@ -202,7 +198,9 @@
             parseRgba: (s) => { const m = s.match(/rgba?\((\d+),\s*(\d+),\s*(\d+),?\s*([\d.]+)?\)/); return m ? {r:parseInt(m[1]), g:parseInt(m[2]), b:parseInt(m[3]), a:parseFloat(m[4]||1)} : {r:255,g:255,b:255,a:1}; }
         };
 
-        // --- FULL ELEMENT LIBRARY ---
+        const cloneObj = (obj) => JSON.parse(JSON.stringify(obj));
+
+        // --- 2. ELEMENT DICTIONARY ---
         const ElDefs = {
             Frame: { w: 150, h: 150, bg: 'rgba(42,43,61,1)', radius: 10, opacity: 1, shadow: 0, z: 1, visible: true },
             Container: { w: 200, h: 200, bg: 'rgba(0,0,0,0)', border: 'rgba(137,180,250,0.5)', radius: 0, opacity: 1, z: 1, visible: true },
@@ -210,25 +208,23 @@
             Circle: { w: 100, h: 100, bg: 'rgba(42,43,61,1)', radius: 50, opacity: 1, shadow: 0, z: 1, visible: true },
             Divider: { w: 200, h: 2, bg: 'rgba(255,255,255,0.2)', radius: 0, opacity: 1, shadow: 0, z: 1, visible: true },
             Text: { w: 150, h: 40, text: 'Text Label', color: 'rgba(255,255,255,1)', size: 16, align: 'center', bg: 'rgba(0,0,0,0)', opacity: 1, z: 3, visible: true },
-            Button: { w: 120, h: 45, text: 'Click Me', color: 'rgba(15,15,23,1)', bg: 'rgba(137,180,250,1)', size: 16, align: 'center', radius: 6, opacity: 1, shadow: 1, z: 4, visible: true },
-            Bar: { w: 200, h: 20, bg: 'rgba(21,21,33,1)', fill: 'rgba(166,227,161,1)', progress: 50, radius: 10, opacity: 1, shadow: 0, z: 3, visible: true },
-            Switch: { w: 50, h: 28, bg: 'rgba(42,43,61,1)', fill: 'rgba(166,227,161,1)', state: false, radius: 14, opacity: 1, shadow: 0, z: 3, visible: true },
+            Button: { w: 140, h: 50, text: 'Click Me', color: 'rgba(15,15,23,1)', bg: 'rgba(137,180,250,1)', size: 16, align: 'center', radius: 8, opacity: 1, shadow: 1, z: 4, visible: true },
+            Bar: { w: 200, h: 24, bg: 'rgba(21,21,33,1)', fill: 'rgba(166,227,161,1)', progress: 50, radius: 12, opacity: 1, shadow: 0, z: 3, visible: true },
+            Switch: { w: 56, h: 32, bg: 'rgba(42,43,61,1)', fill: 'rgba(166,227,161,1)', state: false, radius: 16, opacity: 1, shadow: 0, z: 3, visible: true },
             Toggle: { w: 40, h: 40, bg: 'rgba(42,43,61,1)', fill: 'rgba(137,180,250,1)', state: false, radius: 8, opacity: 1, shadow: 0, z: 3, visible: true },
             Slider: { w: 200, h: 24, bg: 'rgba(21,21,33,1)', fill: 'rgba(137,180,250,1)', progress: 50, radius: 12, opacity: 1, shadow: 0, z: 3, visible: true },
-            Input: { w: 180, h: 44, text: '', hint: 'Type...', color: 'rgba(255,255,255,1)', bg: 'rgba(21,21,33,1)', size: 14, align: 'left', radius: 8, opacity: 1, shadow: 0, z: 4, visible: true },
+            Input: { w: 200, h: 48, text: '', hint: 'Type...', color: 'rgba(255,255,255,1)', bg: 'rgba(21,21,33,1)', size: 14, align: 'left', radius: 8, opacity: 1, shadow: 0, z: 4, visible: true },
             TextArea: { w: 200, h: 100, text: '', hint: 'Multiline...', color: 'rgba(255,255,255,1)', bg: 'rgba(21,21,33,1)', size: 14, align: 'left', radius: 8, opacity: 1, shadow: 0, z: 4, visible: true },
-            Dropdown: { w: 150, h: 40, bg: 'rgba(42,43,61,1)', color: 'rgba(255,255,255,1)', options: 'Option 1,Option 2', radius: 6, opacity: 1, shadow: 0, z: 4, visible: true },
-            ColorPicker: { w: 50, h: 50, bg: 'rgba(0,0,0,0)', fill: '#ff0000', radius: 8, opacity: 1, shadow: 0, z: 4, visible: true },
+            Dropdown: { w: 160, h: 44, bg: 'rgba(42,43,61,1)', color: 'rgba(255,255,255,1)', options: 'Option 1,Option 2', radius: 8, opacity: 1, shadow: 0, z: 4, visible: true },
+            ColorPicker: { w: 60, h: 60, bg: 'rgba(0,0,0,0)', fill: '#ff0000', radius: 12, opacity: 1, shadow: 0, z: 4, visible: true },
             Image: { w: 150, h: 150, url: 'https://picsum.photos/150', bg: 'rgba(0,0,0,0)', radius: 8, opacity: 1, shadow: 0, z: 2, visible: true },
-            Video: { w: 250, h: 150, url: 'https://www.w3schools.com/html/mov_bbb.mp4', bg: 'rgba(0,0,0,1)', radius: 8, opacity: 1, shadow: 0, z: 2, visible: true },
-            Audio: { w: 200, h: 50, url: '', bg: 'rgba(0,0,0,0)', radius: 8, opacity: 1, shadow: 0, z: 2, visible: true },
-            WebView: { w: 250, h: 300, url: 'https://example.com', bg: 'rgba(255,255,255,1)', radius: 8, opacity: 1, shadow: 0, z: 2, visible: true },
-            Joystick: { w: 100, h: 100, bg: 'rgba(21,21,33,0.5)', fill: 'rgba(137,180,250,0.8)', radius: 50, joyX: 0, joyY: 0, opacity: 1, shadow: 0, z: 5, visible: true },
-            Viewport3D: { w: 150, h: 150, bg: 'rgba(0,0,0,0)', fill: 'rgba(203,166,247,1)', radius: 0, opacity: 1, shadow: 0, z: 1, visible: true },
-            Loader: { w: 50, h: 50, bg: 'rgba(0,0,0,0)', fill: 'rgba(137,180,250,1)', radius: 50, opacity: 1, shadow: 0, z: 4, visible: true }
+            Video: { w: 280, h: 160, url: 'https://www.w3schools.com/html/mov_bbb.mp4', bg: 'rgba(0,0,0,1)', radius: 8, opacity: 1, shadow: 0, z: 2, visible: true },
+            Audio: { w: 200, h: 50, url: '', bg: 'rgba(42,43,61,1)', radius: 8, opacity: 1, shadow: 0, z: 2, visible: true },
+            WebView: { w: 280, h: 300, url: 'https://example.com', bg: 'rgba(255,255,255,1)', radius: 8, opacity: 1, shadow: 0, z: 2, visible: true },
+            Joystick: { w: 120, h: 120, bg: 'rgba(21,21,33,0.5)', fill: 'rgba(137,180,250,0.8)', radius: 60, joyX: 0, joyY: 0, opacity: 1, shadow: 0, z: 5, visible: true }
         };
 
-        // --- FULL NODE LIBRARY ---
+        // --- 3. NODE DICTIONARY ---
         const NodeDefs = {
             Evt_Click: { n: 'On Click', c: '#a6e3a1', out: ['exec'], f: { target: 'el' } },
             Evt_Down: { n: 'On Press', c: '#a6e3a1', out: ['exec'], f: { target: 'el' } },
@@ -237,9 +233,9 @@
             Evt_Change: { n: 'On Change', c: '#a6e3a1', out: ['exec'], f: { target: 'el' } },
             Evt_Tick: { n: 'On Tick', c: '#a6e3a1', out: ['exec'], f: { ms: 'num' } },
             
-            Act_Set: { n: 'Set Value', c: '#89b4fa', in: ['exec'], out: ['exec'], f: { target: 'el', prop: 'numprop', val: 'num', smooth: 'bool', sec: 'num' } },
+            Act_Set: { n: 'Set Value', c: '#89b4fa', in: ['exec'], out: ['exec'], f: { target: 'el', prop: 'numprop', val: 'num' } },
             Act_SyncProp: { n: 'Sync Prop', c: '#89b4fa', in: ['exec'], out: ['exec'], f: { srcEl: 'el', srcProp: 'numprop', tgtEl: 'el', tgtProp: 'numprop', mult: 'num' } },
-            Act_Color: { n: 'Set Color', c: '#cba6f7', in: ['exec'], out: ['exec'], f: { target: 'el', part: 'part', color: 'color', smooth: 'bool', sec: 'num' } },
+            Act_Color: { n: 'Set Color', c: '#cba6f7', in: ['exec'], out: ['exec'], f: { target: 'el', part: 'part', color: 'color' } },
             Act_Math: { n: 'Math', c: '#f9e2af', in: ['exec'], out: ['exec'], f: { target: 'el', prop: 'numprop', op: 'op', value: 'num' } },
             Act_MathAdv: { n: 'Adv Math', c: '#89b4fa', in: ['exec'], out: ['exec'], f: { target: 'el', prop: 'numprop', op: 'advmath' } },
             Act_Wait: { n: 'Wait (sec)', c: '#f38ba8', in: ['exec'], out: ['exec'], f: { time: 'num' } },
@@ -255,56 +251,62 @@
             Flow_Loop: { n: 'Repeat Loop', c: '#f9e2af', in: ['exec'], out: ['loop', 'done'], f: { count: 'num' } },
             Data_Save: { n: 'Save Data', c: '#fab387', in: ['exec'], out: ['exec'], f: { key: 'str', target: 'el', prop: 'numprop' } },
             Data_Load: { n: 'Load Data', c: '#fab387', in: ['exec'], out: ['exec'], f: { key: 'str', target: 'el', prop: 'numprop' } },
-            Data_Date: { n: 'Get Time', c: '#fab387', in: ['exec'], out: ['exec'], f: { target: 'el', prop: 'str', format: 'timefmt' } },
             Data_Random: { n: 'Random', c: '#fab387', in: ['exec'], out: ['exec'], f: { target: 'el', prop: 'numprop', min: 'num', max: 'num' } }
         };
 
-        // --- UI ROUTER ---
-        const switchTab = (tabId) => {
-            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active-tab'));
-            document.querySelector(`.nav-tab[data-tab="${tabId}"]`).classList.add('active-tab');
-            document.querySelectorAll('.workspace').forEach(w => { w.classList.remove('active'); w.style.display = 'none'; });
-            const activeWs = document.getElementById(`ws-${tabId}`);
-            activeWs.classList.add('active'); activeWs.style.display = tabId === 'props' ? 'flex' : 'block';
-            document.getElementById('fab-canvas').classList.toggle('hidden', tabId !== 'canvas');
-            document.getElementById('fab-logic').classList.toggle('hidden', tabId !== 'logic');
-            document.querySelectorAll('.menu-pop').forEach(m => m.classList.add('hidden'));
-            if(tabId === 'logic') Logic.drawWires();
+        // --- 4. UI ROUTER (ISOLATED) ---
+        const Sys = {
+            switchTab: (tabId) => {
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active-tab'));
+                document.querySelector(`.nav-tab[data-tab="${tabId}"]`).classList.add('active-tab');
+                document.querySelectorAll('.workspace').forEach(w => { w.classList.remove('active'); w.style.display = 'none'; });
+                const activeWs = document.getElementById(`ws-${tabId}`);
+                activeWs.classList.add('active'); activeWs.style.display = tabId === 'props' ? 'flex' : 'block';
+                
+                document.getElementById('fab-canvas').classList.toggle('hidden', tabId !== 'canvas');
+                document.getElementById('fab-canvas').classList.remove('pulse-anim'); // Stop pulse after first click
+                document.getElementById('fab-logic').classList.toggle('hidden', tabId !== 'logic');
+                Sys.closeMenus();
+                if(tabId === 'logic') Logic.drawWires();
+            },
+            toggleMenu: (id) => {
+                const menu = document.getElementById(id); const isHidden = menu.style.display !== 'flex';
+                Sys.closeMenus();
+                if(isHidden) menu.style.display = 'flex';
+            },
+            closeMenus: () => document.querySelectorAll('.menu-pop').forEach(m => m.style.display = 'none'),
+            export: () => {
+                const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({ el: Engine.elements, nd: Engine.nodes, wr: Engine.wires })], {type:'application/json'}));
+                a.download = 'nebula_master.json'; a.click();
+            }
         };
 
-        document.querySelectorAll('.nav-tab').forEach(tab => tab.addEventListener('click', () => switchTab(tab.dataset.tab)));
-
-        const toggleMenu = (id) => {
-            const menu = document.getElementById(id); const isHidden = menu.classList.contains('hidden');
-            document.querySelectorAll('.menu-pop').forEach(m => m.classList.add('hidden'));
-            if(isHidden) menu.classList.remove('hidden');
-        };
-
-        document.getElementById('fab-canvas').addEventListener('click', (e) => { e.stopPropagation(); toggleMenu('pop-canvas'); });
-        document.getElementById('fab-logic').addEventListener('click', (e) => { e.stopPropagation(); toggleMenu('pop-logic'); });
-        document.addEventListener('pointerdown', (e) => { if(!e.target.closest('.menu-pop') && !e.target.closest('.fab')) document.querySelectorAll('.menu-pop').forEach(m => m.classList.add('hidden')); });
-
-        document.getElementById('btn-save').addEventListener('click', () => {
-            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({ el: Engine.elements, nd: Engine.nodes, wr: Engine.wires })], {type:'application/json'}));
-            a.download = 'nebula_project.json'; a.click();
-        });
-        document.getElementById('btn-load').addEventListener('click', () => document.getElementById('import-file').click());
+        // Bind UI Controls
+        document.querySelectorAll('.nav-tab').forEach(tab => tab.addEventListener('pointerdown', () => Sys.switchTab(tab.dataset.tab)));
+        document.getElementById('fab-canvas').addEventListener('pointerdown', (e) => { e.stopPropagation(); Sys.toggleMenu('pop-canvas'); });
+        document.getElementById('fab-logic').addEventListener('pointerdown', (e) => { e.stopPropagation(); Sys.toggleMenu('pop-logic'); });
+        document.getElementById('btn-save').addEventListener('pointerdown', Sys.export);
+        document.getElementById('btn-load').addEventListener('pointerdown', () => document.getElementById('import-file').click());
         document.getElementById('import-file').addEventListener('change', (e) => {
             const r = new FileReader(); r.onload = () => { const d = JSON.parse(r.result); Engine.elements = d.el; Engine.nodes = d.nd; Engine.wires = d.wr; Canvas.render(); Logic.render(); Inspector.render(); };
             r.readAsText(e.target.files[0]); e.target.value = '';
         });
 
-        // --- CANVAS ---
+        // Close menus when clicking outside
+        document.addEventListener('pointerdown', (e) => {
+            if(!e.target.closest('.menu-pop') && !e.target.closest('.fab')) Sys.closeMenus();
+        });
+
+        // --- 5. CANVAS ENGINE ---
         const Canvas = {
             layer: document.getElementById('canvas-pan'),
             add: (type) => {
-                const props = JSON.parse(JSON.stringify(ElDefs[type]));
+                const props = cloneObj(ElDefs[type]);
                 props.x = Math.max(20, 100 - Engine.panC.x); props.y = Math.max(20, 100 - Engine.panC.y);
                 Engine.elements.push({ id: Engine.id('el'), type, name: `${type}_${Engine.elements.length+1}`, props });
                 Engine.sel = Engine.elements[Engine.elements.length-1].id;
                 Canvas.render(); Inspector.render(); Logic.render(); // Logic render updates dropdowns!
-                switchTab('props');
-                document.getElementById('pop-canvas').classList.add('hidden');
+                Sys.switchTab('props'); Sys.closeMenus();
             },
             render: () => {
                 Canvas.layer.innerHTML = '';
@@ -324,7 +326,7 @@
                     if(el.type === 'Circle') d.style.borderRadius = '50%';
                     if(el.type === 'Text' || el.type === 'Button') { d.innerText = el.props.text; d.style.color = el.props.color; d.style.fontSize = (el.props.size||16)+'px'; d.style.fontWeight = 'bold'; d.style.textAlign = el.props.align||'center'; d.style.justifyContent = el.props.align === 'left' ? 'flex-start' : el.props.align === 'right' ? 'flex-end' : 'center'; d.style.padding = '0 10px'; }
                     
-                    if(el.type === 'Bar') d.innerHTML = `<div style="height:100%; width:${Math.min(100, Math.max(0, parseFloat(el.props.progress)||0))}%; background:${el.props.fill}; border-radius:${el.props.radius}px;"></div>`;
+                    if(el.type === 'Bar') d.innerHTML = `<div style="height:100%; width:${Math.min(100, Math.max(0, parseFloat(el.props.progress)||0))}%; background:${el.props.fill}; border-radius:${el.props.radius}px; transition: width 0.05s linear;"></div>`;
                     
                     if(el.type === 'Toggle') {
                         d.style.background = el.props.state ? el.props.fill : el.props.bg; d.style.transition = '0.2s';
@@ -383,27 +385,20 @@
                         if(Engine.mode === 'edit') d.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#000;"><i class="fa-solid fa-globe text-3xl"></i></div>`;
                         else d.innerHTML = `<iframe src="${el.props.url}" style="width:100%;height:100%;border:none;border-radius:${el.props.radius}px;"></iframe>`;
                     }
-                    if(el.type === 'Viewport3D') {
-                        d.innerHTML = `<div class="cube-container"><div class="cube"><div class="front" style="background:${el.props.fill}"></div><div class="back" style="background:${el.props.fill}"></div><div class="right" style="background:${el.props.fill}"></div><div class="left" style="background:${el.props.fill}"></div><div class="top" style="background:${el.props.fill}"></div><div class="bottom" style="background:${el.props.fill}"></div></div></div>`;
-                    }
-                    if(el.type === 'Loader') {
-                        d.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-4xl" style="color:${el.props.fill}"></i>`;
-                    }
-
                     Canvas.layer.appendChild(d);
                 });
                 Inspector.updateTree();
             }
         };
 
-        document.querySelectorAll('.el-add').forEach(b => b.addEventListener('click', () => Canvas.add(b.dataset.type)));
+        document.querySelectorAll('.el-add').forEach(b => b.addEventListener('pointerdown', (e) => { e.stopPropagation(); Canvas.add(b.dataset.type); }));
 
-        // --- LOGIC GRAPH ---
+        // --- 6. LOGIC GRAPH ---
         const Logic = {
             layer: document.getElementById('node-layer'), svg: document.getElementById('svg-layer'),
             add: (type) => {
                 Engine.nodes.push({ id: Engine.id('nd'), type, x: (100 - Engine.panL.x)/Engine.zoomL, y: (100 - Engine.panL.y)/Engine.zoomL, data: {} });
-                Logic.render(); document.getElementById('pop-logic').classList.add('hidden');
+                Logic.render(); Sys.closeMenus();
             },
             render: () => {
                 Logic.layer.innerHTML = '';
@@ -416,7 +411,7 @@
                     
                     let flds = '';
                     for(const [k, v] of Object.entries(def.f)) {
-                        if(v==='el') flds += `<select class="ui-input mt-2 n-fld" data-k="${k}"><option value="">[ Target ]</option>${Engine.elements.map(e=>`<option value="${e.id}" ${n.data[k]===e.id?'selected':''}>${e.name}</option>`).join('')}</select>`;
+                        if(v==='el') flds += `<select class="ui-input mt-2 n-fld" data-k="${k}"><option value="">[ Target Element ]</option>${Engine.elements.map(e=>`<option value="${e.id}" ${n.data[k]===e.id?'selected':''}>${e.name}</option>`).join('')}</select>`;
                         else if(v==='op') flds += `<select class="ui-input mt-2 n-fld" data-k="${k}"><option value="+" ${n.data[k]==='+'?'selected':''}>Add (+)</option><option value="-" ${n.data[k]==='-'?'selected':''}>Sub (-)</option><option value="*" ${n.data[k]==='*'?'selected':''}>Mult (*)</option></select>`;
                         else if(v==='cmp') flds += `<select class="ui-input mt-2 n-fld" data-k="${k}"><option value="==" ${n.data[k]==='=='?'selected':''}>Equal (==)</option><option value=">" ${n.data[k]==='>'?'selected':''}>Greater (>)</option><option value="<" ${n.data[k]==='<'?'selected':''}>Less (<)</option></select>`;
                         else if(v==='part') flds += `<select class="ui-input mt-2 n-fld" data-k="${k}"><option value="bg" ${n.data[k]==='bg'?'selected':''}>Background</option><option value="color" ${n.data[k]==='color'?'selected':''}>Text Color</option><option value="fill" ${n.data[k]==='fill'?'selected':''}>Accent / Fill</option></select>`;
@@ -430,8 +425,6 @@
                         else if(v==='advmath') flds += `<select class="ui-input mt-2 n-fld" data-k="${k}"><option value="round" ${n.data[k]==='round'?'selected':''}>Round</option><option value="floor" ${n.data[k]==='floor'?'selected':''}>Floor</option><option value="ceil" ${n.data[k]==='ceil'?'selected':''}>Ceiling</option><option value="sqrt" ${n.data[k]==='sqrt'?'selected':''}>Square Root</option></select>`;
                         else if(v==='media') flds += `<select class="ui-input mt-2 n-fld" data-k="${k}"><option value="play" ${n.data[k]==='play'?'selected':''}>Play Media</option><option value="pause" ${n.data[k]==='pause'?'selected':''}>Pause Media</option></select>`;
                         else if(v==='timefmt') flds += `<select class="ui-input mt-2 n-fld" data-k="${k}"><option value="time" ${n.data[k]==='time'?'selected':''}>Time (HH:MM)</option><option value="date" ${n.data[k]==='date'?'selected':''}>Date</option><option value="ms" ${n.data[k]==='ms'?'selected':''}>Milliseconds</option></select>`;
-                        else if(v==='color') flds += `<div class="flex items-center gap-3 mt-2"><input type="color" class="n-fld rounded w-10 h-8 cursor-pointer border-none bg-transparent" data-k="${k}" value="${n.data[k]||'#ffffff'}"><span class="text-xs text-muted font-bold">HEX COLOR</span></div>`;
-                        else if(v==='bool') flds += `<div class="flex items-center gap-3 mt-2"><input type="checkbox" class="n-fld-chk w-5 h-5 cursor-pointer accent-accent" data-k="${k}" ${n.data[k]==='true'?'checked':''}><span class="text-xs text-muted font-bold uppercase">${k} (Animate)</span></div>`;
                         else flds += `<input type="text" class="ui-input mt-2 n-fld" placeholder="${k}" data-k="${k}" value="${n.data[k]||''}">`;
                     }
 
@@ -440,7 +433,6 @@
                         <div class="p-3 pt-1 flex flex-col">${flds}</div>`;
                     
                     d.querySelectorAll('.n-fld').forEach(f => { f.addEventListener('pointerdown', e=>e.stopPropagation()); f.addEventListener('change', e => n.data[f.dataset.k] = e.target.value); });
-                    d.querySelectorAll('.n-fld-chk').forEach(f => { f.addEventListener('pointerdown', e=>e.stopPropagation()); f.addEventListener('change', e => { n.data[f.dataset.k] = e.target.checked ? 'true' : 'false'; Logic.render(); }); });
                     Logic.layer.appendChild(d);
                 });
                 Logic.drawWires();
@@ -466,17 +458,17 @@
             }
         };
 
-        document.querySelectorAll('.nd-add').forEach(b => b.addEventListener('click', () => Logic.add(b.dataset.type)));
+        document.querySelectorAll('.nd-add').forEach(b => b.addEventListener('pointerdown', (e) => { e.stopPropagation(); Logic.add(b.dataset.type); }));
 
-        // --- INSPECTOR ---
+        // --- 7. INSPECTOR ---
         const Inspector = {
             updateTree: () => {
                 const tr = document.getElementById('tree-view'); tr.innerHTML = '';
                 Engine.elements.forEach(el => {
                     const d = document.createElement('div');
-                    d.className = `p-3 rounded text-[12px] font-bold cursor-pointer ${Engine.sel === el.id ? 'bg-accent text-black' : 'bg-[#1e1e2e] text-white hover:bg-[#2a2b3d]'}`;
+                    d.className = `p-4 rounded text-[13px] font-bold cursor-pointer ${Engine.sel === el.id ? 'bg-accent text-black' : 'bg-[#1e1e2e] text-white hover:bg-[#2a2b3d]'}`;
                     d.innerText = el.name;
-                    d.addEventListener('click', () => { Engine.sel = el.id; Canvas.render(); Inspector.render(); });
+                    d.addEventListener('pointerdown', () => { Engine.sel = el.id; Canvas.render(); Inspector.render(); });
                     tr.appendChild(d);
                 });
             },
@@ -487,8 +479,8 @@
                 ed.classList.remove('hidden'); ed.classList.add('flex'); em.classList.add('hidden');
 
                 let h = `<div class="prop-group"><input class="ui-input font-bold" id="inp-name" value="${el.name}"></div>
-                         <div class="prop-group"><div class="text-[10px] text-accent font-black tracking-widest mb-2">TRANSFORM</div>
-                         <div class="grid grid-cols-2 gap-3">
+                         <div class="prop-group"><div class="text-[10px] text-accent font-black tracking-widest mb-3">TRANSFORM</div>
+                         <div class="grid grid-cols-2 gap-4">
                              <div class="text-[10px] text-muted font-bold">X Pos <input type="number" class="ui-input mt-1" id="inp-x" value="${el.props.x}"></div>
                              <div class="text-[10px] text-muted font-bold">Y Pos <input type="number" class="ui-input mt-1" id="inp-y" value="${el.props.y}"></div>
                              <div class="text-[10px] text-muted font-bold">Width <input type="number" class="ui-input mt-1" id="inp-w" value="${el.props.w}"></div>
@@ -496,6 +488,8 @@
                          </div></div>`;
 
                 let sp = '';
+                if(el.props.radius !== undefined) sp += `<div class="text-[10px] text-muted font-bold mt-4 mb-2 uppercase">BORDER RADIUS</div><input type="number" class="ui-input" id="inp-rad" value="${el.props.radius}">`;
+
                 ['bg', 'color', 'fill', 'border'].forEach(p => {
                     if(el.props[p] !== undefined) {
                         const c = Engine.parseRgba(el.props[p]);
@@ -510,7 +504,7 @@
                 if(el.props.align !== undefined) sp += `<div class="text-[10px] text-muted font-bold mt-4 mb-2">TEXT ALIGN</div><select class="ui-input" id="inp-align"><option value="left" ${el.props.align==='left'?'selected':''}>Left</option><option value="center" ${el.props.align==='center'?'selected':''}>Center</option><option value="right" ${el.props.align==='right'?'selected':''}>Right</option></select>`;
                 if(el.props.options !== undefined) sp += `<div class="text-[10px] text-muted font-bold mt-4 mb-2">OPTIONS (Comma sep)</div><input class="ui-input" id="inp-opt" value="${el.props.options}">`;
                 if(el.props.progress !== undefined) sp += `<div class="text-[10px] text-muted font-bold mt-4 mb-2">VALUE</div><input type="range" class="w-full" id="inp-prog" value="${el.props.progress}">`;
-                if(el.props.url !== undefined) sp += `<div class="text-[10px] text-muted font-bold mt-4 mb-2">MEDIA/WEB URL</div><input class="ui-input" id="inp-url" value="${el.props.url}">`;
+                if(el.props.url !== undefined) sp += `<div class="text-[10px] text-muted font-bold mt-4 mb-2">MEDIA URL</div><input class="ui-input" id="inp-url" value="${el.props.url}">`;
                 if(el.props.opacity !== undefined) sp += `<div class="text-[10px] text-muted font-bold mt-4 mb-2">OPACITY (0 to 1)</div><input type="number" step="0.1" max="1" min="0" class="ui-input" id="inp-opa" value="${el.props.opacity}">`;
                 if(el.props.shadow !== undefined) sp += `<div class="text-[10px] text-muted font-bold mt-4 mb-2 flex items-center gap-3"><input type="checkbox" class="w-5 h-5 accent-accent" id="inp-shad" ${el.props.shadow==1?'checked':''}> ENABLE SHADOW</div>`;
 
@@ -520,7 +514,10 @@
 
                 const b = (id, fn) => { const e = document.getElementById(id); if(e) e.addEventListener('input', fn); };
                 b('inp-name', (e) => { el.name = e.target.value; Inspector.updateTree(); Logic.render(); });
-                ['x','y','w','h','size','opa'].forEach(p => b(`inp-${p}`, (e) => { el.props[p==='opa'?'opacity':p] = parseFloat(e.target.value)||0; Canvas.render(); }));
+                ['x','y','w','h','size','opa','rad'].forEach(p => b(`inp-${p}`, (e) => { 
+                    const v = parseFloat(e.target.value)||0;
+                    if(p==='opa') el.props.opacity = v; else if(p==='rad') el.props.radius = v; else el.props[p] = v; Canvas.render(); 
+                }));
                 b('inp-txt', (e) => { el.props.text = e.target.value; Canvas.render(); });
                 b('inp-align', (e) => { el.props.align = e.target.value; Canvas.render(); });
                 b('inp-opt', (e) => { el.props.options = e.target.value; Canvas.render(); });
@@ -540,19 +537,19 @@
                     }
                 });
 
-                document.getElementById('btn-del-el').addEventListener('click', () => {
-                    Engine.elements = Engine.elements.filter(x=>x.id !== el.id); Engine.sel = null; Canvas.render(); Inspector.render(); Logic.render();
+                document.getElementById('btn-del-el').addEventListener('pointerdown', (e) => {
+                    e.stopPropagation(); Engine.elements = Engine.elements.filter(x=>x.id !== el.id); Engine.sel = null; Canvas.render(); Inspector.render(); Logic.render();
                 });
             }
         };
 
-        // --- RUNTIME EVALUATOR ---
+        // --- 8. RUNTIME EVALUATOR ---
         const Runtime = {
             stateBkp: null,
             play: () => {
                 Runtime.stateBkp = JSON.stringify(Engine.elements); Engine.mode = 'play'; document.body.className = 'mode-play';
                 document.getElementById('btn-play').classList.add('hidden'); document.getElementById('btn-stop').classList.remove('hidden');
-                Engine.sel = null; Canvas.render(); Inspector.render(); switchTab('canvas');
+                Engine.sel = null; Canvas.render(); Inspector.render(); Sys.switchTab('canvas');
                 
                 Engine.intervals = [];
                 Engine.nodes.filter(n=>n.type === 'Evt_Tick').forEach(n => {
@@ -625,8 +622,7 @@
                             const d = new Date(); 
                             if(n.data.format === 'time') el.props[n.data.prop] = d.toLocaleTimeString();
                             if(n.data.format === 'date') el.props[n.data.prop] = d.toLocaleDateString();
-                            if(n.data.format === 'ms') el.props[n.data.prop] = d.getTime();
-                            Canvas.render();
+                            if(n.data.format === 'ms') el.props[n.data.prop] = d.getTime(); Canvas.render();
                         }
                     }
 
@@ -643,15 +639,14 @@
             }
         };
 
-        document.getElementById('btn-play').addEventListener('click', Runtime.play); document.getElementById('btn-stop').addEventListener('click', Runtime.stop);
+        document.getElementById('btn-play').addEventListener('pointerdown', Runtime.play); document.getElementById('btn-stop').addEventListener('pointerdown', Runtime.stop);
 
-        // --- GLOBAL POINTER ENGINE ---
+        // --- 9. GLOBAL POINTER ENGINE (FIXED) ---
         let Ptr = { drag: null, wire: null };
         let pointers = {}; let pinchDist = 0;
         const main = document.getElementById('main-area');
 
         main.addEventListener('pointerdown', (e) => {
-            if (Ptr.drag || Ptr.wire) return;
             pointers[e.pointerId] = e;
             
             const btnDel = e.target.closest('.btn-del');
@@ -681,6 +676,7 @@
             const port = e.target.closest('.port');
             if(port) { 
                 if(port.dataset.io === 'in') {
+                    // 1-TAP DELETE WIRE
                     const existIdx = Engine.wires.findIndex(w => w.t === port.dataset.n && w.tp === port.dataset.p);
                     if(existIdx > -1) { Engine.wires.splice(existIdx, 1); Logic.drawWires(); return; }
                 }
@@ -722,8 +718,7 @@
                 if(pinchDist) {
                     let delta = dist - pinchDist;
                     Engine.zoomL = Math.max(0.3, Math.min(2.5, Engine.zoomL + delta * 0.005));
-                    document.getElementById('logic-pan').style.transform = `translate(${Engine.panL.x}px, ${Engine.panL.y}px) scale(${Engine.zoomL})`;
-                    Logic.drawWires();
+                    document.getElementById('logic-pan').style.transform = `translate(${Engine.panL.x}px, ${Engine.panL.y}px) scale(${Engine.zoomL})`; Logic.drawWires();
                 }
                 pinchDist = dist; return;
             }
@@ -732,8 +727,7 @@
 
             if(Ptr.drag) {
                 if(Ptr.drag.type === 'node') { 
-                    Ptr.drag.obj.x = (e.clientX - Ptr.drag.sx) / Engine.zoomL; 
-                    Ptr.drag.obj.y = (e.clientY - Ptr.drag.sy) / Engine.zoomL; 
+                    Ptr.drag.obj.x = (e.clientX - Ptr.drag.sx) / Engine.zoomL; Ptr.drag.obj.y = (e.clientY - Ptr.drag.sy) / Engine.zoomL; 
                     const dom = document.querySelector(`.node[data-id="${Ptr.drag.obj.id}"]`);
                     if(dom) { dom.style.left = Ptr.drag.obj.x + 'px'; dom.style.top = Ptr.drag.obj.y + 'px'; } Logic.drawWires(); 
                 }
@@ -742,4 +736,29 @@
                     const dom = document.querySelector(`.el-box[data-id="${Ptr.drag.obj.id}"]`);
                     if(dom) { dom.style.left = Ptr.drag.obj.props.x + 'px'; dom.style.top = Ptr.drag.obj.props.y + 'px'; }
                     const ix = document.getElementById('inp-x'); const iy = document.getElementById('inp-y');
-                    if(ix) ix.value = Ptr.drag.obj.props.x; if(iy
+                    if(ix) ix.value = Ptr.drag.obj.props.x; if(iy) iy.value = Ptr.drag.obj.props.y;
+                }
+                if(Ptr.drag.type === 'panC') { Engine.panC.x = e.clientX - Ptr.drag.sx; Engine.panC.y = e.clientY - Ptr.drag.sy; document.getElementById('canvas-pan').style.transform = `translate(${Engine.panC.x}px, ${Engine.panC.y}px)`; }
+                if(Ptr.drag.type === 'panL') { 
+                    Engine.panL.x = e.clientX - Ptr.drag.sx; Engine.panL.y = e.clientY - Ptr.drag.sy; 
+                    document.getElementById('logic-pan').style.transform = `translate(${Engine.panL.x}px, ${Engine.panL.y}px) scale(${Engine.zoomL})`; Logic.drawWires(); 
+                }
+                if(Ptr.drag.type === 'slider') {
+                    const rect = Ptr.drag.dom.getBoundingClientRect();
+                    Ptr.drag.el.props.progress = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100)); Canvas.render(); Runtime.fire('Evt_Change', Ptr.drag.el.id);
+                }
+                if(Ptr.drag.type === 'joy') {
+                    let dx = e.clientX - Ptr.drag.cx; let dy = e.clientY - Ptr.drag.cy;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    if(dist > Ptr.drag.r) { dx = (dx/dist)*Ptr.drag.r; dy = (dy/dist)*Ptr.drag.r; }
+                    Ptr.drag.el.props.joyX = dx; Ptr.drag.el.props.joyY = dy; Canvas.render(); Runtime.fire('Evt_Change', Ptr.drag.el.id);
+                }
+            }
+
+            if(Ptr.wire) {
+                let tw = document.getElementById('temp-wire');
+                if(!tw) { tw = document.createElementNS("http://www.w3.org/2000/svg", "path"); tw.id = 'temp-wire'; tw.setAttribute('class', 'wire temp'); tw.setAttribute('stroke', '#89b4fa'); Logic.svg.appendChild(tw); }
+                const r1 = Ptr.wire.el.getBoundingClientRect(); const ws = Logic.svg.getBoundingClientRect(); const z = Engine.zoomL || 1;
+                const x1 = (r1.left + 11 - ws.left) / z; const y1 = (r1.top + 11 - ws.top) / z;
+                const x2 = (e.clientX - ws.left) / z; const y2 = (e.clientY - ws.top) / z;
+                tw.setAttribute('d', `M ${x1} ${y1} C ${x1+(Ptr.wire.io==='out'?40:-40)}
