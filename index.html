@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Nebula Studio | Master Release</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nebula Studio | Ironclad V10</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -14,27 +14,26 @@
             --text-main: #cdd6f4; --text-muted: #a6adc8;
         }
 
-        /* STRICT MOBILE LOCKDOWN & GITHUB DEPLOYMENT STANDARDS */
+        /* NUCLEAR MOBILE LOCKDOWN */
         * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; user-select: none; }
         input, textarea, select { user-select: text; pointer-events: auto; }
         
-        body, html { 
-            background: var(--bg-base); color: var(--text-main); font-family: 'Segoe UI', system-ui, sans-serif; 
-            margin: 0; padding: 0; width: 100vw; height: 100dvh; /* dvh fixes mobile address bar bug */
-            overflow: hidden; touch-action: none; overscroll-behavior: none; 
-            display: flex; flex-direction: column;
-        }
+        /* Fixed position prevents iframe collapse */
+        html, body { background: var(--bg-base); color: var(--text-main); font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 0; width: 100vw; height: 100vh; position: fixed; inset: 0; overflow: hidden; touch-action: none; }
 
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-thumb { background: var(--bg-surface); border-radius: 2px; }
 
-        .ui-input { width: 100%; background: #000; border: 1px solid var(--bg-surface); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; font-family: monospace; transition: 0.2s; }
+        .ui-input { width: 100%; background: #000; border: 1px solid var(--bg-surface); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; font-family: monospace; }
         .ui-input:focus { border-color: var(--accent); }
-        .btn-tool { background: var(--bg-surface); color: var(--text-main); padding: 8px 14px; border-radius: 6px; font-weight: bold; cursor: pointer; border: none; font-size: 0.8rem; display: flex; gap: 6px; align-items: center; transition: 0.1s; }
-        .btn-tool:active { transform: scale(0.95); filter: brightness(1.2); }
+        .btn-tool { background: var(--bg-surface); color: var(--text-main); padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; border: none; font-size: 0.8rem; display: flex; gap: 6px; align-items: center; }
+        .btn-tool:active { filter: brightness(1.2); }
 
-        /* VIEWS - min-height:0 fixes flexbox overflow crushing */
-        #main-area { flex: 1; min-height: 0; position: relative; overflow: hidden; touch-action: none; }
+        /* ABSOLUTE LAYOUT (Immune to Flexbox collapse) */
+        header { position: absolute; top: 0; left: 0; right: 0; height: 60px; z-index: 50; }
+        #bottom-nav { position: absolute; bottom: 0; left: 0; right: 0; height: 64px; z-index: 200; display: flex; background: var(--bg-crust); border-top: 1px solid var(--bg-surface); }
+        #main-area { position: absolute; top: 60px; bottom: 64px; left: 0; right: 0; overflow: hidden; background: #000; }
+
         .workspace { position: absolute; inset: 0; display: none; background-color: var(--bg-base); overflow: hidden; }
         .workspace.active { display: block; }
         .pan-layer { position: absolute; inset: 0; transform-origin: 0 0; touch-action: none; }
@@ -42,60 +41,47 @@
         /* CANVAS */
         #ws-canvas { background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 20px 20px; }
         .el-box { position: absolute; display: flex; align-items: center; justify-content: center; box-sizing: border-box; background-size: cover; background-position: center; overflow: hidden; touch-action: none; }
-        body.mode-edit .el-box { cursor: grab; }
         body.mode-edit .el-box.selected { outline: 2px solid var(--accent); box-shadow: 0 0 15px rgba(137,180,250,0.6); z-index: 9999 !important; }
-        body.mode-play .el-box.interactive { cursor: pointer; }
 
         /* LOGIC GRAPH */
-        #ws-logic { background-color: #0c0c14; background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 40px 40px; }
-        .node { position: absolute; width: 260px; background: var(--bg-crust); border: 1px solid var(--bg-surface); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.9); z-index: 10; touch-action: none; }
-        .node-head { padding: 12px 14px; font-weight: 900; font-size: 0.75rem; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; cursor: grab; border-radius: 7px 7px 0 0; }
-        .node-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; pointer-events: auto; }
+        #ws-logic { background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 40px 40px; }
+        .node { position: absolute; width: 250px; background: var(--bg-crust); border: 1px solid var(--bg-surface); border-radius: 8px; box-shadow: 0 10px 20px rgba(0,0,0,0.8); z-index: 10; }
+        .node-head { padding: 12px 14px; font-weight: 900; font-size: 0.75rem; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; border-radius: 7px 7px 0 0; }
         .port-row { display: flex; justify-content: space-between; align-items: center; position: relative; margin-bottom: 4px; }
-        .port { width: 20px; height: 20px; background: #fff; border-radius: 50%; border: 4px solid var(--bg-crust); cursor: crosshair; position: absolute; z-index: 20; touch-action: none; transition: 0.1s; }
-        .port:hover { transform: scale(1.3); }
+        .port { width: 20px; height: 20px; background: #fff; border-radius: 50%; border: 4px solid var(--bg-crust); position: absolute; z-index: 20; }
         .port.in { left: -18px; } .port.out { right: -18px; }
         .port.exec { background: var(--warning); border-radius: 6px; }
-        
         #svg-layer { position: absolute; inset: 0; pointer-events: none !important; z-index: 5; overflow: visible; }
         .wire { fill: none; stroke-width: 4; stroke-linecap: round; pointer-events: none !important; }
 
         /* PROPS WORKSPACE */
-        #ws-props { overflow-y: auto; padding: 16px; touch-action: auto; padding-bottom: 150px; }
-        .prop-group { background: var(--bg-crust); border: 1px solid var(--bg-surface); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
-        .rgba-container { display: flex; gap: 4px; background: #000; padding: 6px; border-radius: 8px; align-items: center; }
-        .rgba-input { flex: 1; min-width: 0; background: transparent; border: none; color: #fff; text-align: center; font-size: 0.8rem; pointer-events: auto; }
+        #ws-props { overflow-y: auto; padding: 16px; padding-bottom: 100px; display: none; flex-direction: column; }
+        #ws-props.active { display: flex; }
+        .prop-group { background: var(--bg-crust); border: 1px solid var(--bg-surface); border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+        .rgba-container { display: flex; gap: 4px; background: #000; padding: 4px; border-radius: 6px; align-items: center; }
+        .rgba-input { flex: 1; min-width: 0; background: transparent; border: none; color: #fff; text-align: center; font-size: 0.75rem; }
 
-        /* ISOLATED UI OVERLAYS */
-        #ui-layer { position: absolute; inset: 0; pointer-events: none; z-index: 100; overflow: hidden; }
-        .fab { position: absolute; bottom: 20px; right: 20px; width: 64px; height: 64px; border-radius: 50%; background: var(--accent); color: #000; font-size: 1.8rem; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 5px 20px rgba(0,0,0,0.6); border: none; transition: 0.1s; pointer-events: auto; }
-        .fab:active { transform: scale(0.9); }
-        .menu-pop { position: absolute; bottom: 95px; right: 20px; width: 230px; background: var(--bg-crust); border: 1px solid var(--bg-surface); border-radius: 16px; display: none; flex-direction: column; max-height: 60vh; overflow-y: auto; box-shadow: 0 15px 40px rgba(0,0,0,0.9); pointer-events: auto; }
-        .menu-item { padding: 14px; font-size: 0.9rem; font-weight: bold; cursor: pointer; border-bottom: 1px solid var(--bg-surface); color: var(--text-main); display: flex; gap: 12px; align-items: center; transition: 0.1s; }
-        .menu-item:active { background: var(--bg-surface); color: var(--accent); }
+        /* OVERLAYS */
+        .fab { position: absolute; bottom: 80px; right: 20px; width: 60px; height: 60px; border-radius: 50%; background: var(--accent); color: #000; font-size: 1.8rem; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.5); z-index: 300; border: none; }
+        .menu-pop { position: absolute; bottom: 150px; right: 20px; width: 240px; background: var(--bg-crust); border: 1px solid var(--bg-surface); border-radius: 12px; display: none; flex-direction: column; max-height: 50vh; overflow-y: auto; z-index: 310; box-shadow: 0 10px 30px rgba(0,0,0,0.9); }
+        .menu-item { padding: 14px; font-size: 0.85rem; font-weight: bold; cursor: pointer; border-bottom: 1px solid var(--bg-surface); color: var(--text-main); display: flex; gap: 12px; align-items: center; }
 
-        /* BOTTOM NAV */
-        #bottom-nav { height: 65px; background: var(--bg-crust); border-top: 1px solid var(--bg-surface); display: flex; z-index: 200; flex-shrink: 0; padding-bottom: env(safe-area-inset-bottom); }
-        .nav-tab { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 0.75rem; font-weight: 800; color: var(--text-muted); cursor: pointer; transition: 0.2s; }
+        .nav-tab { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 0.75rem; font-weight: 800; color: var(--text-muted); cursor: pointer; }
         .nav-tab.active-tab { color: var(--accent); background: rgba(137,180,250,0.1); }
-        .nav-tab i { font-size: 1.2rem; margin-bottom: 4px; }
-
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(137,180,250, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(137,180,250, 0); } 100% { box-shadow: 0 0 0 0 rgba(137,180,250, 0); } }
-        .pulse-anim { animation: pulse 2s infinite; }
     </style>
 </head>
 <body class="mode-edit">
 
-    <header class="h-16 bg-[#151521] border-b border-[#2a2b3d] flex items-center justify-between px-4 z-50 shrink-0">
+    <header class="bg-[#151521] border-b border-[#2a2b3d] flex items-center justify-between px-3">
         <div class="flex items-center gap-2 font-black tracking-widest uppercase text-xs">
-            <i class="fa-solid fa-rocket text-accent text-lg"></i> Nebula <span class="text-accent">Master</span>
+            <i class="fa-solid fa-code text-accent text-lg"></i> Nebula <span class="text-accent">V10</span>
         </div>
         <div class="flex gap-2">
-            <button id="btn-save" class="btn-tool"><i class="fa-solid fa-save"></i></button>
-            <button id="btn-load" class="btn-tool"><i class="fa-solid fa-folder-open"></i></button>
+            <button class="btn-tool" onclick="window.Sys.export()"><i class="fa-solid fa-save"></i></button>
+            <button class="btn-tool" onclick="document.getElementById('import-file').click()"><i class="fa-solid fa-folder-open"></i></button>
             <div class="w-px bg-[#2a2b3d] mx-1"></div>
-            <button id="btn-play" class="btn-tool bg-emerald-500 text-black px-4"><i class="fa-solid fa-play"></i> RUN APP</button>
-            <button id="btn-stop" class="btn-tool bg-red-500 text-black px-4 hidden"><i class="fa-solid fa-stop"></i> STOP</button>
+            <button id="btn-play" class="btn-tool bg-emerald-500 text-black" onclick="window.Runtime.play()"><i class="fa-solid fa-play"></i> RUN</button>
+            <button id="btn-stop" class="btn-tool bg-red-500 text-black hidden" onclick="window.Runtime.stop()"><i class="fa-solid fa-stop"></i> STOP</button>
         </div>
     </header>
 
@@ -111,86 +97,81 @@
         
         <div id="ws-props" class="workspace">
             <div class="prop-group">
-                <div class="text-[10px] font-black text-accent mb-3 tracking-widest">HIERARCHY EXPLORER</div>
-                <div id="tree-view" class="flex flex-col gap-2"></div>
+                <div class="text-[10px] font-black text-accent mb-2 tracking-widest">HIERARCHY</div>
+                <div id="tree-view" class="flex flex-col gap-1"></div>
             </div>
             <div id="prop-view" class="hidden flex-col gap-3"></div>
-            <div id="prop-empty" class="text-center py-16 opacity-30 font-black text-sm">SELECT AN ELEMENT</div>
-        </div>
-
-        <div id="ui-layer">
-            <button id="fab-canvas" class="fab pulse-anim"><i class="fa-solid fa-plus"></i></button>
-            <button id="fab-logic" class="fab hidden" style="background:var(--warning); color:#000;"><i class="fa-solid fa-bolt"></i></button>
-
-            <div id="pop-canvas" class="menu-pop">
-                <div class="p-3 text-[10px] text-accent font-black tracking-widest bg-[#2a2b3d] sticky top-0 z-10">SHAPES & CONTAINERS</div>
-                <div class="menu-item el-add" data-type="Frame"><i class="fa-solid fa-square w-5 text-gray-400"></i> Frame Box</div>
-                <div class="menu-item el-add" data-type="Container"><i class="fa-regular fa-square w-5 text-gray-500"></i> Border Container</div>
-                <div class="menu-item el-add" data-type="GlassPanel"><i class="fa-regular fa-square w-5 text-cyan-200"></i> Glass Panel</div>
-                <div class="menu-item el-add" data-type="Circle"><i class="fa-solid fa-circle w-5 text-blue-300"></i> Circle</div>
-                <div class="menu-item el-add" data-type="Divider"><i class="fa-solid fa-minus w-5 text-gray-400"></i> Divider Line</div>
-                
-                <div class="p-3 text-[10px] text-accent font-black tracking-widest bg-[#2a2b3d] sticky top-0 z-10 mt-2">INTERACTIVE CONTROLS</div>
-                <div class="menu-item el-add" data-type="Text"><i class="fa-solid fa-font text-accent w-5"></i> Text Label</div>
-                <div class="menu-item el-add" data-type="Button"><i class="fa-solid fa-hand-pointer text-emerald-400 w-5"></i> Action Button</div>
-                <div class="menu-item el-add" data-type="Bar"><i class="fa-solid fa-bars-progress text-red-400 w-5"></i> Progress Bar</div>
-                <div class="menu-item el-add" data-type="Switch"><i class="fa-solid fa-toggle-on text-purple-400 w-5"></i> iOS Switch</div>
-                <div class="menu-item el-add" data-type="Toggle"><i class="fa-solid fa-check-square text-green-400 w-5"></i> Checkbox</div>
-                <div class="menu-item el-add" data-type="Slider"><i class="fa-solid fa-sliders text-yellow-400 w-5"></i> Slider</div>
-                <div class="menu-item el-add" data-type="Input"><i class="fa-solid fa-i-cursor text-blue-400 w-5"></i> Text Input Field</div>
-                <div class="menu-item el-add" data-type="Dropdown"><i class="fa-solid fa-caret-down text-orange-400 w-5"></i> Dropdown Menu</div>
-                <div class="menu-item el-add" data-type="Joystick"><i class="fa-solid fa-gamepad text-orange-400 w-5"></i> Thumb Joystick</div>
-                
-                <div class="p-3 text-[10px] text-accent font-black tracking-widest bg-[#2a2b3d] sticky top-0 z-10 mt-2">MEDIA & WEB</div>
-                <div class="menu-item el-add" data-type="Image"><i class="fa-solid fa-image text-pink-400 w-5"></i> Image URL</div>
-                <div class="menu-item el-add" data-type="Video"><i class="fa-solid fa-video text-purple-300 w-5"></i> MP4 Video Player</div>
-                <div class="menu-item el-add" data-type="Audio"><i class="fa-solid fa-music text-blue-300 w-5"></i> Audio Player</div>
-                <div class="menu-item el-add" data-type="WebView"><i class="fa-solid fa-globe text-emerald-300 w-5"></i> Embedded Website</div>
-            </div>
-
-            <div id="pop-logic" class="menu-pop">
-                <div class="p-3 text-[10px] text-emerald-400 font-black tracking-widest bg-[#2a2b3d] sticky top-0 z-10">EVENTS (Triggers)</div>
-                <div class="menu-item nd-add" data-type="Evt_Click">On Click / Tap</div>
-                <div class="menu-item nd-add" data-type="Evt_Down">On Press (Down)</div>
-                <div class="menu-item nd-add" data-type="Evt_Up">On Release (Up)</div>
-                <div class="menu-item nd-add" data-type="Evt_Start">On App Start</div>
-                <div class="menu-item nd-add" data-type="Evt_Change">On Value Change</div>
-                <div class="menu-item nd-add" data-type="Evt_Tick">On Tick (Loop ms)</div>
-                
-                <div class="p-3 text-[10px] text-accent font-black tracking-widest bg-[#2a2b3d] sticky top-0 z-10 mt-2">ACTIONS (Visual)</div>
-                <div class="menu-item nd-add" data-type="Act_Set">Set Value / Text</div>
-                <div class="menu-item nd-add" data-type="Act_SyncProp">Sync / Copy Property</div>
-                <div class="menu-item nd-add" data-type="Act_Color">Set Color</div>
-                <div class="menu-item nd-add" data-type="Act_Tween">Smooth Tween Animate</div>
-                <div class="menu-item nd-add" data-type="Act_Wait">Wait (Delay Seconds)</div>
-                <div class="menu-item nd-add" data-type="Act_Alert">Show Alert Popup</div>
-                <div class="menu-item nd-add" data-type="Act_Media">Play/Pause Media</div>
-                <div class="menu-item nd-add" data-type="Act_Link">Open Web Link</div>
-                <div class="menu-item nd-add" data-type="Act_Vibrate">Vibrate Phone</div>
-                
-                <div class="p-3 text-[10px] text-purple-400 font-black tracking-widest bg-[#2a2b3d] sticky top-0 z-10 mt-2">LOGIC & DATA</div>
-                <div class="menu-item nd-add" data-type="Act_Math">Math Operation (+ - *)</div>
-                <div class="menu-item nd-add" data-type="Act_Concat">Combine Text</div>
-                <div class="menu-item nd-add" data-type="Flow_If">If Condition</div>
-                <div class="menu-item nd-add" data-type="Flow_Loop">Repeat Loop</div>
-                <div class="menu-item nd-add" data-type="Data_Save">Save to Device</div>
-                <div class="menu-item nd-add" data-type="Data_Load">Load from Device</div>
-                <div class="menu-item nd-add" data-type="Data_Random">Random Number</div>
-            </div>
+            <div id="prop-empty" class="text-center py-12 opacity-30 font-black text-sm">SELECT AN ELEMENT</div>
         </div>
     </main>
 
+    <button id="fab-canvas" class="fab" onclick="window.Sys.toggleMenu('pop-canvas')"><i class="fa-solid fa-plus"></i></button>
+    <button id="fab-logic" class="fab hidden" style="background:var(--warning); color:#000;" onclick="window.Sys.toggleMenu('pop-logic')"><i class="fa-solid fa-bolt"></i></button>
+
+    <div id="pop-canvas" class="menu-pop">
+        <div class="p-2 text-[10px] text-accent font-black tracking-widest bg-[#2a2b3d] sticky top-0 z-10">SHAPES</div>
+        <div class="menu-item" onclick="window.Canvas.add('Frame')"><i class="fa-solid fa-square w-4"></i> Frame</div>
+        <div class="menu-item" onclick="window.Canvas.add('Container')"><i class="fa-regular fa-square w-4"></i> Container</div>
+        <div class="menu-item" onclick="window.Canvas.add('GlassPanel')"><i class="fa-regular fa-square w-4"></i> Glass Panel</div>
+        <div class="menu-item" onclick="window.Canvas.add('Circle')"><i class="fa-solid fa-circle w-4"></i> Circle</div>
+        <div class="p-2 text-[10px] text-accent font-black tracking-widest bg-[#2a2b3d] sticky top-0 z-10">CONTROLS</div>
+        <div class="menu-item" onclick="window.Canvas.add('Text')"><i class="fa-solid fa-font w-4"></i> Text</div>
+        <div class="menu-item" onclick="window.Canvas.add('Button')"><i class="fa-solid fa-hand-pointer w-4"></i> Button</div>
+        <div class="menu-item" onclick="window.Canvas.add('Bar')"><i class="fa-solid fa-bars-progress w-4"></i> Progress Bar</div>
+        <div class="menu-item" onclick="window.Canvas.add('Switch')"><i class="fa-solid fa-toggle-on w-4"></i> Switch</div>
+        <div class="menu-item" onclick="window.Canvas.add('Slider')"><i class="fa-solid fa-sliders w-4"></i> Slider</div>
+        <div class="menu-item" onclick="window.Canvas.add('Input')"><i class="fa-solid fa-i-cursor w-4"></i> Text Input</div>
+        <div class="menu-item" onclick="window.Canvas.add('Dropdown')"><i class="fa-solid fa-caret-down w-4"></i> Dropdown</div>
+        <div class="menu-item" onclick="window.Canvas.add('Joystick')"><i class="fa-solid fa-gamepad w-4"></i> Joystick</div>
+        <div class="p-2 text-[10px] text-accent font-black tracking-widest bg-[#2a2b3d] sticky top-0 z-10">MEDIA</div>
+        <div class="menu-item" onclick="window.Canvas.add('Image')"><i class="fa-solid fa-image w-4"></i> Image Panel</div>
+        <div class="menu-item" onclick="window.Canvas.add('Video')"><i class="fa-solid fa-video w-4"></i> Video Player</div>
+    </div>
+
+    <div id="pop-logic" class="menu-pop">
+        <div class="p-2 text-[10px] text-emerald-400 font-black tracking-widest bg-[#2a2b3d] sticky top-0 z-10">TRIGGERS</div>
+        <div class="menu-item" onclick="window.Logic.add('Evt_Click')">On Click</div>
+        <div class="menu-item" onclick="window.Logic.add('Evt_Down')">On Press (Down)</div>
+        <div class="menu-item" onclick="window.Logic.add('Evt_Up')">On Release (Up)</div>
+        <div class="menu-item" onclick="window.Logic.add('Evt_Start')">On App Start</div>
+        <div class="menu-item" onclick="window.Logic.add('Evt_Change')">On Value Change</div>
+        <div class="menu-item" onclick="window.Logic.add('Evt_Tick')">On Tick (Loop)</div>
+        <div class="p-2 text-[10px] text-accent font-black tracking-widest bg-[#2a2b3d] sticky top-0 z-10">ACTIONS</div>
+        <div class="menu-item" onclick="window.Logic.add('Act_Set')">Set Property</div>
+        <div class="menu-item" onclick="window.Logic.add('Act_SyncProp')">Sync Property</div>
+        <div class="menu-item" onclick="window.Logic.add('Act_Color')">Set Color</div>
+        <div class="menu-item" onclick="window.Logic.add('Act_Tween')">Smooth Tween</div>
+        <div class="menu-item" onclick="window.Logic.add('Act_Wait')">Wait (Delay)</div>
+        <div class="menu-item" onclick="window.Logic.add('Act_Alert')">Show Alert Popup</div>
+        <div class="menu-item" onclick="window.Logic.add('Act_Media')">Play/Pause Media</div>
+        <div class="menu-item" onclick="window.Logic.add('Act_Link')">Open URL</div>
+        <div class="menu-item" onclick="window.Logic.add('Act_Vibrate')">Vibrate Phone</div>
+        <div class="p-2 text-[10px] text-purple-400 font-black tracking-widest bg-[#2a2b3d] sticky top-0 z-10">LOGIC & DATA</div>
+        <div class="menu-item" onclick="window.Logic.add('Act_Math')">Math (+ - *)</div>
+        <div class="menu-item" onclick="window.Logic.add('Act_MathAdv')">Adv Math (Round/Sqrt)</div>
+        <div class="menu-item" onclick="window.Logic.add('Act_Concat')">Combine Text</div>
+        <div class="menu-item" onclick="window.Logic.add('Flow_If')">If Condition</div>
+        <div class="menu-item" onclick="window.Logic.add('Flow_Loop')">Repeat Loop</div>
+        <div class="menu-item" onclick="window.Logic.add('Data_Save')">Save to Device</div>
+        <div class="menu-item" onclick="window.Logic.add('Data_Load')">Load from Device</div>
+        <div class="menu-item" onclick="window.Logic.add('Data_Date')">Get Date/Time</div>
+        <div class="menu-item" onclick="window.Logic.add('Data_Random')">Random Number</div>
+    </div>
+
     <nav id="bottom-nav">
-        <div class="nav-tab active-tab" data-tab="canvas"><i class="fa-solid fa-shapes"></i> Canvas</div>
-        <div class="nav-tab" data-tab="logic"><i class="fa-solid fa-diagram-project"></i> Logic</div>
-        <div class="nav-tab" data-tab="props"><i class="fa-solid fa-sliders"></i> Props</div>
+        <div class="nav-tab active-tab" id="tab-canvas" onclick="window.Sys.switchTab('canvas')"><i class="fa-solid fa-shapes"></i> Canvas</div>
+        <div class="nav-tab" id="tab-logic" onclick="window.Sys.switchTab('logic')"><i class="fa-solid fa-diagram-project"></i> Logic</div>
+        <div class="nav-tab" id="tab-props" onclick="window.Sys.switchTab('props')"><i class="fa-solid fa-sliders"></i> Props</div>
     </nav>
 
-    <input type="file" id="import-file" class="hidden" accept=".json">
+    <input type="file" id="import-file" class="hidden" accept=".json" onchange="window.Sys.import(event)">
 
     <script>
-        // --- 1. CORE ENGINE ---
-        const Engine = {
+        // GLOBAL ERROR CATCHER - Will alert you instantly if the IDE breaks something
+        window.onerror = function(msg, url, line) { alert("IDE Crash Prevented: " + msg + " (Line " + line + ")"); return false; };
+
+        // --- GLOBAL ENGINE SCOPE ---
+        window.Engine = {
             mode: 'edit', elements: [], nodes: [], wires: [], sel: null, 
             panC: {x:0, y:0}, panL: {x:0, y:0}, zoomL: 1, intervals: [],
             id: (p) => `${p}_${Math.random().toString(36).substr(2,6)}`,
@@ -198,34 +179,30 @@
             parseRgba: (s) => { const m = s.match(/rgba?\((\d+),\s*(\d+),\s*(\d+),?\s*([\d.]+)?\)/); return m ? {r:parseInt(m[1]), g:parseInt(m[2]), b:parseInt(m[3]), a:parseFloat(m[4]||1)} : {r:255,g:255,b:255,a:1}; }
         };
 
-        const cloneObj = (obj) => JSON.parse(JSON.stringify(obj));
-
-        // --- 2. ELEMENT DICTIONARY ---
-        const ElDefs = {
+        window.ElDefs = {
             Frame: { w: 150, h: 150, bg: 'rgba(42,43,61,1)', radius: 10, opacity: 1, shadow: 0, z: 1, visible: true },
             Container: { w: 200, h: 200, bg: 'rgba(0,0,0,0)', border: 'rgba(137,180,250,0.5)', radius: 0, opacity: 1, z: 1, visible: true },
             GlassPanel: { w: 200, h: 200, bg: 'rgba(255,255,255,0.1)', radius: 16, opacity: 1, shadow: 1, z: 2, visible: true },
             Circle: { w: 100, h: 100, bg: 'rgba(42,43,61,1)', radius: 50, opacity: 1, shadow: 0, z: 1, visible: true },
             Divider: { w: 200, h: 2, bg: 'rgba(255,255,255,0.2)', radius: 0, opacity: 1, shadow: 0, z: 1, visible: true },
             Text: { w: 150, h: 40, text: 'Text Label', color: 'rgba(255,255,255,1)', size: 16, align: 'center', bg: 'rgba(0,0,0,0)', opacity: 1, z: 3, visible: true },
-            Button: { w: 140, h: 50, text: 'Click Me', color: 'rgba(15,15,23,1)', bg: 'rgba(137,180,250,1)', size: 16, align: 'center', radius: 8, opacity: 1, shadow: 1, z: 4, visible: true },
-            Bar: { w: 200, h: 24, bg: 'rgba(21,21,33,1)', fill: 'rgba(166,227,161,1)', progress: 50, radius: 12, opacity: 1, shadow: 0, z: 3, visible: true },
-            Switch: { w: 56, h: 32, bg: 'rgba(42,43,61,1)', fill: 'rgba(166,227,161,1)', state: false, radius: 16, opacity: 1, shadow: 0, z: 3, visible: true },
+            Button: { w: 120, h: 45, text: 'Click Me', color: 'rgba(15,15,23,1)', bg: 'rgba(137,180,250,1)', size: 16, align: 'center', radius: 6, opacity: 1, shadow: 1, z: 4, visible: true },
+            Bar: { w: 200, h: 20, bg: 'rgba(21,21,33,1)', fill: 'rgba(166,227,161,1)', progress: 50, radius: 10, opacity: 1, shadow: 0, z: 3, visible: true },
+            Switch: { w: 50, h: 28, bg: 'rgba(42,43,61,1)', fill: 'rgba(166,227,161,1)', state: false, radius: 14, opacity: 1, shadow: 0, z: 3, visible: true },
             Toggle: { w: 40, h: 40, bg: 'rgba(42,43,61,1)', fill: 'rgba(137,180,250,1)', state: false, radius: 8, opacity: 1, shadow: 0, z: 3, visible: true },
             Slider: { w: 200, h: 24, bg: 'rgba(21,21,33,1)', fill: 'rgba(137,180,250,1)', progress: 50, radius: 12, opacity: 1, shadow: 0, z: 3, visible: true },
-            Input: { w: 200, h: 48, text: '', hint: 'Type...', color: 'rgba(255,255,255,1)', bg: 'rgba(21,21,33,1)', size: 14, align: 'left', radius: 8, opacity: 1, shadow: 0, z: 4, visible: true },
+            Input: { w: 180, h: 44, text: '', hint: 'Type...', color: 'rgba(255,255,255,1)', bg: 'rgba(21,21,33,1)', size: 14, align: 'left', radius: 8, opacity: 1, shadow: 0, z: 4, visible: true },
             TextArea: { w: 200, h: 100, text: '', hint: 'Multiline...', color: 'rgba(255,255,255,1)', bg: 'rgba(21,21,33,1)', size: 14, align: 'left', radius: 8, opacity: 1, shadow: 0, z: 4, visible: true },
-            Dropdown: { w: 160, h: 44, bg: 'rgba(42,43,61,1)', color: 'rgba(255,255,255,1)', options: 'Option 1,Option 2', radius: 8, opacity: 1, shadow: 0, z: 4, visible: true },
-            ColorPicker: { w: 60, h: 60, bg: 'rgba(0,0,0,0)', fill: '#ff0000', radius: 12, opacity: 1, shadow: 0, z: 4, visible: true },
+            Dropdown: { w: 150, h: 40, bg: 'rgba(42,43,61,1)', color: 'rgba(255,255,255,1)', options: 'Option 1,Option 2', radius: 6, opacity: 1, shadow: 0, z: 4, visible: true },
+            ColorPicker: { w: 50, h: 50, bg: 'rgba(0,0,0,0)', fill: '#ff0000', radius: 8, opacity: 1, shadow: 0, z: 4, visible: true },
             Image: { w: 150, h: 150, url: 'https://picsum.photos/150', bg: 'rgba(0,0,0,0)', radius: 8, opacity: 1, shadow: 0, z: 2, visible: true },
-            Video: { w: 280, h: 160, url: 'https://www.w3schools.com/html/mov_bbb.mp4', bg: 'rgba(0,0,0,1)', radius: 8, opacity: 1, shadow: 0, z: 2, visible: true },
-            Audio: { w: 200, h: 50, url: '', bg: 'rgba(42,43,61,1)', radius: 8, opacity: 1, shadow: 0, z: 2, visible: true },
-            WebView: { w: 280, h: 300, url: 'https://example.com', bg: 'rgba(255,255,255,1)', radius: 8, opacity: 1, shadow: 0, z: 2, visible: true },
-            Joystick: { w: 120, h: 120, bg: 'rgba(21,21,33,0.5)', fill: 'rgba(137,180,250,0.8)', radius: 60, joyX: 0, joyY: 0, opacity: 1, shadow: 0, z: 5, visible: true }
+            Video: { w: 250, h: 150, url: 'https://www.w3schools.com/html/mov_bbb.mp4', bg: 'rgba(0,0,0,1)', radius: 8, opacity: 1, shadow: 0, z: 2, visible: true },
+            Audio: { w: 200, h: 50, url: '', bg: 'rgba(0,0,0,0)', radius: 8, opacity: 1, shadow: 0, z: 2, visible: true },
+            WebView: { w: 250, h: 300, url: 'https://example.com', bg: 'rgba(255,255,255,1)', radius: 8, opacity: 1, shadow: 0, z: 2, visible: true },
+            Joystick: { w: 100, h: 100, bg: 'rgba(21,21,33,0.5)', fill: 'rgba(137,180,250,0.8)', radius: 50, joyX: 0, joyY: 0, opacity: 1, shadow: 0, z: 5, visible: true }
         };
 
-        // --- 3. NODE DICTIONARY ---
-        const NodeDefs = {
+        window.NodeDefs = {
             Evt_Click: { n: 'On Click', c: '#a6e3a1', out: ['exec'], f: { target: 'el' } },
             Evt_Down: { n: 'On Press', c: '#a6e3a1', out: ['exec'], f: { target: 'el' } },
             Evt_Up: { n: 'On Release', c: '#a6e3a1', out: ['exec'], f: { target: 'el' } },
@@ -251,70 +228,56 @@
             Flow_Loop: { n: 'Repeat Loop', c: '#f9e2af', in: ['exec'], out: ['loop', 'done'], f: { count: 'num' } },
             Data_Save: { n: 'Save Data', c: '#fab387', in: ['exec'], out: ['exec'], f: { key: 'str', target: 'el', prop: 'numprop' } },
             Data_Load: { n: 'Load Data', c: '#fab387', in: ['exec'], out: ['exec'], f: { key: 'str', target: 'el', prop: 'numprop' } },
+            Data_Date: { n: 'Get Time', c: '#fab387', in: ['exec'], out: ['exec'], f: { target: 'el', prop: 'str', format: 'timefmt' } },
             Data_Random: { n: 'Random', c: '#fab387', in: ['exec'], out: ['exec'], f: { target: 'el', prop: 'numprop', min: 'num', max: 'num' } }
         };
 
-        // --- 4. UI ROUTER (ISOLATED) ---
-        const Sys = {
+        // --- EXPLICIT WINDOW BINDINGS (Bypasses mobile IDE blockers) ---
+        window.Sys = {
             switchTab: (tabId) => {
                 document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active-tab'));
-                document.querySelector(`.nav-tab[data-tab="${tabId}"]`).classList.add('active-tab');
+                document.getElementById(`tab-${tabId}`).classList.add('active-tab');
                 document.querySelectorAll('.workspace').forEach(w => { w.classList.remove('active'); w.style.display = 'none'; });
                 const activeWs = document.getElementById(`ws-${tabId}`);
                 activeWs.classList.add('active'); activeWs.style.display = tabId === 'props' ? 'flex' : 'block';
-                
                 document.getElementById('fab-canvas').classList.toggle('hidden', tabId !== 'canvas');
-                document.getElementById('fab-canvas').classList.remove('pulse-anim'); // Stop pulse after first click
                 document.getElementById('fab-logic').classList.toggle('hidden', tabId !== 'logic');
-                Sys.closeMenus();
-                if(tabId === 'logic') Logic.drawWires();
+                window.Sys.closeMenus();
+                if(tabId === 'logic') window.Logic.drawWires();
             },
             toggleMenu: (id) => {
                 const menu = document.getElementById(id); const isHidden = menu.style.display !== 'flex';
-                Sys.closeMenus();
+                window.Sys.closeMenus();
                 if(isHidden) menu.style.display = 'flex';
             },
             closeMenus: () => document.querySelectorAll('.menu-pop').forEach(m => m.style.display = 'none'),
             export: () => {
-                const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({ el: Engine.elements, nd: Engine.nodes, wr: Engine.wires })], {type:'application/json'}));
-                a.download = 'nebula_master.json'; a.click();
+                const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({ el: window.Engine.elements, nd: window.Engine.nodes, wr: window.Engine.wires })], {type:'application/json'}));
+                a.download = 'nebula_v10.json'; a.click();
+            },
+            import: (e) => {
+                const r = new FileReader(); r.onload = () => { const d = JSON.parse(r.result); window.Engine.elements = d.el; window.Engine.nodes = d.nd; window.Engine.wires = d.wr; window.Canvas.render(); window.Logic.render(); window.Inspector.render(); };
+                r.readAsText(e.target.files[0]); e.target.value = '';
             }
         };
 
-        // Bind UI Controls
-        document.querySelectorAll('.nav-tab').forEach(tab => tab.addEventListener('pointerdown', () => Sys.switchTab(tab.dataset.tab)));
-        document.getElementById('fab-canvas').addEventListener('pointerdown', (e) => { e.stopPropagation(); Sys.toggleMenu('pop-canvas'); });
-        document.getElementById('fab-logic').addEventListener('pointerdown', (e) => { e.stopPropagation(); Sys.toggleMenu('pop-logic'); });
-        document.getElementById('btn-save').addEventListener('pointerdown', Sys.export);
-        document.getElementById('btn-load').addEventListener('pointerdown', () => document.getElementById('import-file').click());
-        document.getElementById('import-file').addEventListener('change', (e) => {
-            const r = new FileReader(); r.onload = () => { const d = JSON.parse(r.result); Engine.elements = d.el; Engine.nodes = d.nd; Engine.wires = d.wr; Canvas.render(); Logic.render(); Inspector.render(); };
-            r.readAsText(e.target.files[0]); e.target.value = '';
-        });
-
-        // Close menus when clicking outside
-        document.addEventListener('pointerdown', (e) => {
-            if(!e.target.closest('.menu-pop') && !e.target.closest('.fab')) Sys.closeMenus();
-        });
-
-        // --- 5. CANVAS ENGINE ---
-        const Canvas = {
+        window.Canvas = {
             layer: document.getElementById('canvas-pan'),
             add: (type) => {
-                const props = cloneObj(ElDefs[type]);
-                props.x = Math.max(20, 100 - Engine.panC.x); props.y = Math.max(20, 100 - Engine.panC.y);
-                Engine.elements.push({ id: Engine.id('el'), type, name: `${type}_${Engine.elements.length+1}`, props });
-                Engine.sel = Engine.elements[Engine.elements.length-1].id;
-                Canvas.render(); Inspector.render(); Logic.render(); // Logic render updates dropdowns!
-                Sys.switchTab('props'); Sys.closeMenus();
+                const props = JSON.parse(JSON.stringify(window.ElDefs[type]));
+                props.x = Math.max(20, 100 - window.Engine.panC.x); props.y = Math.max(20, 100 - window.Engine.panC.y);
+                window.Engine.elements.push({ id: window.Engine.id('el'), type, name: `${type}_${window.Engine.elements.length+1}`, props });
+                window.Engine.sel = window.Engine.elements[window.Engine.elements.length-1].id;
+                window.Canvas.render(); window.Inspector.render(); window.Logic.render(); // Sync dropdowns
+                window.Sys.switchTab('props'); window.Sys.closeMenus();
             },
             render: () => {
-                Canvas.layer.innerHTML = '';
-                Engine.elements.sort((a,b)=>a.props.z - b.props.z).forEach(el => {
-                    if(!el.props.visible && Engine.mode === 'play') return;
+                window.Canvas.layer.innerHTML = '';
+                window.Engine.elements.sort((a,b)=>a.props.z - b.props.z).forEach(el => {
+                    if(!el.props.visible && window.Engine.mode === 'play') return;
                     
                     const d = document.createElement('div');
-                    d.className = `el-box ${Engine.sel === el.id ? 'selected' : ''} ${['Button','Toggle','Switch','Slider','Joystick','Dropdown','ColorPicker'].includes(el.type) ? 'interactive' : ''}`;
+                    d.className = `el-box ${window.Engine.sel === el.id ? 'selected' : ''} ${['Button','Toggle','Switch','Slider','Joystick','Dropdown','ColorPicker'].includes(el.type) ? 'interactive' : ''}`;
                     d.dataset.id = el.id;
                     
                     const shadowStr = el.props.shadow == 1 ? 'box-shadow: 0 4px 15px rgba(0,0,0,0.5);' : '';
@@ -326,7 +289,7 @@
                     if(el.type === 'Circle') d.style.borderRadius = '50%';
                     if(el.type === 'Text' || el.type === 'Button') { d.innerText = el.props.text; d.style.color = el.props.color; d.style.fontSize = (el.props.size||16)+'px'; d.style.fontWeight = 'bold'; d.style.textAlign = el.props.align||'center'; d.style.justifyContent = el.props.align === 'left' ? 'flex-start' : el.props.align === 'right' ? 'flex-end' : 'center'; d.style.padding = '0 10px'; }
                     
-                    if(el.type === 'Bar') d.innerHTML = `<div style="height:100%; width:${Math.min(100, Math.max(0, parseFloat(el.props.progress)||0))}%; background:${el.props.fill}; border-radius:${el.props.radius}px; transition: width 0.05s linear;"></div>`;
+                    if(el.type === 'Bar') d.innerHTML = `<div style="height:100%; width:${Math.min(100, Math.max(0, parseFloat(el.props.progress)||0))}%; background:${el.props.fill}; border-radius:${el.props.radius}px; transition:0.05s ease-out;"></div>`;
                     
                     if(el.type === 'Toggle') {
                         d.style.background = el.props.state ? el.props.fill : el.props.bg; d.style.transition = '0.2s';
@@ -350,60 +313,55 @@
                         const inp = document.createElement('input');
                         inp.value = el.props.text; inp.placeholder = el.props.hint;
                         inp.style.cssText = `width:100%; height:100%; background:transparent; border:none; color:${el.props.color}; font-size:${el.props.size||14}px; font-weight:bold; padding:0 10px; outline:none; font-family:inherit; text-align:${el.props.align||'left'};`;
-                        if(Engine.mode === 'edit') inp.style.pointerEvents = 'none';
-                        else inp.oninput = (e) => { el.props.text = e.target.value; Runtime.fire('Evt_Change', el.id); };
+                        if(window.Engine.mode === 'edit') inp.style.pointerEvents = 'none';
+                        else inp.oninput = (e) => { el.props.text = e.target.value; window.Runtime.fire('Evt_Change', el.id); };
                         d.appendChild(inp);
                     }
                     if(el.type === 'TextArea') {
                         const inp = document.createElement('textarea');
                         inp.value = el.props.text; inp.placeholder = el.props.hint;
                         inp.style.cssText = `width:100%; height:100%; background:transparent; border:none; color:${el.props.color}; font-size:${el.props.size||14}px; font-weight:bold; padding:10px; outline:none; font-family:inherit; text-align:${el.props.align||'left'}; resize:none;`;
-                        if(Engine.mode === 'edit') inp.style.pointerEvents = 'none';
-                        else inp.oninput = (e) => { el.props.text = e.target.value; Runtime.fire('Evt_Change', el.id); };
+                        if(window.Engine.mode === 'edit') inp.style.pointerEvents = 'none';
+                        else inp.oninput = (e) => { el.props.text = e.target.value; window.Runtime.fire('Evt_Change', el.id); };
                         d.appendChild(inp);
                     }
                     if(el.type === 'Dropdown') {
                         const opts = (el.props.options||'').split(',').map(x=>`<option value="${x.trim()}">${x.trim()}</option>`).join('');
                         d.innerHTML = `<select style="width:100%;height:100%;background:transparent;color:${el.props.color};border:none;outline:none;font-weight:bold;padding:0 10px;">${opts}</select>`;
-                        if(Engine.mode === 'edit') d.style.pointerEvents = 'none';
-                        else d.querySelector('select').onchange = (e) => { el.props.text = e.target.value; Runtime.fire('Evt_Change', el.id); };
+                        if(window.Engine.mode === 'edit') d.style.pointerEvents = 'none';
+                        else d.querySelector('select').onchange = (e) => { el.props.text = e.target.value; window.Runtime.fire('Evt_Change', el.id); };
                     }
                     if(el.type === 'ColorPicker') {
                         d.innerHTML = `<input type="color" value="${el.props.fill}" style="width:100%;height:100%;border:none;background:transparent;cursor:pointer;">`;
-                        if(Engine.mode === 'edit') d.style.pointerEvents = 'none';
-                        else d.querySelector('input').onchange = (e) => { el.props.fill = e.target.value; Runtime.fire('Evt_Change', el.id); };
+                        if(window.Engine.mode === 'edit') d.style.pointerEvents = 'none';
+                        else d.querySelector('input').onchange = (e) => { el.props.fill = e.target.value; window.Runtime.fire('Evt_Change', el.id); };
                     }
                     if(el.type === 'Image') { d.style.backgroundImage = `url('${el.props.url}')`; d.style.backgroundSize = 'cover'; d.style.backgroundPosition = 'center'; }
-                    if(el.type === 'Video') {
-                        d.innerHTML = `<video src="${el.props.url}" style="width:100%;height:100%;object-fit:cover;border-radius:${el.props.radius}px;" ${Engine.mode==='edit'?'':'controls'}></video>`;
-                    }
+                    if(el.type === 'Video') { d.innerHTML = `<video src="${el.props.url}" style="width:100%;height:100%;object-fit:cover;border-radius:${el.props.radius}px;" ${window.Engine.mode==='edit'?'':'controls'}></video>`; }
                     if(el.type === 'Audio') {
-                        d.innerHTML = `<audio src="${el.props.url}" style="width:100%;" ${Engine.mode==='edit'?'':'controls'}></audio>`;
-                        if(Engine.mode==='edit') { d.style.background = 'rgba(255,255,255,0.1)'; d.innerHTML = '<i class="fa-solid fa-music text-2xl text-blue-300"></i>'; }
+                        d.innerHTML = `<audio src="${el.props.url}" style="width:100%;" ${window.Engine.mode==='edit'?'':'controls'}></audio>`;
+                        if(window.Engine.mode==='edit') { d.style.background = 'rgba(255,255,255,0.1)'; d.innerHTML = '<i class="fa-solid fa-music text-2xl text-blue-300"></i>'; }
                     }
                     if(el.type === 'WebView') {
-                        if(Engine.mode === 'edit') d.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#000;"><i class="fa-solid fa-globe text-3xl"></i></div>`;
+                        if(window.Engine.mode === 'edit') d.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#000;"><i class="fa-solid fa-globe text-3xl"></i></div>`;
                         else d.innerHTML = `<iframe src="${el.props.url}" style="width:100%;height:100%;border:none;border-radius:${el.props.radius}px;"></iframe>`;
                     }
-                    Canvas.layer.appendChild(d);
+                    window.Canvas.layer.appendChild(d);
                 });
-                Inspector.updateTree();
+                window.Inspector.updateTree();
             }
         };
 
-        document.querySelectorAll('.el-add').forEach(b => b.addEventListener('pointerdown', (e) => { e.stopPropagation(); Canvas.add(b.dataset.type); }));
-
-        // --- 6. LOGIC GRAPH ---
-        const Logic = {
+        window.Logic = {
             layer: document.getElementById('node-layer'), svg: document.getElementById('svg-layer'),
             add: (type) => {
-                Engine.nodes.push({ id: Engine.id('nd'), type, x: (100 - Engine.panL.x)/Engine.zoomL, y: (100 - Engine.panL.y)/Engine.zoomL, data: {} });
-                Logic.render(); Sys.closeMenus();
+                window.Engine.nodes.push({ id: window.Engine.id('nd'), type, x: (100 - window.Engine.panL.x)/window.Engine.zoomL, y: (100 - window.Engine.panL.y)/window.Engine.zoomL, data: {} });
+                window.Logic.render(); window.Sys.closeMenus();
             },
             render: () => {
-                Logic.layer.innerHTML = '';
-                Engine.nodes.forEach(n => {
-                    const d = document.createElement('div'); const def = NodeDefs[n.type];
+                window.Logic.layer.innerHTML = '';
+                window.Engine.nodes.forEach(n => {
+                    const d = document.createElement('div'); const def = window.NodeDefs[n.type];
                     d.className = 'node pointer-events-auto'; d.dataset.id = n.id; d.style.cssText = `left:${n.x}px; top:${n.y}px; border-top: 4px solid ${def.c}`;
                     
                     let pIn = (def.in||[]).map(p => `<div class="port-row"><div class="port in exec" data-n="${n.id}" data-p="${p}" data-io="in"></div><span class="text-[10px] font-bold text-gray-400">${p}</span></div>`).join('');
@@ -411,7 +369,7 @@
                     
                     let flds = '';
                     for(const [k, v] of Object.entries(def.f)) {
-                        if(v==='el') flds += `<select class="ui-input mt-2 n-fld" data-k="${k}"><option value="">[ Target Element ]</option>${Engine.elements.map(e=>`<option value="${e.id}" ${n.data[k]===e.id?'selected':''}>${e.name}</option>`).join('')}</select>`;
+                        if(v==='el') flds += `<select class="ui-input mt-2 n-fld" data-k="${k}"><option value="">[ Target ]</option>${window.Engine.elements.map(e=>`<option value="${e.id}" ${n.data[k]===e.id?'selected':''}>${e.name}</option>`).join('')}</select>`;
                         else if(v==='op') flds += `<select class="ui-input mt-2 n-fld" data-k="${k}"><option value="+" ${n.data[k]==='+'?'selected':''}>Add (+)</option><option value="-" ${n.data[k]==='-'?'selected':''}>Sub (-)</option><option value="*" ${n.data[k]==='*'?'selected':''}>Mult (*)</option></select>`;
                         else if(v==='cmp') flds += `<select class="ui-input mt-2 n-fld" data-k="${k}"><option value="==" ${n.data[k]==='=='?'selected':''}>Equal (==)</option><option value=">" ${n.data[k]==='>'?'selected':''}>Greater (>)</option><option value="<" ${n.data[k]==='<'?'selected':''}>Less (<)</option></select>`;
                         else if(v==='part') flds += `<select class="ui-input mt-2 n-fld" data-k="${k}"><option value="bg" ${n.data[k]==='bg'?'selected':''}>Background</option><option value="color" ${n.data[k]==='color'?'selected':''}>Text Color</option><option value="fill" ${n.data[k]==='fill'?'selected':''}>Accent / Fill</option></select>`;
@@ -433,15 +391,15 @@
                         <div class="p-3 pt-1 flex flex-col">${flds}</div>`;
                     
                     d.querySelectorAll('.n-fld').forEach(f => { f.addEventListener('pointerdown', e=>e.stopPropagation()); f.addEventListener('change', e => n.data[f.dataset.k] = e.target.value); });
-                    Logic.layer.appendChild(d);
+                    window.Logic.layer.appendChild(d);
                 });
-                Logic.drawWires();
+                window.Logic.drawWires();
             },
             drawWires: () => {
-                Logic.svg.innerHTML = ''; 
-                const panR = Logic.layer.getBoundingClientRect(); const z = Engine.zoomL || 1;
+                window.Logic.svg.innerHTML = ''; 
+                const panR = window.Logic.layer.getBoundingClientRect(); const z = window.Engine.zoomL || 1;
                 
-                Engine.wires.forEach(w => {
+                window.Engine.wires.forEach(w => {
                     const p1 = document.querySelector(`.port[data-n="${w.f}"][data-p="${w.fp}"][data-io="out"]`);
                     const p2 = document.querySelector(`.port[data-n="${w.t}"][data-p="${w.tp}"][data-io="in"]`);
                     if(p1 && p2) {
@@ -451,36 +409,33 @@
                         
                         const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
                         p.setAttribute('d', `M ${x1} ${y1} C ${x1+40} ${y1}, ${x2-40} ${y2}, ${x2} ${y2}`);
-                        p.setAttribute('class', 'wire'); p.setAttribute('stroke', NodeDefs[Engine.nodes.find(n=>n.id===w.f).type].c);
-                        Logic.svg.appendChild(p);
+                        p.setAttribute('class', 'wire'); p.setAttribute('stroke', window.NodeDefs[window.Engine.nodes.find(n=>n.id===w.f).type].c);
+                        window.Logic.svg.appendChild(p);
                     }
                 });
             }
         };
 
-        document.querySelectorAll('.nd-add').forEach(b => b.addEventListener('pointerdown', (e) => { e.stopPropagation(); Logic.add(b.dataset.type); }));
-
-        // --- 7. INSPECTOR ---
-        const Inspector = {
+        window.Inspector = {
             updateTree: () => {
                 const tr = document.getElementById('tree-view'); tr.innerHTML = '';
-                Engine.elements.forEach(el => {
+                window.Engine.elements.forEach(el => {
                     const d = document.createElement('div');
-                    d.className = `p-4 rounded text-[13px] font-bold cursor-pointer ${Engine.sel === el.id ? 'bg-accent text-black' : 'bg-[#1e1e2e] text-white hover:bg-[#2a2b3d]'}`;
+                    d.className = `p-3 rounded text-[12px] font-bold cursor-pointer ${window.Engine.sel === el.id ? 'bg-accent text-black' : 'bg-[#1e1e2e] text-white hover:bg-[#2a2b3d]'}`;
                     d.innerText = el.name;
-                    d.addEventListener('pointerdown', () => { Engine.sel = el.id; Canvas.render(); Inspector.render(); });
+                    d.addEventListener('pointerdown', () => { window.Engine.sel = el.id; window.Canvas.render(); window.Inspector.render(); });
                     tr.appendChild(d);
                 });
             },
             render: () => {
-                const el = Engine.elements.find(x=>x.id === Engine.sel);
+                const el = window.Engine.elements.find(x=>x.id === window.Engine.sel);
                 const ed = document.getElementById('prop-view'), em = document.getElementById('prop-empty');
                 if(!el) { ed.classList.add('hidden'); ed.classList.remove('flex'); em.classList.remove('hidden'); return; }
                 ed.classList.remove('hidden'); ed.classList.add('flex'); em.classList.add('hidden');
 
                 let h = `<div class="prop-group"><input class="ui-input font-bold" id="inp-name" value="${el.name}"></div>
-                         <div class="prop-group"><div class="text-[10px] text-accent font-black tracking-widest mb-3">TRANSFORM</div>
-                         <div class="grid grid-cols-2 gap-4">
+                         <div class="prop-group"><div class="text-[10px] text-accent font-black tracking-widest mb-2">TRANSFORM</div>
+                         <div class="grid grid-cols-2 gap-3">
                              <div class="text-[10px] text-muted font-bold">X Pos <input type="number" class="ui-input mt-1" id="inp-x" value="${el.props.x}"></div>
                              <div class="text-[10px] text-muted font-bold">Y Pos <input type="number" class="ui-input mt-1" id="inp-y" value="${el.props.y}"></div>
                              <div class="text-[10px] text-muted font-bold">Width <input type="number" class="ui-input mt-1" id="inp-w" value="${el.props.w}"></div>
@@ -492,7 +447,7 @@
 
                 ['bg', 'color', 'fill', 'border'].forEach(p => {
                     if(el.props[p] !== undefined) {
-                        const c = Engine.parseRgba(el.props[p]);
+                        const c = window.Engine.parseRgba(el.props[p]);
                         sp += `<div class="text-[10px] text-muted font-bold mt-4 mb-2 uppercase">${p} COLOR</div>
                         <div class="rgba-container"><div class="w-10 h-10 rounded border border-[#2a2b3d] shrink-0" style="background:${el.props[p]}"></div>
                         <input type="number" class="rgba-input i-${p}-r" value="${c.r}"><input type="number" class="rgba-input i-${p}-g" value="${c.g}"><input type="number" class="rgba-input i-${p}-b" value="${c.b}"><input type="number" step="0.1" class="rgba-input i-${p}-a" value="${c.a}"></div>`;
@@ -513,24 +468,24 @@
                 ed.innerHTML = h;
 
                 const b = (id, fn) => { const e = document.getElementById(id); if(e) e.addEventListener('input', fn); };
-                b('inp-name', (e) => { el.name = e.target.value; Inspector.updateTree(); Logic.render(); });
+                b('inp-name', (e) => { el.name = e.target.value; window.Inspector.updateTree(); window.Logic.render(); });
                 ['x','y','w','h','size','opa','rad'].forEach(p => b(`inp-${p}`, (e) => { 
                     const v = parseFloat(e.target.value)||0;
-                    if(p==='opa') el.props.opacity = v; else if(p==='rad') el.props.radius = v; else el.props[p] = v; Canvas.render(); 
+                    if(p==='opa') el.props.opacity = v; else if(p==='rad') el.props.radius = v; else el.props[p] = v; window.Canvas.render(); 
                 }));
-                b('inp-txt', (e) => { el.props.text = e.target.value; Canvas.render(); });
-                b('inp-align', (e) => { el.props.align = e.target.value; Canvas.render(); });
-                b('inp-opt', (e) => { el.props.options = e.target.value; Canvas.render(); });
-                b('inp-prog', (e) => { el.props.progress = parseFloat(e.target.value)||0; Canvas.render(); });
-                b('inp-url', (e) => { el.props.url = e.target.value; Canvas.render(); });
-                b('inp-shad', (e) => { el.props.shadow = e.target.checked ? 1 : 0; Canvas.render(); });
+                b('inp-txt', (e) => { el.props.text = e.target.value; window.Canvas.render(); });
+                b('inp-align', (e) => { el.props.align = e.target.value; window.Canvas.render(); });
+                b('inp-opt', (e) => { el.props.options = e.target.value; window.Canvas.render(); });
+                b('inp-prog', (e) => { el.props.progress = parseFloat(e.target.value)||0; window.Canvas.render(); });
+                b('inp-url', (e) => { el.props.url = e.target.value; window.Canvas.render(); });
+                b('inp-shad', (e) => { el.props.shadow = e.target.checked ? 1 : 0; window.Canvas.render(); });
                 
                 ['bg', 'color', 'fill', 'border'].forEach(p => {
                     if(el.props[p] !== undefined) {
                         const upC = () => {
                             const r = ed.querySelector(`.i-${p}-r`).value; const g = ed.querySelector(`.i-${p}-g`).value;
                             const b = ed.querySelector(`.i-${p}-b`).value; const a = ed.querySelector(`.i-${p}-a`).value;
-                            el.props[p] = Engine.rgbaStr(r,g,b,a); Canvas.render(); Inspector.render();
+                            el.props[p] = window.Engine.rgbaStr(r,g,b,a); window.Canvas.render(); window.Inspector.render();
                         };
                         ed.querySelector(`.i-${p}-r`).addEventListener('input', upC); ed.querySelector(`.i-${p}-g`).addEventListener('input', upC);
                         ed.querySelector(`.i-${p}-b`).addEventListener('input', upC); ed.querySelector(`.i-${p}-a`).addEventListener('input', upC);
@@ -538,39 +493,35 @@
                 });
 
                 document.getElementById('btn-del-el').addEventListener('pointerdown', (e) => {
-                    e.stopPropagation(); Engine.elements = Engine.elements.filter(x=>x.id !== el.id); Engine.sel = null; Canvas.render(); Inspector.render(); Logic.render();
+                    e.stopPropagation(); window.Engine.elements = window.Engine.elements.filter(x=>x.id !== el.id); window.Engine.sel = null; window.Canvas.render(); window.Inspector.render(); window.Logic.render();
                 });
             }
         };
 
-        // --- 8. RUNTIME EVALUATOR ---
-        const Runtime = {
+        window.Runtime = {
             stateBkp: null,
             play: () => {
-                Runtime.stateBkp = JSON.stringify(Engine.elements); Engine.mode = 'play'; document.body.className = 'mode-play';
+                window.Runtime.stateBkp = JSON.stringify(window.Engine.elements); window.Engine.mode = 'play'; document.body.className = 'mode-play';
                 document.getElementById('btn-play').classList.add('hidden'); document.getElementById('btn-stop').classList.remove('hidden');
-                Engine.sel = null; Canvas.render(); Inspector.render(); Sys.switchTab('canvas');
-                
-                Engine.intervals = [];
-                Engine.nodes.filter(n=>n.type === 'Evt_Tick').forEach(n => {
-                    const ms = parseInt(n.data.ms)||1000; Engine.intervals.push(setInterval(() => Runtime.eval(n.id, 'exec'), ms));
-                });
-                Runtime.fire('Evt_Start');
+                window.Engine.sel = null; window.Canvas.render(); window.Inspector.render(); window.Sys.switchTab('canvas');
+                window.Engine.intervals = [];
+                window.Engine.nodes.filter(n=>n.type === 'Evt_Tick').forEach(n => { const ms = parseInt(n.data.ms)||1000; window.Engine.intervals.push(setInterval(() => window.Runtime.eval(n.id, 'exec'), ms)); });
+                window.Runtime.fire('Evt_Start');
             },
             stop: () => {
-                Engine.intervals.forEach(clearInterval); Engine.intervals = [];
-                if(Runtime.stateBkp) Engine.elements = JSON.parse(Runtime.stateBkp); 
-                Engine.mode = 'edit'; document.body.className = 'mode-edit';
-                document.getElementById('btn-stop').classList.add('hidden'); document.getElementById('btn-play').classList.remove('hidden'); Canvas.render();
+                window.Engine.intervals.forEach(clearInterval); window.Engine.intervals = [];
+                if(window.Runtime.stateBkp) window.Engine.elements = JSON.parse(window.Runtime.stateBkp); 
+                window.Engine.mode = 'edit'; document.body.className = 'mode-edit';
+                document.getElementById('btn-stop').classList.add('hidden'); document.getElementById('btn-play').classList.remove('hidden'); window.Canvas.render();
             },
             fire: (type, targetId=null) => {
-                Engine.nodes.filter(n=>n.type===type).forEach(n => {
+                window.Engine.nodes.filter(n=>n.type===type).forEach(n => {
                     if(['Evt_Click','Evt_Change','Evt_Down','Evt_Up'].includes(type) && n.data.target !== targetId) return;
-                    Runtime.eval(n.id, 'exec');
+                    window.Runtime.eval(n.id, 'exec');
                 });
             },
             eval: async (nodeId, port) => {
-                const n = Engine.nodes.find(x=>x.id===nodeId); if(!n) return; let nxt = 'exec';
+                const n = window.Engine.nodes.find(x=>x.id===nodeId); if(!n) return; let nxt = 'exec';
                 try {
                     if(n.type === 'Act_Wait') await new Promise(r => setTimeout(r, (parseFloat(n.data.time)||0)*1000));
                     if(n.type === 'Act_Alert') alert(n.data.msg || '');
@@ -578,96 +529,66 @@
                     if(n.type === 'Act_Reload') location.reload();
                     if(n.type === 'Act_Vibrate') { if(navigator.vibrate) navigator.vibrate(parseInt(n.data.ms)||100); }
                     
-                    const el = Engine.elements.find(e=>e.id === n.data.target);
+                    const el = window.Engine.elements.find(e=>e.id === n.data.target);
                     if(el) {
-                        if(n.type === 'Act_Set') { el.props[n.data.prop] = isNaN(n.data.val) ? n.data.val : parseFloat(n.data.val); Canvas.render(); }
-                        if(n.type === 'Act_SyncProp') {
-                            const src = Engine.elements.find(e=>e.id === n.data.srcEl);
-                            if(src) { el.props[n.data.tgtProp] = (parseFloat(src.props[n.data.srcProp])||0) * (parseFloat(n.data.mult)||1); Canvas.render(); }
-                        }
-                        if(n.type === 'Act_Color') { el.props[n.data.part] = n.data.color || '#ffffff'; Canvas.render(); }
-                        if(n.type === 'Act_Math') {
-                            const p = n.data.prop||'x'; const cur = parseFloat(el.props[p])||0; const v = parseFloat(n.data.value)||0;
-                            if(n.data.op === '+') el.props[p] = cur + v; if(n.data.op === '-') el.props[p] = cur - v; if(n.data.op === '*') el.props[p] = cur * v; Canvas.render();
-                        }
-                        if(n.type === 'Act_MathAdv') {
-                            const p = n.data.prop||'x'; const cur = parseFloat(el.props[p])||0;
-                            if(n.data.op === 'round') el.props[p] = Math.round(cur); if(n.data.op === 'floor') el.props[p] = Math.floor(cur); if(n.data.op === 'ceil') el.props[p] = Math.ceil(cur); if(n.data.op === 'sqrt') el.props[p] = Math.sqrt(cur); Canvas.render();
-                        }
-                        if(n.type === 'Act_Media') {
-                            const dom = document.querySelector(`.el-box[data-id="${el.id}"] video, .el-box[data-id="${el.id}"] audio`);
-                            if(dom) { if(n.data.action === 'play') dom.play(); else dom.pause(); }
-                        }
-                        if(n.type === 'Act_Concat') { el.props[n.data.prop] = String(n.data.text1 || '') + String(n.data.text2 || ''); Canvas.render(); }
+                        if(n.type === 'Act_Set') { el.props[n.data.prop] = isNaN(n.data.val) ? n.data.val : parseFloat(n.data.val); window.Canvas.render(); }
+                        if(n.type === 'Act_SyncProp') { const src = window.Engine.elements.find(e=>e.id === n.data.srcEl); if(src) { el.props[n.data.tgtProp] = (parseFloat(src.props[n.data.srcProp])||0) * (parseFloat(n.data.mult)||1); window.Canvas.render(); } }
+                        if(n.type === 'Act_Color') { el.props[n.data.part] = n.data.color || '#ffffff'; window.Canvas.render(); }
+                        if(n.type === 'Act_Math') { const p = n.data.prop||'x'; const cur = parseFloat(el.props[p])||0; const v = parseFloat(n.data.value)||0; if(n.data.op === '+') el.props[p] = cur + v; if(n.data.op === '-') el.props[p] = cur - v; if(n.data.op === '*') el.props[p] = cur * v; window.Canvas.render(); }
+                        if(n.type === 'Act_MathAdv') { const p = n.data.prop||'x'; const cur = parseFloat(el.props[p])||0; if(n.data.op === 'round') el.props[p] = Math.round(cur); if(n.data.op === 'floor') el.props[p] = Math.floor(cur); if(n.data.op === 'ceil') el.props[p] = Math.ceil(cur); if(n.data.op === 'sqrt') el.props[p] = Math.sqrt(cur); window.Canvas.render(); }
+                        if(n.type === 'Act_Media') { const dom = document.querySelector(`.el-box[data-id="${el.id}"] video, .el-box[data-id="${el.id}"] audio`); if(dom) { if(n.data.action === 'play') dom.play(); else dom.pause(); } }
+                        if(n.type === 'Act_Concat') { el.props[n.data.prop] = String(n.data.text1 || '') + String(n.data.text2 || ''); window.Canvas.render(); }
                         if(n.type === 'Act_Tween') {
                             await new Promise(resolve => {
                                 const p = n.data.prop||'x'; const tgt = parseFloat(n.data.val)||0; const dur = (parseFloat(n.data.sec)||1)*1000;
                                 const st = parseFloat(el.props[p])||0; const startT = performance.now();
-                                const anim = (time) => {
-                                    const prog = Math.min((time - startT)/dur, 1); const ease = 1 - Math.pow(1 - prog, 3);
-                                    el.props[p] = st + (tgt - st) * ease; Canvas.render();
-                                    if(prog < 1) requestAnimationFrame(anim); else resolve();
-                                };
+                                const anim = (time) => { const prog = Math.min((time - startT)/dur, 1); const ease = 1 - Math.pow(1 - prog, 3); el.props[p] = st + (tgt - st) * ease; window.Canvas.render(); if(prog < 1) requestAnimationFrame(anim); else resolve(); };
                                 requestAnimationFrame(anim);
                             });
                         }
-                        if(n.type === 'Flow_If') {
-                            const p = n.data.prop||'x'; const cur = parseFloat(el.props[p])||0; const v = parseFloat(n.data.value)||0;
-                            let res = false; if(n.data.op === '==') res = cur == v; if(n.data.op === '>') res = cur > v; if(n.data.op === '<') res = cur < v; nxt = res ? 'true' : 'false';
-                        }
+                        if(n.type === 'Flow_If') { const p = n.data.prop||'x'; const cur = parseFloat(el.props[p])||0; const v = parseFloat(n.data.value)||0; let res = false; if(n.data.op === '==') res = cur == v; if(n.data.op === '>') res = cur > v; if(n.data.op === '<') res = cur < v; nxt = res ? 'true' : 'false'; }
                         if(n.type === 'Data_Save') { localStorage.setItem(`nebula_${n.data.key}`, String(el.props[n.data.prop])); }
-                        if(n.type === 'Data_Load') { const saved = localStorage.getItem(`nebula_${n.data.key}`); if(saved) { el.props[n.data.prop] = isNaN(saved) ? saved : parseFloat(saved); Canvas.render(); } }
-                        if(n.type === 'Data_Random') { const min = parseFloat(n.data.min)||0; const max = parseFloat(n.data.max)||100; el.props[n.data.prop] = Math.floor(Math.random() * (max - min + 1)) + min; Canvas.render(); }
-                        if(n.type === 'Data_Date') { 
-                            const d = new Date(); 
-                            if(n.data.format === 'time') el.props[n.data.prop] = d.toLocaleTimeString();
-                            if(n.data.format === 'date') el.props[n.data.prop] = d.toLocaleDateString();
-                            if(n.data.format === 'ms') el.props[n.data.prop] = d.getTime(); Canvas.render();
-                        }
+                        if(n.type === 'Data_Load') { const saved = localStorage.getItem(`nebula_${n.data.key}`); if(saved) { el.props[n.data.prop] = isNaN(saved) ? saved : parseFloat(saved); window.Canvas.render(); } }
+                        if(n.type === 'Data_Random') { const min = parseFloat(n.data.min)||0; const max = parseFloat(n.data.max)||100; el.props[n.data.prop] = Math.floor(Math.random() * (max - min + 1)) + min; window.Canvas.render(); }
+                        if(n.type === 'Data_Date') { const d = new Date(); if(n.data.format === 'time') el.props[n.data.prop] = d.toLocaleTimeString(); if(n.data.format === 'date') el.props[n.data.prop] = d.toLocaleDateString(); if(n.data.format === 'ms') el.props[n.data.prop] = d.getTime(); window.Canvas.render(); }
                     }
 
                     if(n.type === 'Flow_Loop') {
                         for(let i=0; i<parseInt(n.data.count||0); i++) {
-                            const ws = Engine.wires.filter(w => w.f === nodeId && w.fp === 'loop');
-                            for(const w of ws) await Runtime.eval(w.t, 'exec');
+                            const ws = window.Engine.wires.filter(w => w.f === nodeId && w.fp === 'loop');
+                            for(const w of ws) await window.Runtime.eval(w.t, 'exec');
                         }
                         nxt = 'done';
                     }
 
-                    Engine.wires.filter(w => w.f === nodeId && w.fp === nxt).forEach(w => Runtime.eval(w.t, 'exec'));
+                    window.Engine.wires.filter(w => w.f === nodeId && w.fp === nxt).forEach(w => window.Runtime.eval(w.t, 'exec'));
                 } catch(e) { console.error("Logic Error:", e); }
             }
         };
 
-        document.getElementById('btn-play').addEventListener('pointerdown', Runtime.play); document.getElementById('btn-stop').addEventListener('pointerdown', Runtime.stop);
-
-        // --- 9. GLOBAL POINTER ENGINE (FIXED) ---
+        // --- POINTER MANAGER ---
         let Ptr = { drag: null, wire: null };
         let pointers = {}; let pinchDist = 0;
-        const main = document.getElementById('main-area');
 
-        main.addEventListener('pointerdown', (e) => {
+        document.addEventListener('pointerdown', (e) => {
+            if (e.target.closest('.fab') || e.target.closest('.menu-pop')) return;
             pointers[e.pointerId] = e;
             
             const btnDel = e.target.closest('.btn-del');
-            if(btnDel) {
-                const nId = btnDel.dataset.nid; Engine.nodes = Engine.nodes.filter(x=>x.id!==nId); Engine.wires = Engine.wires.filter(w=>w.f!==nId && w.t!==nId); Logic.render(); return; 
-            }
+            if(btnDel) { const nId = btnDel.dataset.nid; window.Engine.nodes = window.Engine.nodes.filter(x=>x.id!==nId); window.Engine.wires = window.Engine.wires.filter(w=>w.f!==nId && w.t!==nId); window.Logic.render(); return; }
 
-            if(Engine.mode === 'play') {
+            if(window.Engine.mode === 'play') {
                 const box = e.target.closest('.el-box');
                 if(box) {
-                    const el = Engine.elements.find(x=>x.id===box.dataset.id);
-                    Runtime.fire('Evt_Down', el.id);
-                    if(el.type === 'Button') Runtime.fire('Evt_Click', el.id);
-                    if(el.type === 'Toggle' || el.type === 'Switch') { el.props.state = !el.props.state; Canvas.render(); Runtime.fire('Evt_Change', el.id); }
+                    const el = window.Engine.elements.find(x=>x.id===box.dataset.id);
+                    window.Runtime.fire('Evt_Down', el.id);
+                    if(el.type === 'Button') window.Runtime.fire('Evt_Click', el.id);
+                    if(el.type === 'Toggle' || el.type === 'Switch') { el.props.state = !el.props.state; window.Canvas.render(); window.Runtime.fire('Evt_Change', el.id); }
                     if(el.type === 'Slider') { Ptr.drag = { type: 'slider', el: el, dom: box }; }
                     if(el.type === 'Joystick') { 
-                        const r = box.getBoundingClientRect(); 
-                        Ptr.drag = { type: 'joy', el: el, cx: r.left + r.width/2, cy: r.top + r.height/2, r: r.width/2 }; 
-                        el.props.joyX = Math.max(-Ptr.drag.r, Math.min(Ptr.drag.r, e.clientX - Ptr.drag.cx));
-                        el.props.joyY = Math.max(-Ptr.drag.r, Math.min(Ptr.drag.r, e.clientY - Ptr.drag.cy));
-                        Canvas.render(); Runtime.fire('Evt_Change', el.id);
+                        const r = box.getBoundingClientRect(); Ptr.drag = { type: 'joy', el: el, cx: r.left + r.width/2, cy: r.top + r.height/2, r: r.width/2 }; 
+                        el.props.joyX = Math.max(-Ptr.drag.r, Math.min(Ptr.drag.r, e.clientX - Ptr.drag.cx)); el.props.joyY = Math.max(-Ptr.drag.r, Math.min(Ptr.drag.r, e.clientY - Ptr.drag.cy));
+                        window.Canvas.render(); window.Runtime.fire('Evt_Change', el.id);
                     }
                 }
                 return;
@@ -676,49 +597,43 @@
             const port = e.target.closest('.port');
             if(port) { 
                 if(port.dataset.io === 'in') {
-                    // 1-TAP DELETE WIRE
-                    const existIdx = Engine.wires.findIndex(w => w.t === port.dataset.n && w.tp === port.dataset.p);
-                    if(existIdx > -1) { Engine.wires.splice(existIdx, 1); Logic.drawWires(); return; }
+                    const existIdx = window.Engine.wires.findIndex(w => w.t === port.dataset.n && w.tp === port.dataset.p);
+                    if(existIdx > -1) { window.Engine.wires.splice(existIdx, 1); window.Logic.drawWires(); return; }
                 }
                 Ptr.wire = { n: port.dataset.n, p: port.dataset.p, io: port.dataset.io, el: port }; return; 
             }
             if(e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
 
             const nHead = e.target.closest('.node-head');
-            if(nHead) { 
-                const n = Engine.nodes.find(x=>x.id === nHead.dataset.drag); 
-                Ptr.drag = { type: 'node', obj: n, sx: e.clientX - n.x * Engine.zoomL, sy: e.clientY - n.y * Engine.zoomL }; return; 
-            }
+            if(nHead) { const n = window.Engine.nodes.find(x=>x.id === nHead.dataset.drag); Ptr.drag = { type: 'node', obj: n, sx: e.clientX - n.x * window.Engine.zoomL, sy: e.clientY - n.y * window.Engine.zoomL }; return; }
             
             const elBox = e.target.closest('.el-box');
             if(elBox && document.getElementById('ws-canvas').classList.contains('active')) {
-                Engine.sel = elBox.dataset.id; document.querySelectorAll('.el-box').forEach(b => b.classList.remove('selected')); elBox.classList.add('selected'); Inspector.render();
-                const el = Engine.elements.find(x=>x.id === Engine.sel);
+                window.Engine.sel = elBox.dataset.id; document.querySelectorAll('.el-box').forEach(b => b.classList.remove('selected')); elBox.classList.add('selected'); window.Inspector.render();
+                const el = window.Engine.elements.find(x=>x.id === window.Engine.sel);
                 Ptr.drag = { type: 'el', obj: el, sx: e.clientX - el.props.x, sy: e.clientY - el.props.y }; return;
             }
 
             if(document.getElementById('ws-canvas').classList.contains('active')) {
                 if(e.target.id === 'ws-canvas' || e.target.id === 'canvas-pan') {
-                    Engine.sel = null; document.querySelectorAll('.el-box').forEach(b => b.classList.remove('selected')); Inspector.render();
-                    Ptr.drag = { type: 'panC', sx: e.clientX - Engine.panC.x, sy: e.clientY - Engine.panC.y };
+                    window.Engine.sel = null; document.querySelectorAll('.el-box').forEach(b => b.classList.remove('selected')); window.Inspector.render();
+                    Ptr.drag = { type: 'panC', sx: e.clientX - window.Engine.panC.x, sy: e.clientY - window.Engine.panC.y };
                 }
             } else if(document.getElementById('ws-logic').classList.contains('active')) {
                 if(e.target.id === 'ws-logic' || e.target.id === 'logic-pan' || e.target.id === 'svg-layer') {
-                    Ptr.drag = { type: 'panL', sx: e.clientX - Engine.panL.x, sy: e.clientY - Engine.panL.y };
+                    Ptr.drag = { type: 'panL', sx: e.clientX - window.Engine.panL.x, sy: e.clientY - window.Engine.panL.y };
                 }
             }
         }, { passive: false });
 
-        main.addEventListener('pointermove', (e) => {
+        document.addEventListener('pointermove', (e) => {
             pointers[e.pointerId] = e;
             
             if(Object.keys(pointers).length === 2 && document.getElementById('ws-logic').classList.contains('active')) {
-                let pts = Object.values(pointers);
-                let dist = Math.hypot(pts[0].clientX - pts[1].clientX, pts[0].clientY - pts[1].clientY);
+                let pts = Object.values(pointers); let dist = Math.hypot(pts[0].clientX - pts[1].clientX, pts[0].clientY - pts[1].clientY);
                 if(pinchDist) {
-                    let delta = dist - pinchDist;
-                    Engine.zoomL = Math.max(0.3, Math.min(2.5, Engine.zoomL + delta * 0.005));
-                    document.getElementById('logic-pan').style.transform = `translate(${Engine.panL.x}px, ${Engine.panL.y}px) scale(${Engine.zoomL})`; Logic.drawWires();
+                    window.Engine.zoomL = Math.max(0.3, Math.min(2.5, window.Engine.zoomL + (dist - pinchDist) * 0.005));
+                    document.getElementById('logic-pan').style.transform = `translate(${window.Engine.panL.x}px, ${window.Engine.panL.y}px) scale(${window.Engine.zoomL})`; window.Logic.drawWires();
                 }
                 pinchDist = dist; return;
             }
@@ -727,38 +642,39 @@
 
             if(Ptr.drag) {
                 if(Ptr.drag.type === 'node') { 
-                    Ptr.drag.obj.x = (e.clientX - Ptr.drag.sx) / Engine.zoomL; Ptr.drag.obj.y = (e.clientY - Ptr.drag.sy) / Engine.zoomL; 
-                    const dom = document.querySelector(`.node[data-id="${Ptr.drag.obj.id}"]`);
-                    if(dom) { dom.style.left = Ptr.drag.obj.x + 'px'; dom.style.top = Ptr.drag.obj.y + 'px'; } Logic.drawWires(); 
+                    Ptr.drag.obj.x = (e.clientX - Ptr.drag.sx) / window.Engine.zoomL; Ptr.drag.obj.y = (e.clientY - Ptr.drag.sy) / window.Engine.zoomL; 
+                    const dom = document.querySelector(`.node[data-id="${Ptr.drag.obj.id}"]`); if(dom) { dom.style.left = Ptr.drag.obj.x + 'px'; dom.style.top = Ptr.drag.obj.y + 'px'; } window.Logic.drawWires(); 
                 }
                 if(Ptr.drag.type === 'el') { 
                     Ptr.drag.obj.props.x = e.clientX - Ptr.drag.sx; Ptr.drag.obj.props.y = e.clientY - Ptr.drag.sy; 
-                    const dom = document.querySelector(`.el-box[data-id="${Ptr.drag.obj.id}"]`);
-                    if(dom) { dom.style.left = Ptr.drag.obj.props.x + 'px'; dom.style.top = Ptr.drag.obj.props.y + 'px'; }
-                    const ix = document.getElementById('inp-x'); const iy = document.getElementById('inp-y');
-                    if(ix) ix.value = Ptr.drag.obj.props.x; if(iy) iy.value = Ptr.drag.obj.props.y;
+                    const dom = document.querySelector(`.el-box[data-id="${Ptr.drag.obj.id}"]`); if(dom) { dom.style.left = Ptr.drag.obj.props.x + 'px'; dom.style.top = Ptr.drag.obj.props.y + 'px'; }
+                    const ix = document.getElementById('inp-x'); const iy = document.getElementById('inp-y'); if(ix) ix.value = Ptr.drag.obj.props.x; if(iy) iy.value = Ptr.drag.obj.props.y;
                 }
-                if(Ptr.drag.type === 'panC') { Engine.panC.x = e.clientX - Ptr.drag.sx; Engine.panC.y = e.clientY - Ptr.drag.sy; document.getElementById('canvas-pan').style.transform = `translate(${Engine.panC.x}px, ${Engine.panC.y}px)`; }
-                if(Ptr.drag.type === 'panL') { 
-                    Engine.panL.x = e.clientX - Ptr.drag.sx; Engine.panL.y = e.clientY - Ptr.drag.sy; 
-                    document.getElementById('logic-pan').style.transform = `translate(${Engine.panL.x}px, ${Engine.panL.y}px) scale(${Engine.zoomL})`; Logic.drawWires(); 
-                }
-                if(Ptr.drag.type === 'slider') {
-                    const rect = Ptr.drag.dom.getBoundingClientRect();
-                    Ptr.drag.el.props.progress = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100)); Canvas.render(); Runtime.fire('Evt_Change', Ptr.drag.el.id);
-                }
-                if(Ptr.drag.type === 'joy') {
-                    let dx = e.clientX - Ptr.drag.cx; let dy = e.clientY - Ptr.drag.cy;
-                    const dist = Math.sqrt(dx*dx + dy*dy);
-                    if(dist > Ptr.drag.r) { dx = (dx/dist)*Ptr.drag.r; dy = (dy/dist)*Ptr.drag.r; }
-                    Ptr.drag.el.props.joyX = dx; Ptr.drag.el.props.joyY = dy; Canvas.render(); Runtime.fire('Evt_Change', Ptr.drag.el.id);
-                }
+                if(Ptr.drag.type === 'panC') { window.Engine.panC.x = e.clientX - Ptr.drag.sx; window.Engine.panC.y = e.clientY - Ptr.drag.sy; document.getElementById('canvas-pan').style.transform = `translate(${window.Engine.panC.x}px, ${window.Engine.panC.y}px)`; }
+                if(Ptr.drag.type === 'panL') { window.Engine.panL.x = e.clientX - Ptr.drag.sx; window.Engine.panL.y = e.clientY - Ptr.drag.sy; document.getElementById('logic-pan').style.transform = `translate(${window.Engine.panL.x}px, ${window.Engine.panL.y}px) scale(${window.Engine.zoomL})`; window.Logic.drawWires(); }
+                if(Ptr.drag.type === 'slider') { const rect = Ptr.drag.dom.getBoundingClientRect(); Ptr.drag.el.props.progress = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100)); window.Canvas.render(); window.Runtime.fire('Evt_Change', Ptr.drag.el.id); }
+                if(Ptr.drag.type === 'joy') { let dx = e.clientX - Ptr.drag.cx; let dy = e.clientY - Ptr.drag.cy; const dist = Math.sqrt(dx*dx + dy*dy); if(dist > Ptr.drag.r) { dx = (dx/dist)*Ptr.drag.r; dy = (dy/dist)*Ptr.drag.r; } Ptr.drag.el.props.joyX = dx; Ptr.drag.el.props.joyY = dy; window.Canvas.render(); window.Runtime.fire('Evt_Change', Ptr.drag.el.id); }
             }
 
             if(Ptr.wire) {
                 let tw = document.getElementById('temp-wire');
-                if(!tw) { tw = document.createElementNS("http://www.w3.org/2000/svg", "path"); tw.id = 'temp-wire'; tw.setAttribute('class', 'wire temp'); tw.setAttribute('stroke', '#89b4fa'); Logic.svg.appendChild(tw); }
-                const r1 = Ptr.wire.el.getBoundingClientRect(); const ws = Logic.svg.getBoundingClientRect(); const z = Engine.zoomL || 1;
-                const x1 = (r1.left + 11 - ws.left) / z; const y1 = (r1.top + 11 - ws.top) / z;
-                const x2 = (e.clientX - ws.left) / z; const y2 = (e.clientY - ws.top) / z;
-                tw.setAttribute('d', `M ${x1} ${y1} C ${x1+(Ptr.wire.io==='out'?40:-40)}
+                if(!tw) { tw = document.createElementNS("http://www.w3.org/2000/svg", "path"); tw.id = 'temp-wire'; tw.setAttribute('class', 'wire temp'); tw.setAttribute('stroke', '#89b4fa'); window.Logic.svg.appendChild(tw); }
+                const r1 = Ptr.wire.el.getBoundingClientRect(); const ws = window.Logic.svg.getBoundingClientRect(); const z = window.Engine.zoomL || 1;
+                const x1 = (r1.left + 11 - ws.left) / z; const y1 = (r1.top + 11 - ws.top) / z; const x2 = (e.clientX - ws.left) / z; const y2 = (e.clientY - ws.top) / z;
+                tw.setAttribute('d', `M ${x1} ${y1} C ${x1+(Ptr.wire.io==='out'?40:-40)} ${y1}, ${x2+(Ptr.wire.io==='out'?-40:40)} ${y2}, ${x2} ${y2}`);
+            }
+        }, { passive: false });
+
+        const endDrag = (e) => {
+            delete pointers[e.pointerId]; if(Object.keys(pointers).length < 2) pinchDist = 0;
+            if(window.Engine.mode === 'play') {
+                if(Ptr.drag && Ptr.drag.type !== 'slider' && Ptr.drag.type !== 'joy') { const box = e.target.closest('.el-box'); if(box) { const el = window.Engine.elements.find(x=>x.id===box.dataset.id); window.Runtime.fire('Evt_Up', el.id); } }
+                if(Ptr.drag && Ptr.drag.type === 'joy') { Ptr.drag.el.props.joyX = 0; Ptr.drag.el.props.joyY = 0; window.Canvas.render(); window.Runtime.fire('Evt_Change', Ptr.drag.el.id); }
+            }
+            if(Ptr.wire) {
+                const tw = document.getElementById('temp-wire'); if(tw) tw.remove();
+                window.Logic.svg.style.display = 'none'; const hit = document.elementFromPoint(e.clientX, e.clientY); window.Logic.svg.style.display = 'block';
+
+                if(hit && hit.classList.contains('port')) {
+                    const t = hit.dataset;
+                    if(t.n
