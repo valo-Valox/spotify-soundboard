@@ -1,721 +1,491 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Nebula Studio | Ultimate V11</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <style>
-        :root {
-            --bg-base: #0f0f17; --bg-crust: #151521; --bg-surface: #2a2b3d;
-            --accent: #89b4fa; --success: #a6e3a1; --danger: #f38ba8; --warning: #f9e2af;
-            --text-main: #cdd6f4; --text-muted: #a6adc8;
-        }
-
-        /* THE ULTIMATE MOBILE FIX: FIXED INSET */
-        * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; user-select: none; }
-        input, textarea, select { user-select: text; pointer-events: auto; }
-        html, body { position: fixed; top: 0; bottom: 0; left: 0; right: 0; margin: 0; padding: 0; overflow: hidden; background: var(--bg-base); color: var(--text-main); font-family: 'Segoe UI', system-ui, sans-serif; touch-action: none; overscroll-behavior: none; }
-        
-        #app-container { display: flex; flex-direction: column; width: 100%; height: 100%; }
-
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
-        ::-webkit-scrollbar-thumb { background: var(--bg-surface); border-radius: 2px; }
-
-        .ui-input { width: 100%; background: #000; border: 1px solid var(--bg-surface); color: #fff; padding: 8px 10px; border-radius: 6px; font-size: 0.85rem; font-family: monospace; }
-        .btn-tool { background: var(--bg-surface); color: var(--text-main); padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; border: none; font-size: 0.8rem; display: flex; gap: 6px; align-items: center; }
-        .btn-tool:active { filter: brightness(1.2); }
-
-        /* VIEWS */
-        #main-area { flex-grow: 1; position: relative; overflow: hidden; touch-action: none; background: #000; }
-        .workspace { position: absolute; inset: 0; display: none; background-color: var(--bg-base); overflow: hidden; }
-        .workspace.active { display: block; }
-        .pan-layer { position: absolute; inset: 0; transform-origin: 0 0; touch-action: none; }
-
-        /* CANVAS */
-        #ws-canvas { background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 20px 20px; }
-        .el-box { position: absolute; display: flex; align-items: center; justify-content: center; box-sizing: border-box; background-size: cover; background-position: center; overflow: hidden; touch-action: none; }
-        body.mode-edit .el-box { cursor: grab; }
-        body.mode-edit .el-box.selected { outline: 2px solid var(--accent); box-shadow: 0 0 15px rgba(137,180,250,0.6); z-index: 9999 !important; }
-        body.mode-play .el-box.interactive { cursor: pointer; }
-
-        /* LOGIC GRAPH */
-        #ws-logic { background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 40px 40px; }
-        .node { position: absolute; width: 250px; background: var(--bg-crust); border: 1px solid var(--bg-surface); border-radius: 8px; box-shadow: 0 10px 20px rgba(0,0,0,0.8); z-index: 10; touch-action: none; }
-        .node-head { padding: 12px 14px; font-weight: 900; font-size: 0.75rem; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; cursor: grab; border-radius: 7px 7px 0 0; }
-        .port-row { display: flex; justify-content: space-between; align-items: center; position: relative; margin-bottom: 4px; }
-        .port { width: 20px; height: 20px; background: #fff; border-radius: 50%; border: 4px solid var(--bg-crust); cursor: crosshair; position: absolute; z-index: 20; touch-action: none; }
-        .port.in { left: -18px; } .port.out { right: -18px; }
-        .port.exec { background: var(--warning); border-radius: 6px; }
-        #svg-layer { position: absolute; inset: 0; pointer-events: none !important; z-index: 5; overflow: visible; }
-        .wire { fill: none; stroke-width: 4; stroke-linecap: round; pointer-events: none !important; }
-        .wire.temp { stroke-dasharray: 6,6; opacity: 0.7; }
-
-        /* PROPS WORKSPACE */
-        #ws-props { overflow-y: auto; padding: 16px; padding-bottom: 80px; display: none; flex-direction: column; }
-        #ws-props.active { display: flex; }
-        .prop-group { background: var(--bg-crust); border: 1px solid var(--bg-surface); border-radius: 8px; padding: 12px; margin-bottom: 12px; }
-        .rgba-container { display: flex; gap: 4px; background: #000; padding: 4px; border-radius: 6px; align-items: center; }
-        .rgba-input { flex: 1; min-width: 0; background: transparent; border: none; color: #fff; text-align: center; font-size: 0.75rem; }
-
-        /* UI OVERLAYS */
-        .fab { position: absolute; bottom: 20px; right: 20px; width: 60px; height: 60px; border-radius: 50%; background: var(--accent); color: #000; font-size: 1.8rem; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.5); z-index: 300; border: none; }
-        .menu-pop { position: absolute; bottom: 90px; right: 20px; width: 240px; background: var(--bg-crust); border: 1px solid var(--bg-surface); border-radius: 12px; display: none; flex-direction: column; max-height: 50vh; overflow-y: auto; z-index: 310; box-shadow: 0 10px 30px rgba(0,0,0,0.9); }
-        .menu-item { padding: 14px; font-size: 0.85rem; font-weight: bold; cursor: pointer; border-bottom: 1px solid var(--bg-surface); color: var(--text-main); display: flex; gap: 12px; align-items: center; }
-
-        /* BOTTOM NAV */
-        header { height: 60px; flex-shrink: 0; background: #151521; border-bottom: 1px solid #2a2b3d; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; z-index: 50; }
-        nav { height: 65px; flex-shrink: 0; background: var(--bg-crust); border-top: 1px solid var(--bg-surface); display: flex; z-index: 200; }
-        .nav-tab { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 0.75rem; font-weight: 800; color: var(--text-muted); cursor: pointer; }
-        .nav-tab.active-tab { color: var(--accent); background: rgba(137,180,250,0.1); }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spotify Visualizer Overlay</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body {
+    background-color: #000;
+    color: white;
+    font-family: system-ui, -apple-system, sans-serif;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+  }
+  #canvas-container {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+  #ui-layer {
+    position: absolute;
+    z-index: 10;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(18, 18, 18, 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 1.5rem;
+    border-radius: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    width: 95%;
+    max-width: 650px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+  }
+  .hidden-ui {
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, 20px) !important;
+  }
+  .btn-primary {
+    background: #1DB954;
+    color: black;
+    font-weight: 700;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 2rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  .btn-primary:hover {
+    background: #1ed760;
+    transform: scale(1.02);
+  }
+  .btn-primary:active {
+    transform: scale(0.98);
+  }
+  .mode-btn {
+    background: rgba(255, 255, 255, 0.05);
+    color: #b3b3b3;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    border-radius: 2rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .mode-btn.active {
+    background: white;
+    color: black;
+    border-color: white;
+    font-weight: 600;
+  }
+  .mode-btn:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+  }
+  .btn-outline {
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    color: white;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: 2rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: none;
+    text-align: center;
+  }
+  .btn-outline:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: white;
+  }
+  .btn-outline:active {
+    transform: scale(0.98);
+  }
+  #error-msg {
+    display: none;
+    color: #f15e6c;
+    background: rgba(241, 94, 108, 0.1);
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.85rem;
+    text-align: center;
+    margin-top: -0.5rem;
+  }
+</style>
 </head>
-<body class="mode-edit">
+<body>
 
-<div id="app-container">
-    <header>
-        <div class="flex items-center gap-2 font-black tracking-widest uppercase text-xs">
-            <i class="fa-solid fa-code text-accent text-lg"></i> Nebula <span class="text-accent">V11</span>
-        </div>
-        <div class="flex gap-2">
-            <button class="btn-tool" onclick="Sys.export()"><i class="fa-solid fa-save"></i></button>
-            <button class="btn-tool" onclick="document.getElementById('import-file').click()"><i class="fa-solid fa-folder-open"></i></button>
-            <div class="w-px bg-[#2a2b3d] mx-1"></div>
-            <button id="btn-play" class="btn-tool bg-emerald-500 text-black" onclick="Runtime.play()"><i class="fa-solid fa-play"></i> RUN</button>
-            <button id="btn-stop" class="btn-tool bg-red-500 text-black hidden" onclick="Runtime.stop()"><i class="fa-solid fa-stop"></i> STOP</button>
-        </div>
-    </header>
-
-    <main id="main-area">
-        <div id="ws-canvas" class="workspace active"><div id="canvas-pan" class="pan-layer"></div></div>
-        
-        <div id="ws-logic" class="workspace">
-            <div id="logic-pan" class="pan-layer">
-                <svg id="svg-layer"></svg>
-                <div id="node-layer" class="absolute inset-0"></div>
-            </div>
-        </div>
-        
-        <div id="ws-props" class="workspace">
-            <div class="prop-group">
-                <div class="text-[10px] font-black text-accent mb-2 tracking-widest">HIERARCHY</div>
-                <div id="tree-view" class="flex flex-col gap-1"></div>
-            </div>
-            <div id="prop-view" class="hidden flex-col gap-3"></div>
-            <div id="prop-empty" class="text-center py-12 opacity-30 font-black text-sm">SELECT AN ELEMENT</div>
-        </div>
-
-        <button id="fab-canvas" class="fab" onclick="Sys.toggleMenu('pop-canvas')"><i class="fa-solid fa-plus"></i></button>
-        <button id="fab-logic" class="fab hidden" style="background:var(--warning); color:#000;" onclick="Sys.toggleMenu('pop-logic')"><i class="fa-solid fa-bolt"></i></button>
-
-        <div id="pop-canvas" class="menu-pop">
-            <div class="p-2 text-[10px] text-accent font-black tracking-widest bg-[#2a2b3d] sticky top-0 z-10">SHAPES</div>
-            <div class="menu-item" onclick="Canvas.add('Frame')"><i class="fa-solid fa-square w-4 text-gray-400"></i> Frame</div>
-            <div class="menu-item" onclick="Canvas.add('Container')"><i class="fa-regular fa-square w-4 text-gray-500"></i> Container</div>
-            <div class="menu-item" onclick="Canvas.add('GlassPanel')"><i class="fa-regular fa-square w-4 text-cyan-200"></i> Glass Panel</div>
-            <div class="menu-item" onclick="Canvas.add('Circle')"><i class="fa-solid fa-circle w-4 text-blue-300"></i> Circle</div>
-            <div class="menu-item" onclick="Canvas.add('Divider')"><i class="fa-solid fa-minus w-4 text-gray-400"></i> Divider</div>
-            <div class="p-2 text-[10px] text-accent font-black tracking-widest bg-[#2a2b3d] sticky top-0 z-10">CONTROLS</div>
-            <div class="menu-item" onclick="Canvas.add('Text')"><i class="fa-solid fa-font text-accent w-4"></i> Text Label</div>
-            <div class="menu-item" onclick="Canvas.add('Button')"><i class="fa-solid fa-hand-pointer text-emerald-400 w-4"></i> Button</div>
-            <div class="menu-item" onclick="Canvas.add('Bar')"><i class="fa-solid fa-bars-progress text-red-400 w-4"></i> Progress Bar</div>
-            <div class="menu-item" onclick="Canvas.add('Switch')"><i class="fa-solid fa-toggle-on text-purple-400 w-4"></i> iOS Switch</div>
-            <div class="menu-item" onclick="Canvas.add('Toggle')"><i class="fa-solid fa-check-square text-green-400 w-4"></i> Checkbox</div>
-            <div class="menu-item" onclick="Canvas.add('Slider')"><i class="fa-solid fa-sliders text-yellow-400 w-4"></i> Slider</div>
-            <div class="menu-item" onclick="Canvas.add('Input')"><i class="fa-solid fa-i-cursor text-blue-400 w-4"></i> Text Input</div>
-            <div class="menu-item" onclick="Canvas.add('TextArea')"><i class="fa-solid fa-align-left text-blue-300 w-4"></i> Text Area</div>
-            <div class="menu-item" onclick="Canvas.add('Dropdown')"><i class="fa-solid fa-caret-down text-orange-400 w-4"></i> Dropdown</div>
-            <div class="menu-item" onclick="Canvas.add('ColorPicker')"><i class="fa-solid fa-palette text-pink-400 w-4"></i> Color Picker</div>
-            <div class="menu-item" onclick="Canvas.add('Joystick')"><i class="fa-solid fa-gamepad text-orange-400 w-4"></i> Joystick</div>
-            <div class="p-2 text-[10px] text-accent font-black tracking-widest bg-[#2a2b3d] sticky top-0 z-10">MEDIA & WEB</div>
-            <div class="menu-item" onclick="Canvas.add('Image')"><i class="fa-solid fa-image text-pink-400 w-4"></i> Image Panel</div>
-            <div class="menu-item" onclick="Canvas.add('Video')"><i class="fa-solid fa-video text-purple-300 w-4"></i> Video Player</div>
-            <div class="menu-item" onclick="Canvas.add('Audio')"><i class="fa-solid fa-music text-blue-300 w-4"></i> Audio Player</div>
-            <div class="menu-item" onclick="Canvas.add('WebView')"><i class="fa-solid fa-globe text-emerald-300 w-4"></i> Web View</div>
-            <div class="menu-item" onclick="Canvas.add('Viewport3D')"><i class="fa-solid fa-cube text-purple-400 w-4"></i> 3D CSS Cube</div>
-        </div>
-
-        <div id="pop-logic" class="menu-pop">
-            <div class="p-2 text-[10px] text-emerald-400 font-black tracking-widest bg-[#2a2b3d] sticky top-0 z-10">TRIGGERS</div>
-            <div class="menu-item" onclick="Logic.add('Evt_Click')">On Click</div>
-            <div class="menu-item" onclick="Logic.add('Evt_Down')">On Press (Down)</div>
-            <div class="menu-item" onclick="Logic.add('Evt_Up')">On Release (Up)</div>
-            <div class="menu-item" onclick="Logic.add('Evt_Start')">On App Start</div>
-            <div class="menu-item" onclick="Logic.add('Evt_Change')">On Value Change</div>
-            <div class="menu-item" onclick="Logic.add('Evt_Tick')">On Tick (Loop ms)</div>
-            <div class="p-2 text-[10px] text-accent font-black tracking-widest bg-[#2a2b3d] sticky top-0 z-10">ACTIONS</div>
-            <div class="menu-item" onclick="Logic.add('Act_Set')">Set Value/Text</div>
-            <div class="menu-item" onclick="Logic.add('Act_SyncProp')">Sync Property</div>
-            <div class="menu-item" onclick="Logic.add('Act_Color')">Set Color</div>
-            <div class="menu-item" onclick="Logic.add('Act_Tween')">Smooth Tween</div>
-            <div class="menu-item" onclick="Logic.add('Act_Wait')">Wait (Delay)</div>
-            <div class="menu-item" onclick="Logic.add('Act_Alert')">Show Alert Popup</div>
-            <div class="menu-item" onclick="Logic.add('Act_Media')">Play/Pause Media</div>
-            <div class="menu-item" onclick="Logic.add('Act_Link')">Open URL</div>
-            <div class="menu-item" onclick="Logic.add('Act_Vibrate')">Vibrate Phone</div>
-            <div class="p-2 text-[10px] text-purple-400 font-black tracking-widest bg-[#2a2b3d] sticky top-0 z-10">LOGIC & DATA</div>
-            <div class="menu-item" onclick="Logic.add('Act_Math')">Math (+ - *)</div>
-            <div class="menu-item" onclick="Logic.add('Act_MathAdv')">Adv Math (Round/Sqrt)</div>
-            <div class="menu-item" onclick="Logic.add('Act_Concat')">Combine Text</div>
-            <div class="menu-item" onclick="Logic.add('Flow_If')">If Condition</div>
-            <div class="menu-item" onclick="Logic.add('Flow_Loop')">Repeat Loop</div>
-            <div class="menu-item" onclick="Logic.add('Data_Save')">Save to Device</div>
-            <div class="menu-item" onclick="Logic.add('Data_Load')">Load from Device</div>
-            <div class="menu-item" onclick="Logic.add('Data_Date')">Get Date/Time</div>
-            <div class="menu-item" onclick="Logic.add('Data_Random')">Random Number</div>
-        </div>
-    </main>
-
-    <nav id="bottom-nav">
-        <div class="nav-tab active-tab" id="tab-canvas" onclick="Sys.switchTab('canvas')"><i class="fa-solid fa-shapes"></i> Canvas</div>
-        <div class="nav-tab" id="tab-logic" onclick="Sys.switchTab('logic')"><i class="fa-solid fa-diagram-project"></i> Logic</div>
-        <div class="nav-tab" id="tab-props" onclick="Sys.switchTab('props')"><i class="fa-solid fa-sliders"></i> Props</div>
-    </nav>
+<div id="canvas-container">
+  <canvas id="viz"></canvas>
 </div>
 
-    <input type="file" id="import-file" class="hidden" accept=".json" onchange="Sys.import(event)">
+<video id="pip" muted autoplay playsinline style="display:none;"></video>
 
-    <script>
-        // GLOBALS
-        const App = {
-            mode: 'edit', elements: [], nodes: [], wires: [], sel: null, 
-            panC: {x:0, y:0}, panL: {x:0, y:0}, zoomL: 1, intervals: [],
-            id: (p) => `${p}_${Math.random().toString(36).substr(2,6)}`,
-            rgbaStr: (r,g,b,a) => `rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${a})`,
-            parseRgba: (s) => { const m = s.match(/rgba?\((\d+),\s*(\d+),\s*(\d+),?\s*([\d.]+)?\)/); return m ? {r:parseInt(m[1]), g:parseInt(m[2]), b:parseInt(m[3]), a:parseFloat(m[4]||1)} : {r:255,g:255,b:255,a:1}; }
-        };
+<div id="ui-layer">
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="#1DB954"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.54.659.301 1.02zm1.44-3.3c-.301.42-.84.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.02.6-1.14 4.32-1.38 9.6-1.02 13.44 1.32.42.3.6.84.3 1.5zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.18-1.2-.18-1.38-.78-.18-.6.18-1.2.78-1.38 4.2-1.26 11.28-1.02 15.721 1.62.539.3.719 1.02.42 1.56-.299.48-1.02.6-1.62.3z"/></svg>
+      <div>
+        <h1 style="font-size: 1.2rem; font-weight: 700; margin: 0; line-height: 1.2;">Visualizer</h1>
+        <p style="font-size: 0.8rem; color: #a7a7a7; margin: 0;">for Spotify Web/App</p>
+      </div>
+    </div>
+    <button class="btn-primary" id="connect-btn">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+      Connect Audio
+    </button>
+  </div>
+  
+  <p style="font-size: 0.9rem; color: #b3b3b3; line-height: 1.5; margin: 0;" id="instruction-text">
+    Click <strong>Connect Audio</strong>, select the tab or screen playing Spotify, and ensure the <strong>"Share tab audio"</strong> switch is turned ON.
+  </p>
 
-        const ElDefs = {
-            Frame: { w: 150, h: 150, bg: 'rgba(42,43,61,1)', radius: 10, opacity: 1, shadow: 0, z: 1, visible: true },
-            Container: { w: 200, h: 200, bg: 'rgba(0,0,0,0)', border: 'rgba(137,180,250,0.5)', radius: 0, opacity: 1, z: 1, visible: true },
-            GlassPanel: { w: 200, h: 200, bg: 'rgba(255,255,255,0.1)', radius: 16, opacity: 1, shadow: 1, z: 2, visible: true },
-            Circle: { w: 100, h: 100, bg: 'rgba(42,43,61,1)', radius: 50, opacity: 1, shadow: 0, z: 1, visible: true },
-            Divider: { w: 200, h: 2, bg: 'rgba(255,255,255,0.2)', radius: 0, opacity: 1, shadow: 0, z: 1, visible: true },
-            Text: { w: 150, h: 40, text: 'Text Label', color: 'rgba(255,255,255,1)', size: 16, align: 'center', bg: 'rgba(0,0,0,0)', opacity: 1, z: 3, visible: true },
-            Button: { w: 120, h: 45, text: 'Click Me', color: 'rgba(15,15,23,1)', bg: 'rgba(137,180,250,1)', size: 16, align: 'center', radius: 6, opacity: 1, shadow: 1, z: 4, visible: true },
-            Bar: { w: 200, h: 20, bg: 'rgba(21,21,33,1)', fill: 'rgba(166,227,161,1)', progress: 50, radius: 10, opacity: 1, shadow: 0, z: 3, visible: true },
-            Switch: { w: 56, h: 32, bg: 'rgba(42,43,61,1)', fill: 'rgba(166,227,161,1)', state: false, radius: 16, opacity: 1, shadow: 0, z: 3, visible: true },
-            Toggle: { w: 40, h: 40, bg: 'rgba(42,43,61,1)', fill: 'rgba(137,180,250,1)', state: false, radius: 8, opacity: 1, shadow: 0, z: 3, visible: true },
-            Slider: { w: 200, h: 24, bg: 'rgba(21,21,33,1)', fill: 'rgba(137,180,250,1)', progress: 50, radius: 12, opacity: 1, shadow: 0, z: 3, visible: true },
-            Input: { w: 200, h: 48, text: '', hint: 'Type...', color: 'rgba(255,255,255,1)', bg: 'rgba(21,21,33,1)', size: 14, align: 'left', radius: 8, opacity: 1, shadow: 0, z: 4, visible: true },
-            TextArea: { w: 200, h: 100, text: '', hint: 'Multiline...', color: 'rgba(255,255,255,1)', bg: 'rgba(21,21,33,1)', size: 14, align: 'left', radius: 8, opacity: 1, shadow: 0, z: 4, visible: true },
-            Dropdown: { w: 160, h: 44, bg: 'rgba(42,43,61,1)', color: 'rgba(255,255,255,1)', options: 'Option 1,Option 2', radius: 8, opacity: 1, shadow: 0, z: 4, visible: true },
-            ColorPicker: { w: 60, h: 60, bg: 'rgba(0,0,0,0)', fill: '#ff0000', radius: 12, opacity: 1, shadow: 0, z: 4, visible: true },
-            Image: { w: 150, h: 150, url: 'https://picsum.photos/150', bg: 'rgba(0,0,0,0)', radius: 8, opacity: 1, shadow: 0, z: 2, visible: true },
-            Video: { w: 280, h: 160, url: 'https://www.w3schools.com/html/mov_bbb.mp4', bg: 'rgba(0,0,0,1)', radius: 8, opacity: 1, shadow: 0, z: 2, visible: true },
-            Audio: { w: 200, h: 50, url: '', bg: 'rgba(42,43,61,1)', radius: 8, opacity: 1, shadow: 0, z: 2, visible: true },
-            WebView: { w: 280, h: 300, url: 'https://example.com', bg: 'rgba(255,255,255,1)', radius: 8, opacity: 1, shadow: 0, z: 2, visible: true },
-            Joystick: { w: 120, h: 120, bg: 'rgba(21,21,33,0.5)', fill: 'rgba(137,180,250,0.8)', radius: 60, joyX: 0, joyY: 0, opacity: 1, shadow: 0, z: 5, visible: true },
-            Viewport3D: { w: 150, h: 150, bg: 'rgba(0,0,0,0)', fill: 'rgba(203,166,247,1)', radius: 0, opacity: 1, shadow: 0, z: 1, visible: true }
-        };
+  <div id="error-msg"></div>
 
-        const NodeDefs = {
-            Evt_Click: { n: 'On Click', c: '#a6e3a1', out: ['exec'], f: { target: 'el' } },
-            Evt_Down: { n: 'On Press', c: '#a6e3a1', out: ['exec'], f: { target: 'el' } },
-            Evt_Up: { n: 'On Release', c: '#a6e3a1', out: ['exec'], f: { target: 'el' } },
-            Evt_Start: { n: 'On Start', c: '#a6e3a1', out: ['exec'], f: {} },
-            Evt_Change: { n: 'On Change', c: '#a6e3a1', out: ['exec'], f: { target: 'el' } },
-            Evt_Tick: { n: 'On Tick', c: '#a6e3a1', out: ['exec'], f: { ms: 'num' } },
-            
-            Act_Set: { n: 'Set Value', c: '#89b4fa', in: ['exec'], out: ['exec'], f: { target: 'el', prop: 'numprop', val: 'num' } },
-            Act_SyncProp: { n: 'Sync Prop', c: '#89b4fa', in: ['exec'], out: ['exec'], f: { srcEl: 'el', srcProp: 'numprop', tgtEl: 'el', tgtProp: 'numprop', mult: 'num' } },
-            Act_Color: { n: 'Set Color', c: '#cba6f7', in: ['exec'], out: ['exec'], f: { target: 'el', part: 'part', color: 'color' } },
-            Act_Math: { n: 'Math', c: '#f9e2af', in: ['exec'], out: ['exec'], f: { target: 'el', prop: 'numprop', op: 'op', value: 'num' } },
-            Act_MathAdv: { n: 'Adv Math', c: '#89b4fa', in: ['exec'], out: ['exec'], f: { target: 'el', prop: 'numprop', op: 'advmath' } },
-            Act_Wait: { n: 'Wait (sec)', c: '#f38ba8', in: ['exec'], out: ['exec'], f: { time: 'num' } },
-            Act_Tween: { n: 'Tween', c: '#cba6f7', in: ['exec'], out: ['exec'], f: { target: 'el', prop: 'numprop', val: 'num', sec: 'num' } },
-            Act_Concat: { n: 'Concat Text', c: '#89b4fa', in: ['exec'], out: ['exec'], f: { target: 'el', prop: 'str', text1: 'str', text2: 'str' } },
-            Act_Alert: { n: 'Show Alert', c: '#f38ba8', in: ['exec'], out: ['exec'], f: { msg: 'str' } },
-            Act_Media: { n: 'Play/Pause', c: '#89b4fa', in: ['exec'], out: ['exec'], f: { target: 'el', action: 'media' } },
-            Act_Link: { n: 'Open Link', c: '#89b4fa', in: ['exec'], out: ['exec'], f: { url: 'str' } },
-            Act_Reload: { n: 'Restart App', c: '#f38ba8', in: ['exec'], out: [], f: {} },
-            Act_Vibrate: { n: 'Vibrate', c: '#f38ba8', in: ['exec'], out: ['exec'], f: { ms: 'num' } },
-            
-            Flow_If: { n: 'If Branch', c: '#f9e2af', in: ['exec'], out: ['true', 'false'], f: { target: 'el', prop: 'numprop', op: 'cmp', value: 'num' } },
-            Flow_Loop: { n: 'Repeat Loop', c: '#f9e2af', in: ['exec'], out: ['loop', 'done'], f: { count: 'num' } },
-            Data_Save: { n: 'Save Data', c: '#fab387', in: ['exec'], out: ['exec'], f: { key: 'str', target: 'el', prop: 'numprop' } },
-            Data_Load: { n: 'Load Data', c: '#fab387', in: ['exec'], out: ['exec'], f: { key: 'str', target: 'el', prop: 'numprop' } },
-            Data_Date: { n: 'Get Time', c: '#fab387', in: ['exec'], out: ['exec'], f: { target: 'el', prop: 'str', format: 'timefmt' } },
-            Data_Random: { n: 'Random', c: '#fab387', in: ['exec'], out: ['exec'], f: { target: 'el', prop: 'numprop', min: 'num', max: 'num' } }
-        };
+  <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;" id="mode-container">
+    <button class="mode-btn active" data-mode="0">Bars</button>
+    <button class="mode-btn" data-mode="1">Radial</button>
+    <button class="mode-btn" data-mode="2">Waveform</button>
+    <button class="mode-btn" data-mode="3">Particles</button>
+    <button class="mode-btn" data-mode="4">Neon</button>
+    <button class="mode-btn" data-mode="5">Eclipse</button>
+  </div>
 
-        // --- SYSTEM ---
-        window.Sys = {
-            switchTab: (tabId) => {
-                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active-tab'));
-                document.getElementById(`tab-${tabId}`).classList.add('active-tab');
-                document.querySelectorAll('.workspace').forEach(w => { w.classList.remove('active'); });
-                document.getElementById(`ws-${tabId}`).classList.add('active');
-                
-                document.getElementById('fab-canvas').style.display = tabId === 'canvas' ? 'flex' : 'none';
-                document.getElementById('fab-logic').style.display = tabId === 'logic' ? 'flex' : 'none';
-                window.Sys.closeMenus();
-                if(tabId === 'logic') window.Logic.drawWires();
-            },
-            toggleMenu: (id) => {
-                const menu = document.getElementById(id); const isHidden = menu.style.display === 'none' || menu.style.display === '';
-                window.Sys.closeMenus();
-                if(isHidden) menu.style.display = 'flex';
-            },
-            closeMenus: () => {
-                document.querySelectorAll('.menu-pop').forEach(m => m.style.display = 'none');
-            },
-            export: () => {
-                const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({ el: App.elements, nd: App.nodes, wr: App.wires })], {type:'application/json'}));
-                a.download = 'nebula_v11.json'; a.click();
-            },
-            import: (e) => {
-                const r = new FileReader(); r.onload = () => { const d = JSON.parse(r.result); App.elements = d.el; App.nodes = d.nd; App.wires = d.wr; Canvas.render(); Logic.render(); Inspector.render(); };
-                r.readAsText(e.target.files[0]); e.target.value = '';
-            }
-        };
+  <button class="btn-outline" id="overlay-btn">
+    <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+      Detach to Overlay (PiP)
+    </div>
+  </button>
+</div>
 
-        // Click outside menus to close
-        document.addEventListener('pointerdown', (e) => {
-            if(!e.target.closest('.menu-pop') && !e.target.closest('.fab')) window.Sys.closeMenus();
-        });
+<script>
+const canvas = document.getElementById('viz');
+const ctx = canvas.getContext('2d', { willReadFrequently: true });
+const video = document.getElementById('pip');
+const connectBtn = document.getElementById('connect-btn');
+const overlayBtn = document.getElementById('overlay-btn');
+const modeBtns = document.querySelectorAll('.mode-btn');
+const uiLayer = document.getElementById('ui-layer');
+const instructionText = document.getElementById('instruction-text');
+const errorMsg = document.getElementById('error-msg');
 
-        // --- CANVAS ---
-        window.Canvas = {
-            layer: document.getElementById('canvas-pan'),
-            add: (type) => {
-                const props = JSON.parse(JSON.stringify(ElDefs[type]));
-                props.x = Math.max(20, 100 - App.panC.x); props.y = Math.max(20, 100 - App.panC.y);
-                App.elements.push({ id: App.id('el'), type, name: `${type}_${App.elements.length+1}`, props });
-                App.sel = App.elements[App.elements.length-1].id;
-                window.Canvas.render(); window.Inspector.render(); window.Logic.render();
-                window.Sys.switchTab('props'); window.Sys.closeMenus();
-            },
-            render: () => {
-                window.Canvas.layer.innerHTML = '';
-                App.elements.sort((a,b)=>a.props.z - b.props.z).forEach(el => {
-                    if(!el.props.visible && App.mode === 'play') return;
-                    
-                    const d = document.createElement('div');
-                    d.className = `el-box ${App.sel === el.id ? 'selected' : ''} ${['Button','Toggle','Switch','Slider','Joystick','Dropdown','ColorPicker'].includes(el.type) ? 'interactive' : ''}`;
-                    d.dataset.id = el.id;
-                    
-                    const shadowStr = el.props.shadow == 1 ? 'box-shadow: 0 4px 15px rgba(0,0,0,0.5);' : '';
-                    d.style.cssText = `left:${el.props.x}px; top:${el.props.y}px; width:${el.props.w}px; height:${el.props.h}px; z-index:${el.props.z}; background:${el.props.bg}; border-radius:${el.props.radius||0}px; opacity:${el.props.opacity||1}; ${shadowStr} ${el.props.visible?'':'display:none;'}`;
+let audioCtx, analyser, dataArray, bufferLength;
+let mode = 0;
+let particles = [];
+let isConnected = false;
+let animationId;
 
-                    if(el.type === 'Container') d.style.border = `2px dashed ${el.props.border||'rgba(255,255,255,0.2)'}`;
-                    if(el.type === 'Divider') d.style.background = el.props.bg;
-                    if(el.type === 'GlassPanel') { d.style.backdropFilter = 'blur(12px)'; d.style.webkitBackdropFilter = 'blur(12px)'; d.style.border = '1px solid rgba(255,255,255,0.15)'; }
-                    if(el.type === 'Circle') d.style.borderRadius = '50%';
-                    if(el.type === 'Text' || el.type === 'Button') { d.innerText = el.props.text; d.style.color = el.props.color; d.style.fontSize = (el.props.size||16)+'px'; d.style.fontWeight = 'bold'; d.style.textAlign = el.props.align||'center'; d.style.justifyContent = el.props.align === 'left' ? 'flex-start' : el.props.align === 'right' ? 'flex-end' : 'center'; d.style.padding = '0 10px'; }
-                    
-                    if(el.type === 'Bar') d.innerHTML = `<div style="height:100%; width:${Math.min(100, Math.max(0, parseFloat(el.props.progress)||0))}%; background:${el.props.fill}; border-radius:${el.props.radius}px; transition: width 0.1s linear;"></div>`;
-                    
-                    if(el.type === 'Toggle') {
-                        d.style.background = el.props.state ? el.props.fill : el.props.bg; d.style.transition = '0.2s';
-                        d.innerHTML = `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:${el.props.h*0.6}px;">${el.props.state ? '<i class="fa-solid fa-check"></i>' : ''}</div>`;
-                    }
-                    if(el.type === 'Switch') {
-                        d.style.background = el.props.state ? el.props.fill : el.props.bg; d.style.transition = '0.3s';
-                        d.innerHTML = `<div style="position:absolute; height:${el.props.h-4}px; width:${el.props.h-4}px; background:#fff; border-radius:50%; top:2px; left:${el.props.state ? el.props.w-el.props.h+2 : 2}px; transition:0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>`;
-                    }
-                    
-                    if(el.type === 'Slider') {
-                        const p = Math.min(100, Math.max(0, parseFloat(el.props.progress)||0));
-                        d.innerHTML = `<div style="height:100%; width:${p}%; background:${el.props.fill}; opacity:0.5; border-radius:${el.props.radius}px;"></div><div style="position:absolute; top:0; left:${p}%; height:100%; width:16px; background:${el.props.fill}; border-radius:50%; transform:translateX(-50%); box-shadow:0 0 5px rgba(0,0,0,0.8);"></div>`;
-                    }
-                    if(el.type === 'Joystick') {
-                        const jX = parseFloat(el.props.joyX)||0; const jY = parseFloat(el.props.joyY)||0;
-                        d.style.borderRadius = '50%';
-                        d.innerHTML = `<div style="position:absolute; width:40%; height:40%; background:${el.props.fill}; border-radius:50%; top:50%; left:50%; transform:translate(calc(-50% + ${jX}px), calc(-50% + ${jY}px)); box-shadow:0 5px 15px rgba(0,0,0,0.5);"></div>`;
-                    }
-                    if(el.type === 'Input') {
-                        const inp = document.createElement('input'); inp.value = el.props.text; inp.placeholder = el.props.hint;
-                        inp.style.cssText = `width:100%; height:100%; background:transparent; border:none; color:${el.props.color}; font-size:${el.props.size||14}px; font-weight:bold; padding:0 10px; outline:none; font-family:inherit; text-align:${el.props.align||'left'};`;
-                        if(App.mode === 'edit') inp.style.pointerEvents = 'none'; else inp.oninput = (e) => { el.props.text = e.target.value; window.Runtime.fire('Evt_Change', el.id); };
-                        d.appendChild(inp);
-                    }
-                    if(el.type === 'TextArea') {
-                        const inp = document.createElement('textarea'); inp.value = el.props.text; inp.placeholder = el.props.hint;
-                        inp.style.cssText = `width:100%; height:100%; background:transparent; border:none; color:${el.props.color}; font-size:${el.props.size||14}px; font-weight:bold; padding:10px; outline:none; font-family:inherit; text-align:${el.props.align||'left'}; resize:none;`;
-                        if(App.mode === 'edit') inp.style.pointerEvents = 'none'; else inp.oninput = (e) => { el.props.text = e.target.value; window.Runtime.fire('Evt_Change', el.id); };
-                        d.appendChild(inp);
-                    }
-                    if(el.type === 'Dropdown') {
-                        const opts = (el.props.options||'').split(',').map(x=>`<option value="${x.trim()}">${x.trim()}</option>`).join('');
-                        d.innerHTML = `<select style="width:100%;height:100%;background:transparent;color:${el.props.color};border:none;outline:none;font-weight:bold;padding:0 10px;">${opts}</select>`;
-                        if(App.mode === 'edit') d.style.pointerEvents = 'none'; else d.querySelector('select').onchange = (e) => { el.props.text = e.target.value; window.Runtime.fire('Evt_Change', el.id); };
-                    }
-                    if(el.type === 'ColorPicker') {
-                        d.innerHTML = `<input type="color" value="${el.props.fill}" style="width:100%;height:100%;border:none;background:transparent;cursor:pointer;">`;
-                        if(App.mode === 'edit') d.style.pointerEvents = 'none'; else d.querySelector('input').onchange = (e) => { el.props.fill = e.target.value; window.Runtime.fire('Evt_Change', el.id); };
-                    }
-                    if(el.type === 'Image') { d.style.backgroundImage = `url('${el.props.url}')`; d.style.backgroundSize = 'cover'; d.style.backgroundPosition = 'center'; }
-                    if(el.type === 'Video') { d.innerHTML = `<video src="${el.props.url}" style="width:100%;height:100%;object-fit:cover;border-radius:${el.props.radius}px;" ${App.mode==='edit'?'':'controls'}></video>`; }
-                    if(el.type === 'Audio') {
-                        d.innerHTML = `<audio src="${el.props.url}" style="width:100%;" ${App.mode==='edit'?'':'controls'}></audio>`;
-                        if(App.mode==='edit') { d.style.background = 'rgba(255,255,255,0.1)'; d.innerHTML = '<i class="fa-solid fa-music text-2xl text-blue-300"></i>'; }
-                    }
-                    if(el.type === 'WebView') {
-                        if(App.mode === 'edit') d.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#000;"><i class="fa-solid fa-globe text-3xl"></i></div>`;
-                        else d.innerHTML = `<iframe src="${el.props.url}" style="width:100%;height:100%;border:none;border-radius:${el.props.radius}px;"></iframe>`;
-                    }
-                    if(el.type === 'Viewport3D') {
-                        d.innerHTML = `<div class="cube-container"><div class="cube"><div class="front" style="background:${el.props.fill}"></div><div class="back" style="background:${el.props.fill}"></div><div class="right" style="background:${el.props.fill}"></div><div class="left" style="background:${el.props.fill}"></div><div class="top" style="background:${el.props.fill}"></div><div class="bottom" style="background:${el.props.fill}"></div></div></div>`;
-                    }
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
 
-                    window.Canvas.layer.appendChild(d);
-                });
-                window.Inspector.updateTree();
-            }
-        };
+modeBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    modeBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    mode = parseInt(btn.getAttribute('data-mode'));
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles = [];
+  });
+});
 
-        // --- LOGIC GRAPH ---
-        window.Logic = {
-            layer: document.getElementById('node-layer'), svg: document.getElementById('svg-layer'),
-            add: (type) => {
-                App.nodes.push({ id: App.id('nd'), type, x: (100 - App.panL.x)/App.zoomL, y: (100 - App.panL.y)/App.zoomL, data: {} });
-                window.Logic.render(); window.Sys.closeMenus();
-            },
-            delNode: (id) => {
-                App.nodes = App.nodes.filter(x=>x.id!==id); App.wires = App.wires.filter(w=>w.f!==id&&w.t!==id); window.Logic.render();
-            },
-            render: () => {
-                window.Logic.layer.innerHTML = '';
-                App.nodes.forEach(n => {
-                    const d = document.createElement('div'); const def = NodeDefs[n.type];
-                    d.className = 'node pointer-events-auto'; d.dataset.id = n.id; d.style.cssText = `left:${n.x}px; top:${n.y}px; border-top: 4px solid ${def.c}`;
-                    
-                    let pIn = (def.in||[]).map(p => `<div class="port-row"><div class="port in exec" data-n="${n.id}" data-p="${p}" data-io="in"></div><span class="text-[10px] font-bold text-gray-400">${p}</span></div>`).join('');
-                    let pOut = (def.out||[]).map(p => `<div class="port-row"><span class="text-[10px] font-bold text-gray-400">${p}</span><div class="port out exec" data-n="${n.id}" data-p="${p}" data-io="out"></div></div>`).join('');
-                    
-                    let flds = '';
-                    for(const [k, v] of Object.entries(def.f)) {
-                        if(v==='el') flds += `<select class="ui-input mt-2 n-fld" data-k="${k}"><option value="">[ Target ]</option>${App.elements.map(e=>`<option value="${e.id}" ${n.data[k]===e.id?'selected':''}>${e.name}</option>`).join('')}</select>`;
-                        else if(v==='op') flds += `<select class="ui-input mt-2 n-fld" data-k="${k}"><option value="+" ${n.data[k]==='+'?'selected':''}>Add (+)</option><option value="-" ${n.data[k]==='-'?'selected':''}>Sub (-)</option><option value="*" ${n.data[k]==='*'?'selected':''}>Mult (*)</option></select>`;
-                        else if(v==='cmp') flds += `<select class="ui-input mt-2 n-fld" data-k="${k}"><option value="==" ${n.data[k]==='=='?'selected':''}>Equal (==)</option><option value=">" ${n.data[k]==='>'?'selected':''}>Greater (>)</option><option value="<" ${n.data[k]==='<'?'selected':''}>Less (<)</option></select>`;
-                        else if(v==='part') flds += `<select class="ui-input mt-2 n-fld" data-k="${k}"><option value="bg" ${n.data[k]==='bg'?'selected':''}>Background</option><option value="color" ${n.data[k]==='color'?'selected':''}>Text Color</option><option value="fill" ${n.data[k]==='fill'?'selected':''}>Accent / Fill</option></select>`;
-                        else if(v==='numprop') flds += `<select class="ui-input mt-2 n-fld" data-k="${k}">
-                            <option value="x" ${n.data[k]==='x'?'selected':''}>X Position</option><option value="y" ${n.data[k]==='y'?'selected':''}>Y Position</option>
-                            <option value="w" ${n.data[k]==='w'?'selected':''}>Width</option><option value="h" ${n.data[k]==='h'?'selected':''}>Height</option>
-                            <option value="progress" ${n.data[k]==='progress'?'selected':''}>Value / Progress</option>
-                            <option value="opacity" ${n.data[k]==='opacity'?'selected':''}>Opacity</option><option value="size" ${n.data[k]==='size'?'selected':''}>Font Size</option>
-                            <option value="joyX" ${n.data[k]==='joyX'?'selected':''}>Joystick X Offset</option><option value="joyY" ${n.data[k]==='joyY'?'selected':''}>Joystick Y Offset</option>
-                            </select>`;
-                        else if(v==='advmath') flds += `<select class="ui-input mt-2 n-fld" data-k="${k}"><option value="round" ${n.data[k]==='round'?'selected':''}>Round</option><option value="floor" ${n.data[k]==='floor'?'selected':''}>Floor</option><option value="ceil" ${n.data[k]==='ceil'?'selected':''}>Ceiling</option><option value="sqrt" ${n.data[k]==='sqrt'?'selected':''}>Square Root</option></select>`;
-                        else if(v==='media') flds += `<select class="ui-input mt-2 n-fld" data-k="${k}"><option value="play" ${n.data[k]==='play'?'selected':''}>Play Media</option><option value="pause" ${n.data[k]==='pause'?'selected':''}>Pause Media</option></select>`;
-                        else if(v==='timefmt') flds += `<select class="ui-input mt-2 n-fld" data-k="${k}"><option value="time" ${n.data[k]==='time'?'selected':''}>Time (HH:MM)</option><option value="date" ${n.data[k]==='date'?'selected':''}>Date</option><option value="ms" ${n.data[k]==='ms'?'selected':''}>Milliseconds</option></select>`;
-                        else flds += `<input type="text" class="ui-input mt-2 n-fld" placeholder="${k}" data-k="${k}" value="${n.data[k]||''}">`;
-                    }
+function showError(msg) {
+  errorMsg.textContent = msg;
+  errorMsg.style.display = 'block';
+  setTimeout(() => { errorMsg.style.display = 'none'; }, 6000);
+}
 
-                    d.innerHTML = `<div class="node-head" data-drag="${n.id}"><span style="color:${def.c}">${def.n}</span><i class="fa-solid fa-trash opacity-40 hover:opacity-100 text-red-400 cursor-pointer" onclick="window.Logic.delNode('${n.id}')"></i></div>
-                        <div class="flex justify-between px-3 pt-3"><div class="flex flex-col gap-3">${pIn}</div><div class="flex flex-col gap-3 text-right">${pOut}</div></div>
-                        <div class="p-3 pt-1 flex flex-col">${flds}</div>`;
-                    
-                    d.querySelectorAll('.n-fld').forEach(f => { f.addEventListener('pointerdown', e=>e.stopPropagation()); f.addEventListener('change', e => n.data[f.dataset.k] = e.target.value); });
-                    window.Logic.layer.appendChild(d);
-                });
-                window.Logic.drawWires();
-            },
-            drawWires: () => {
-                window.Logic.svg.innerHTML = ''; 
-                const panR = window.Logic.layer.getBoundingClientRect(); const z = App.zoomL || 1;
-                
-                App.wires.forEach(w => {
-                    const p1 = document.querySelector(`.port[data-n="${w.f}"][data-p="${w.fp}"][data-io="out"]`);
-                    const p2 = document.querySelector(`.port[data-n="${w.t}"][data-p="${w.tp}"][data-io="in"]`);
-                    if(p1 && p2) {
-                        const r1 = p1.getBoundingClientRect(), r2 = p2.getBoundingClientRect();
-                        const x1 = (r1.left + r1.width/2 - panR.left) / z; const y1 = (r1.top + r1.height/2 - panR.top) / z;
-                        const x2 = (r2.left + r2.width/2 - panR.left) / z; const y2 = (r2.top + r2.height/2 - panR.top) / z;
-                        
-                        const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                        p.setAttribute('d', `M ${x1} ${y1} C ${x1+40} ${y1}, ${x2-40} ${y2}, ${x2} ${y2}`);
-                        p.setAttribute('class', 'wire'); p.setAttribute('stroke', NodeDefs[App.nodes.find(n=>n.id===w.f).type].c);
-                        window.Logic.svg.appendChild(p);
-                    }
-                });
-            }
-        };
+connectBtn.addEventListener('click', async () => {
+  try {
+    const stream = await navigator.mediaDevices.getDisplayMedia({
+      video: true,
+      audio: {
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false
+      }
+    });
 
-        // --- INSPECTOR ---
-        window.Inspector = {
-            update: (id, prop, val, isName=false, isNum=false) => {
-                const el = App.elements.find(x=>x.id===id);
-                if(isName) el.name = val; else el.props[prop] = isNum ? parseFloat(val)||0 : val;
-                window.Canvas.render(); if(isName) { window.Inspector.updateTree(); window.Logic.render(); }
-            },
-            updateTree: () => {
-                const tr = document.getElementById('tree-view'); tr.innerHTML = '';
-                App.elements.forEach(el => {
-                    const d = document.createElement('div');
-                    d.className = `p-3 rounded text-[12px] font-bold cursor-pointer ${App.sel === el.id ? 'bg-accent text-black' : 'bg-[#1e1e2e] text-white hover:bg-[#2a2b3d]'}`;
-                    d.innerText = el.name;
-                    d.onclick = () => { App.sel = el.id; window.Canvas.render(); window.Inspector.render(); };
-                    tr.appendChild(d);
-                });
-            },
-            render: () => {
-                const el = App.elements.find(x=>x.id === App.sel);
-                const ed = document.getElementById('prop-view'), em = document.getElementById('prop-empty');
-                if(!el) { ed.style.display = 'none'; em.style.display = 'block'; return; }
-                ed.style.display = 'flex'; em.style.display = 'none';
+    const audioTracks = stream.getAudioTracks();
+    if (audioTracks.length === 0) {
+      showError('No audio detected. Please re-connect and explicitly check the "Share audio" toggle.');
+      stream.getTracks().forEach(t => t.stop());
+      return;
+    }
 
-                let h = `<div class="prop-group"><input class="ui-input font-bold" value="${el.name}" oninput="window.Inspector.update('${el.id}', 'name', this.value, true)"></div>
-                         <div class="prop-group"><div class="text-[10px] text-accent font-black tracking-widest mb-2">TRANSFORM</div>
-                         <div class="grid grid-cols-2 gap-3">
-                             <div class="text-[10px] text-muted font-bold">X Pos <input type="number" class="ui-input mt-1" value="${el.props.x}" oninput="window.Inspector.update('${el.id}', 'x', this.value, false, true)"></div>
-                             <div class="text-[10px] text-muted font-bold">Y Pos <input type="number" class="ui-input mt-1" value="${el.props.y}" oninput="window.Inspector.update('${el.id}', 'y', this.value, false, true)"></div>
-                             <div class="text-[10px] text-muted font-bold">Width <input type="number" class="ui-input mt-1" value="${el.props.w}" oninput="window.Inspector.update('${el.id}', 'w', this.value, false, true)"></div>
-                             <div class="text-[10px] text-muted font-bold">Height <input type="number" class="ui-input mt-1" value="${el.props.h}" oninput="window.Inspector.update('${el.id}', 'h', this.value, false, true)"></div>
-                         </div></div>`;
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    await audioCtx.resume();
+    
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 1024;
+    analyser.smoothingTimeConstant = 0.85;
 
-                let sp = '';
-                if(el.props.radius !== undefined) sp += `<div class="text-[10px] text-muted font-bold mt-4 mb-2 uppercase">BORDER RADIUS</div><input type="number" class="ui-input" value="${el.props.radius}" oninput="window.Inspector.update('${el.id}', 'radius', this.value, false, true)">`;
+    const source = audioCtx.createMediaStreamSource(stream);
+    source.connect(analyser);
 
-                ['bg', 'color', 'fill', 'border'].forEach(p => {
-                    if(el.props[p] !== undefined) {
-                        const c = App.parseRgba(el.props[p]);
-                        sp += `<div class="text-[10px] text-muted font-bold mt-4 mb-2 uppercase">${p} COLOR</div>
-                        <div class="rgba-container"><div class="w-10 h-10 rounded border border-[#2a2b3d] shrink-0" style="background:${el.props[p]}"></div>
-                        <input type="number" class="rgba-input i-${p}-r" value="${c.r}" oninput="window.Inspector.upCol('${el.id}','${p}')"><input type="number" class="rgba-input i-${p}-g" value="${c.g}" oninput="window.Inspector.upCol('${el.id}','${p}')"><input type="number" class="rgba-input i-${p}-b" value="${c.b}" oninput="window.Inspector.upCol('${el.id}','${p}')"><input type="number" step="0.1" class="rgba-input i-${p}-a" value="${c.a}" oninput="window.Inspector.upCol('${el.id}','${p}')"></div>`;
-                    }
-                });
-                
-                if(el.props.text !== undefined) sp += `<div class="text-[10px] text-muted font-bold mt-4 mb-2">TEXT</div>${el.type==='TextArea' ? `<textarea class="ui-input" rows="3" oninput="window.Inspector.update('${el.id}', 'text', this.value)">${el.props.text}</textarea>` : `<input class="ui-input" value="${el.props.text}" oninput="window.Inspector.update('${el.id}', 'text', this.value)">`}`;
-                if(el.props.size !== undefined) sp += `<div class="text-[10px] text-muted font-bold mt-4 mb-2">FONT SIZE</div><input type="number" class="ui-input" value="${el.props.size}" oninput="window.Inspector.update('${el.id}', 'size', this.value, false, true)">`;
-                if(el.props.align !== undefined) sp += `<div class="text-[10px] text-muted font-bold mt-4 mb-2">TEXT ALIGN</div><select class="ui-input" onchange="window.Inspector.update('${el.id}', 'align', this.value)"><option value="left" ${el.props.align==='left'?'selected':''}>Left</option><option value="center" ${el.props.align==='center'?'selected':''}>Center</option><option value="right" ${el.props.align==='right'?'selected':''}>Right</option></select>`;
-                if(el.props.options !== undefined) sp += `<div class="text-[10px] text-muted font-bold mt-4 mb-2">OPTIONS (Comma sep)</div><input class="ui-input" value="${el.props.options}" oninput="window.Inspector.update('${el.id}', 'options', this.value)">`;
-                if(el.props.progress !== undefined) sp += `<div class="text-[10px] text-muted font-bold mt-4 mb-2">VALUE</div><input type="range" class="w-full" value="${el.props.progress}" oninput="window.Inspector.update('${el.id}', 'progress', this.value, false, true)">`;
-                if(el.props.url !== undefined) sp += `<div class="text-[10px] text-muted font-bold mt-4 mb-2">MEDIA URL</div><input class="ui-input" value="${el.props.url}" oninput="window.Inspector.update('${el.id}', 'url', this.value)">`;
-                if(el.props.opacity !== undefined) sp += `<div class="text-[10px] text-muted font-bold mt-4 mb-2">OPACITY (0 to 1)</div><input type="number" step="0.1" max="1" min="0" class="ui-input" value="${el.props.opacity}" oninput="window.Inspector.update('${el.id}', 'opacity', this.value, false, true)">`;
-                if(el.props.shadow !== undefined) sp += `<div class="text-[10px] text-muted font-bold mt-4 mb-2 flex items-center gap-3"><input type="checkbox" class="w-5 h-5 accent-accent" ${el.props.shadow==1?'checked':''} onchange="window.Inspector.update('${el.id}', 'shadow', this.checked ? 1 : 0)"> ENABLE SHADOW</div>`;
+    bufferLength = analyser.frequencyBinCount;
+    dataArray = new Uint8Array(bufferLength);
+    isConnected = true;
 
-                if(sp) h += `<div class="prop-group"><div class="text-[10px] text-accent font-black tracking-widest mb-3">PROPERTIES</div>${sp}</div>`;
-                h += `<button class="w-full bg-red-500 text-black font-bold py-4 rounded-xl mt-2" onclick="window.Inspector.delEl('${el.id}')">DELETE ELEMENT</button>`;
-                ed.innerHTML = h;
-            },
-            upCol: (id, p) => {
-                const ed = document.getElementById('prop-view');
-                const r = ed.querySelector(`.i-${p}-r`).value; const g = ed.querySelector(`.i-${p}-g`).value;
-                const b = ed.querySelector(`.i-${p}-b`).value; const a = ed.querySelector(`.i-${p}-a`).value;
-                const el = App.elements.find(x=>x.id===id); el.props[p] = App.rgbaStr(r,g,b,a); window.Canvas.render(); window.Inspector.render();
-            },
-            delEl: (id) => {
-                App.elements = App.elements.filter(x=>x.id !== id); App.sel = null; window.Canvas.render(); window.Inspector.render(); window.Logic.render();
-            }
-        };
+    connectBtn.style.display = 'none';
+    instructionText.style.display = 'none';
+    overlayBtn.style.display = 'block';
+    errorMsg.style.display = 'none';
 
-        // --- RUNTIME EVALUATOR ---
-        window.Runtime = {
-            stateBkp: null,
-            play: () => {
-                window.Runtime.stateBkp = JSON.stringify(App.elements); App.mode = 'play'; document.body.className = 'mode-play';
-                document.getElementById('btn-play').style.display = 'none'; document.getElementById('btn-stop').style.display = 'flex';
-                App.sel = null; window.Canvas.render(); window.Inspector.render(); window.Sys.switchTab('canvas');
-                
-                App.intervals = [];
-                App.nodes.filter(n=>n.type === 'Evt_Tick').forEach(n => {
-                    const ms = parseInt(n.data.ms)||1000; App.intervals.push(setInterval(() => window.Runtime.eval(n.id, 'exec'), ms));
-                });
-                window.Runtime.fire('Evt_Start');
-            },
-            stop: () => {
-                App.intervals.forEach(clearInterval); App.intervals = [];
-                if(window.Runtime.stateBkp) App.elements = JSON.parse(window.Runtime.stateBkp); 
-                App.mode = 'edit'; document.body.className = 'mode-edit';
-                document.getElementById('btn-stop').style.display = 'none'; document.getElementById('btn-play').style.display = 'flex'; window.Canvas.render();
-            },
-            fire: (type, targetId=null) => {
-                App.nodes.filter(n=>n.type===type).forEach(n => {
-                    if(['Evt_Click','Evt_Change','Evt_Down','Evt_Up'].includes(type) && n.data.target !== targetId) return;
-                    window.Runtime.eval(n.id, 'exec');
-                });
-            },
-            eval: async (nodeId, port) => {
-                const n = App.nodes.find(x=>x.id===nodeId); if(!n) return; let nxt = 'exec';
-                try {
-                    if(n.type === 'Act_Wait') await new Promise(r => setTimeout(r, (parseFloat(n.data.time)||0)*1000));
-                    if(n.type === 'Act_Alert') alert(n.data.msg || '');
-                    if(n.type === 'Act_Link' && n.data.url) window.open(n.data.url, '_blank');
-                    if(n.type === 'Act_Reload') location.reload();
-                    if(n.type === 'Act_Vibrate') { if(navigator.vibrate) navigator.vibrate(parseInt(n.data.ms)||100); }
-                    
-                    const el = App.elements.find(e=>e.id === n.data.target);
-                    if(el) {
-                        if(n.type === 'Act_Set') { el.props[n.data.prop] = isNaN(n.data.val) ? n.data.val : parseFloat(n.data.val); window.Canvas.render(); }
-                        if(n.type === 'Act_SyncProp') { const src = App.elements.find(e=>e.id === n.data.srcEl); if(src) { el.props[n.data.tgtProp] = (parseFloat(src.props[n.data.srcProp])||0) * (parseFloat(n.data.mult)||1); window.Canvas.render(); } }
-                        if(n.type === 'Act_Color') { el.props[n.data.part] = n.data.color || '#ffffff'; window.Canvas.render(); }
-                        if(n.type === 'Act_Math') { const p = n.data.prop||'x'; const cur = parseFloat(el.props[p])||0; const v = parseFloat(n.data.value)||0; if(n.data.op === '+') el.props[p] = cur + v; if(n.data.op === '-') el.props[p] = cur - v; if(n.data.op === '*') el.props[p] = cur * v; window.Canvas.render(); }
-                        if(n.type === 'Act_MathAdv') { const p = n.data.prop||'x'; const cur = parseFloat(el.props[p])||0; if(n.data.op === 'round') el.props[p] = Math.round(cur); if(n.data.op === 'floor') el.props[p] = Math.floor(cur); if(n.data.op === 'ceil') el.props[p] = Math.ceil(cur); if(n.data.op === 'sqrt') el.props[p] = Math.sqrt(cur); window.Canvas.render(); }
-                        if(n.type === 'Act_Media') { const dom = document.querySelector(`.el-box[data-id="${el.id}"] video, .el-box[data-id="${el.id}"] audio`); if(dom) { if(n.data.action === 'play') dom.play(); else dom.pause(); } }
-                        if(n.type === 'Act_Concat') { el.props[n.data.prop] = String(n.data.text1 || '') + String(n.data.text2 || ''); window.Canvas.render(); }
-                        if(n.type === 'Act_Tween') {
-                            await new Promise(resolve => {
-                                const p = n.data.prop||'x'; const tgt = parseFloat(n.data.val)||0; const dur = (parseFloat(n.data.sec)||1)*1000;
-                                const st = parseFloat(el.props[p])||0; const startT = performance.now();
-                                const anim = (time) => { const prog = Math.min((time - startT)/dur, 1); const ease = 1 - Math.pow(1 - prog, 3); el.props[p] = st + (tgt - st) * ease; window.Canvas.render(); if(prog < 1) requestAnimationFrame(anim); else resolve(); };
-                                requestAnimationFrame(anim);
-                            });
-                        }
-                        if(n.type === 'Flow_If') { const p = n.data.prop||'x'; const cur = parseFloat(el.props[p])||0; const v = parseFloat(n.data.value)||0; let res = false; if(n.data.op === '==') res = cur == v; if(n.data.op === '>') res = cur > v; if(n.data.op === '<') res = cur < v; nxt = res ? 'true' : 'false'; }
-                        if(n.type === 'Data_Save') { localStorage.setItem(`nebula_${n.data.key}`, String(el.props[n.data.prop])); }
-                        if(n.type === 'Data_Load') { const saved = localStorage.getItem(`nebula_${n.data.key}`); if(saved) { el.props[n.data.prop] = isNaN(saved) ? saved : parseFloat(saved); window.Canvas.render(); } }
-                        if(n.type === 'Data_Random') { const min = parseFloat(n.data.min)||0; const max = parseFloat(n.data.max)||100; el.props[n.data.prop] = Math.floor(Math.random() * (max - min + 1)) + min; window.Canvas.render(); }
-                        if(n.type === 'Data_Date') { const d = new Date(); if(n.data.format === 'time') el.props[n.data.prop] = d.toLocaleTimeString(); if(n.data.format === 'date') el.props[n.data.prop] = d.toLocaleDateString(); if(n.data.format === 'ms') el.props[n.data.prop] = d.getTime(); window.Canvas.render(); }
-                    }
+    if (animationId) cancelAnimationFrame(animationId);
+    animate();
+    
+    stream.getVideoTracks()[0].addEventListener('ended', () => {
+       isConnected = false;
+       connectBtn.style.display = 'flex';
+       overlayBtn.style.display = 'none';
+       instructionText.style.display = 'block';
+       ctx.clearRect(0, 0, canvas.width, canvas.height);
+    });
 
-                    if(n.type === 'Flow_Loop') {
-                        for(let i=0; i<parseInt(n.data.count||0); i++) {
-                            const ws = App.wires.filter(w => w.f === nodeId && w.fp === 'loop');
-                            for(const w of ws) await window.Runtime.eval(w.t, 'exec');
-                        }
-                        nxt = 'done';
-                    }
+  } catch (err) {
+    if (err.name !== 'NotAllowedError') {
+      showError('Failed to capture audio. Ensure your browser supports this feature.');
+    }
+  }
+});
 
-                    App.wires.filter(w => w.f === nodeId && w.fp === nxt).forEach(w => window.Runtime.eval(w.t, 'exec'));
-                } catch(e) { console.error("Logic Error:", e); }
-            }
-        };
+overlayBtn.addEventListener('click', async () => {
+  try {
+    const stream = canvas.captureStream(30);
+    video.srcObject = stream;
+    await video.play();
+    await video.requestPictureInPicture();
+    uiLayer.classList.add('hidden-ui');
+  } catch (err) {
+    showError('Picture-in-Picture failed. Your browser might not support Canvas PiP.');
+  }
+});
 
-        // --- GLOBAL POINTER DRAG ENGINE ---
-        let Ptr = { drag: null, wire: null };
-        let pointers = {}; let pinchDist = 0;
-        const main = document.getElementById('main-area');
+video.addEventListener('leavepictureinpicture', () => {
+  uiLayer.classList.remove('hidden-ui');
+});
 
-        main.addEventListener('pointerdown', (e) => {
-            pointers[e.pointerId] = e;
-            
-            if(App.mode === 'play') {
-                const box = e.target.closest('.el-box');
-                if(box) {
-                    const el = App.elements.find(x=>x.id===box.dataset.id);
-                    window.Runtime.fire('Evt_Down', el.id);
-                    if(el.type === 'Button') window.Runtime.fire('Evt_Click', el.id);
-                    if(el.type === 'Toggle' || el.type === 'Switch') { el.props.state = !el.props.state; window.Canvas.render(); window.Runtime.fire('Evt_Change', el.id); }
-                    if(el.type === 'Slider') { Ptr.drag = { type: 'slider', el: el, dom: box }; }
-                    if(el.type === 'Joystick') { 
-                        const r = box.getBoundingClientRect(); Ptr.drag = { type: 'joy', el: el, cx: r.left + r.width/2, cy: r.top + r.height/2, r: r.width/2 }; 
-                        el.props.joyX = Math.max(-Ptr.drag.r, Math.min(Ptr.drag.r, e.clientX - Ptr.drag.cx)); el.props.joyY = Math.max(-Ptr.drag.r, Math.min(Ptr.drag.r, e.clientY - Ptr.drag.cy));
-                        window.Canvas.render(); window.Runtime.fire('Evt_Change', el.id);
-                    }
-                }
-                return;
-            }
+uiLayer.addEventListener('mouseenter', () => {
+  if (document.pictureInPictureElement) {
+    document.exitPictureInPicture().catch(() => {});
+  }
+});
 
-            const port = e.target.closest('.port');
-            if(port) { 
-                if(port.dataset.io === 'in') {
-                    const existIdx = App.wires.findIndex(w => w.t === port.dataset.n && w.tp === port.dataset.p);
-                    if(existIdx > -1) { App.wires.splice(existIdx, 1); window.Logic.drawWires(); return; }
-                }
-                Ptr.wire = { n: port.dataset.n, p: port.dataset.p, io: port.dataset.io, el: port }; return; 
-            }
-            if(e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
+function getAverageVolume() {
+  let sum = 0;
+  for (let i = 0; i < bufferLength; i++) {
+    sum += dataArray[i];
+  }
+  return sum / bufferLength;
+}
 
-            const nHead = e.target.closest('.node-head');
-            if(nHead) { const n = App.nodes.find(x=>x.id === nHead.dataset.drag); Ptr.drag = { type: 'node', obj: n, sx: e.clientX - n.x * App.zoomL, sy: e.clientY - n.y * App.zoomL }; return; }
-            
-            const elBox = e.target.closest('.el-box');
-            if(elBox && document.getElementById('ws-canvas').classList.contains('active')) {
-                App.sel = elBox.dataset.id; document.querySelectorAll('.el-box').forEach(b => b.classList.remove('selected')); elBox.classList.add('selected'); window.Inspector.render();
-                const el = App.elements.find(x=>x.id === App.sel);
-                Ptr.drag = { type: 'el', obj: el, sx: e.clientX - el.props.x, sy: e.clientY - el.props.y }; return;
-            }
+class Particle {
+  constructor(x, y, v) {
+    this.x = x;
+    this.y = y;
+    this.vx = (Math.random() - 0.5) * v;
+    this.vy = (Math.random() - 0.5) * v;
+    this.life = 1;
+    this.color = `hsl(${Math.random() * 40 + 120}, 100%, 50%)`;
+    this.size = Math.random() * 5 + 2;
+  }
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.life -= 0.02;
+    this.size *= 0.95;
+  }
+  draw() {
+    ctx.fillStyle = this.color;
+    ctx.globalAlpha = Math.max(0, this.life);
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+}
 
-            if(document.getElementById('ws-canvas').classList.contains('active')) {
-                if(e.target.id === 'ws-canvas' || e.target.id === 'canvas-pan') {
-                    App.sel = null; document.querySelectorAll('.el-box').forEach(b => b.classList.remove('selected')); window.Inspector.render();
-                    Ptr.drag = { type: 'panC', sx: e.clientX - App.panC.x, sy: e.clientY - App.panC.y };
-                }
-            } else if(document.getElementById('ws-logic').classList.contains('active')) {
-                if(e.target.id === 'ws-logic' || e.target.id === 'logic-pan' || e.target.id === 'svg-layer') {
-                    Ptr.drag = { type: 'panL', sx: e.clientX - App.panL.x, sy: e.clientY - App.panL.y };
-                }
-            }
-        }, { passive: false });
+function drawBars() {
+  const w = canvas.width;
+  const h = canvas.height;
+  const barWidth = (w / bufferLength) * 2.5;
+  let x = 0;
+  for (let i = 0; i < bufferLength; i++) {
+    const barHeight = (dataArray[i] / 255) * h;
+    const r = 29;
+    const g = Math.floor(dataArray[i] / 255 * 185 + 70);
+    const b = 84;
+    ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+    ctx.fillRect(x, h - barHeight, barWidth, barHeight);
+    x += barWidth + 2;
+  }
+}
 
-        main.addEventListener('pointermove', (e) => {
-            pointers[e.pointerId] = e;
-            
-            if(Object.keys(pointers).length === 2 && document.getElementById('ws-logic').classList.contains('active')) {
-                let pts = Object.values(pointers); let dist = Math.hypot(pts[0].clientX - pts[1].clientX, pts[0].clientY - pts[1].clientY);
-                if(pinchDist) {
-                    App.zoomL = Math.max(0.3, Math.min(2.5, App.zoomL + (dist - pinchDist) * 0.005));
-                    document.getElementById('logic-pan').style.transform = `translate(${App.panL.x}px, ${App.panL.y}px) scale(${App.zoomL})`; window.Logic.drawWires();
-                }
-                pinchDist = dist; return;
-            }
+function drawRadial() {
+  const w = canvas.width;
+  const h = canvas.height;
+  const cx = w / 2;
+  const cy = h / 2;
+  const radius = Math.min(cx, cy) * 0.4;
 
-            if(Ptr.drag || Ptr.wire) { e.preventDefault(); } 
+  ctx.translate(cx, cy);
+  for (let i = 0; i < bufferLength; i += 4) {
+    const rad = (i / bufferLength) * Math.PI * 2;
+    const barHeight = (dataArray[i] / 255) * (Math.min(cx, cy) * 0.5);
+    
+    const startX = Math.cos(rad) * radius;
+    const startY = Math.sin(rad) * radius;
+    const endX = Math.cos(rad) * (radius + barHeight);
+    const endY = Math.sin(rad) * (radius + barHeight);
 
-            if(Ptr.drag) {
-                if(Ptr.drag.type === 'node') { 
-                    Ptr.drag.obj.x = (e.clientX - Ptr.drag.sx) / App.zoomL; Ptr.drag.obj.y = (e.clientY - Ptr.drag.sy) / App.zoomL; 
-                    const dom = document.querySelector(`.node[data-id="${Ptr.drag.obj.id}"]`); if(dom) { dom.style.left = Ptr.drag.obj.x + 'px'; dom.style.top = Ptr.drag.obj.y + 'px'; } window.Logic.drawWires(); 
-                }
-                if(Ptr.drag.type === 'el') { 
-                    Ptr.drag.obj.props.x = e.clientX - Ptr.drag.sx; Ptr.drag.obj.props.y = e.clientY - Ptr.drag.sy; 
-                    const dom = document.querySelector(`.el-box[data-id="${Ptr.drag.obj.id}"]`); if(dom) { dom.style.left = Ptr.drag.obj.props.x + 'px'; dom.style.top = Ptr.drag.obj.props.y + 'px'; }
-                }
-                if(Ptr.drag.type === 'panC') { App.panC.x = e.clientX - Ptr.drag.sx; App.panC.y = e.clientY - Ptr.drag.sy; document.getElementById('canvas-pan').style.transform = `translate(${App.panC.x}px, ${App.panC.y}px)`; }
-                if(Ptr.drag.type === 'panL') { App.panL.x = e.clientX - Ptr.drag.sx; App.panL.y = e.clientY - Ptr.drag.sy; document.getElementById('logic-pan').style.transform = `translate(${App.panL.x}px, ${App.panL.y}px) scale(${App.zoomL})`; window.Logic.drawWires(); }
-                if(Ptr.drag.type === 'slider') { const rect = Ptr.drag.dom.getBoundingClientRect(); Ptr.drag.el.props.progress = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100)); window.Canvas.render(); window.Runtime.fire('Evt_Change', Ptr.drag.el.id); }
-                if(Ptr.drag.type === 'joy') { let dx = e.clientX - Ptr.drag.cx; let dy = e.clientY - Ptr.drag.cy; const dist = Math.sqrt(dx*dx + dy*dy); if(dist > Ptr.drag.r) { dx = (dx/dist)*Ptr.drag.r; dy = (dy/dist)*Ptr.drag.r; } Ptr.drag.el.props.joyX = dx; Ptr.drag.el.props.joyY = dy; window.Canvas.render(); window.Runtime.fire('Evt_Change', Ptr.drag.el.id); }
-            }
+    ctx.strokeStyle = `hsl(${(i / bufferLength) * 60 + 120}, 100%, 50%)`;
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+  }
+  ctx.translate(-cx, -cy);
 
-            if(Ptr.wire) {
-                let tw = document.getElementById('temp-wire');
-                if(!tw) { tw = document.createElementNS("http://www.w3.org/2000/svg", "path"); tw.id = 'temp-wire'; tw.setAttribute('class', 'wire temp'); tw.setAttribute('stroke', '#89b4fa'); window.Logic.svg.appendChild(tw); }
-                const r1 = Ptr.wire.el.getBoundingClientRect(); const ws = window.Logic.svg.getBoundingClientRect(); const z = App.zoomL || 1;
-                const x1 = (r1.left + 10 - ws.left) / z; const y1 = (r1.top + 10 - ws.top) / z; const x2 = (e.clientX - ws.left) / z; const y2 = (e.clientY - ws.top) / z;
-                tw.setAttribute('d', `M ${x1} ${y1} C ${x1+(Ptr.wire.io==='out'?40:-40)} ${y1}, ${x2+(Ptr.wire.io==='out'?-40:40)} ${y2}, ${x2} ${y2}`);
-            }
-        }, { passive: false });
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius - 2, 0, Math.PI * 2);
+  ctx.fillStyle = '#0a0a0a';
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#1DB954';
+  ctx.stroke();
+}
 
-        const endDrag = (e) => {
-            delete pointers[e.pointerId]; if(Object.keys(pointers).length < 2) pinchDist = 0;
-            if(App.mode === 'play') {
-                if(Ptr.drag && Ptr.drag.type !== 'slider' && Ptr.drag.type !== 'joy') { const box = e.target.closest('.el-box'); if(box) { const el = App.elements.find(x=>x.id===box.dataset.id); window.Runtime.fire('Evt_Up', el.id); } }
-                if(Ptr.drag && Ptr.drag.type === 'joy') { Ptr.drag.el.props.joyX = 0; Ptr.drag.el.props.joyY = 0; window.Canvas.render(); window.Runtime.fire('Evt_Change', Ptr.drag.el.id); }
-            }
-            if(Ptr.wire) {
-                const tw = document.getElementById('temp-wire'); if(tw) tw.remove();
-                window.Logic.svg.style.display = 'none'; const hit = document.elementFromPoint(e.clientX, e.clientY); window.Logic.svg.style.display = 'block';
+function drawWaveform() {
+  analyser.getByteTimeDomainData(dataArray);
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = '#1DB954';
+  ctx.shadowBlur = 10;
+  ctx.shadowColor = '#1DB954';
+  ctx.beginPath();
+  const sliceWidth = w * 1.0 / bufferLength;
+  let x = 0;
+  for (let i = 0; i < bufferLength; i++) {
+    const v = dataArray[i] / 128.0;
+    const y = v * h / 2;
+    if (i === 0) {
+      ctx.moveTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+    x += sliceWidth;
+  }
+  ctx.lineTo(canvas.width, canvas.height / 2);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+  analyser.getByteFrequencyData(dataArray);
+}
 
-                if(hit && hit.classList.contains('port')) {
-                    const t = hit.dataset;
-                    if(t.n !== Ptr.wire.n && t.io !== Ptr.wire.io) {
-                        const fN = Ptr.wire.io === 'out' ? Ptr.wire.n : t.n; const fP = Ptr.wire.io === 'out' ? Ptr.wire.p : t.p;
-                        const tN = Ptr.wire.io === 'in' ? Ptr.wire.n : t.n; const tP = Ptr.wire.io === 'in' ? Ptr.wire.p : t.p;
-                        App.wires = App.wires.filter(w => !(w.t === tN && w.tp === tP)); App.wires.push({ f: fN, fp: fP, t: tN, tp: tP });
-                    }
-                }
-                window.Logic.drawWires();
-            }
-            Ptr.drag = null; Ptr.wire = null;
-        };
+function drawParticles() {
+  const vol = getAverageVolume();
+  if (vol > 60) {
+    const spawnCount = Math.floor(vol / 15);
+    for (let i = 0; i < spawnCount; i++) {
+      particles.push(new Particle(canvas.width / 2, canvas.height / 2, vol / 6));
+    }
+  }
+  for (let i = particles.length - 1; i >= 0; i--) {
+    particles[i].update();
+    particles[i].draw();
+    if (particles[i].life <= 0) {
+      particles.splice(i, 1);
+    }
+  }
+  
+  ctx.beginPath();
+  ctx.arc(canvas.width/2, canvas.height/2, vol, 0, Math.PI*2);
+  ctx.fillStyle = `rgba(29, 185, 84, ${vol/255})`;
+  ctx.fill();
+}
 
-        main.addEventListener('pointerup', endDrag); main.addEventListener('pointercancel', endDrag);
+function drawNeonRings() {
+  const w = canvas.width;
+  const h = canvas.height;
+  const cx = w / 2;
+  const cy = h / 2;
+  ctx.translate(cx, cy);
+  for(let i = 0; i < 6; i++) {
+    const index = Math.floor(bufferLength / 6) * i;
+    const val = dataArray[index] / 255;
+    const r = 50 + i * 50 + val * 100;
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.lineWidth = 3 + val * 8;
+    ctx.strokeStyle = `hsla(${120 + i * 10}, 100%, 50%, ${0.2 + val})`;
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = ctx.strokeStyle;
+    ctx.stroke();
+  }
+  ctx.shadowBlur = 0;
+  ctx.translate(-cx, -cy);
+}
 
-        document.getElementById('ws-logic').addEventListener('wheel', (e) => {
-            e.preventDefault(); App.zoomL = Math.max(0.3, Math.min(2.5, App.zoomL - e.deltaY * 0.002));
-            document.getElementById('logic-pan').style.transform = `translate(${App.panL.x}px, ${App.panL.y}px) scale(${App.zoomL})`; window.Logic.drawWires();
-        }, { passive: false });
+function drawEclipse() {
+  const w = canvas.width;
+  const h = canvas.height;
+  const cx = w / 2;
+  const cy = h / 2;
+  const vol = getAverageVolume();
+  
+  const r = Math.min(w, h) * 0.2 + (vol / 255) * 120;
+  const grad = ctx.createRadialGradient(cx, cy, r * 0.8, cx, cy, r * 2.5);
+  grad.addColorStop(0, '#000000');
+  grad.addColorStop(0.2, `rgba(29, 185, 84, ${vol/255 + 0.2})`);
+  grad.addColorStop(1, 'transparent');
+  
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+  
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * 0.8, 0, Math.PI * 2);
+  ctx.fillStyle = '#000';
+  ctx.shadowBlur = 30;
+  ctx.shadowColor = '#1DB954';
+  ctx.fill();
+  ctx.shadowBlur = 0;
+}
 
-        // --- INIT DEMO ---
-        window.Canvas.render(); window.Logic.render(); window.Inspector.updateTree();
+function animate() {
+  if (!isConnected) return;
+  animationId = requestAnimationFrame(animate);
 
-        setTimeout(() => {
-            // Build Demo
-            App.elements.push({ id: 'bg1', type: 'GlassPanel', name: 'App_Background', props: { ...ElDefs.GlassPanel, x: 20, y: 20, w: 320, h: 300 } });
-            App.elements.push({ id: 'btn1', type: 'Button', name: 'Start_Button', props: { ...ElDefs.Button, x: 100, y: 120, text: 'Launch' } });
-            
-            App.nodes.push({ id: 'n1', type: 'Evt_Click', x: 20, y: 40, data: { target: 'btn1' } });
-            App.nodes.push({ id: 'n2', type: 'Act_Tween', x: 350, y: 40, data: { target: 'btn1', prop: 'opacity', val: 0, sec: 0.5 } });
-            
-            App.wires.push({ f: 'n1', fp: 'exec', t: 'n2', tp: 'exec' });
+  if (mode !== 2) {
+    analyser.getByteFrequencyData(dataArray);
+  }
 
-            window.Canvas.render(); window.Logic.render(); window.Inspector.updateTree(); window.Sys.switchTab('canvas');
-        }, 200);
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    </script>
+  switch(mode) {
+    case 0: drawBars(); break;
+    case 1: drawRadial(); break;
+    case 2: drawWaveform(); break;
+    case 3: drawParticles(); break;
+    case 4: drawNeonRings(); break;
+    case 5: drawEclipse(); break;
+  }
+}
+</script>
 </body>
 </html>
+
+
+```
